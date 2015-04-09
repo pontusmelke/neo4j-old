@@ -36,14 +36,19 @@ case class ProduceResults(nodes: Map[String, String],
   def generateInit() = ""
 
 
-  def fields() =
+  def fields() = {
+    val columnsList = if (columns.isEmpty) "Collections.emptyList()" else s"Arrays.asList( ${columns.mkString("\"", ", ", "\"")} )"
     s"""@Override
        |public List<String> javaColumns( )
        |{
-       |return Arrays.asList( ${columns.mkString("\"", ", ", "\"")} );
-       |}""".stripMargin
+       |return $columnsList
+;
+       |}""".
+      stripMargin
+    }
+
 
   override def _importedClasses() = Set(
-    "java.util.List", "java.util.Arrays"
+    "java.util.List", "java.util.Arrays", "java.util.Collections"
   )
 }

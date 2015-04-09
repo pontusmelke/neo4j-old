@@ -103,6 +103,7 @@ case class CostBasedExecutablePlanBuilder(monitors: Monitors,
         }
         val nodes = returnIdentifiers.filter(semanticTable.isNode).map(_.name)
         val relationships = returnIdentifiers.filter(semanticTable.isRelationship).map(_.name)
+        //todo figure out properties
         val finalPlan = ProduceResult(nodes, relationships, logicalPlan)
         val codeGen = new CodeGenerator
         Left(codeGen.generate(finalPlan, planContext, clock))

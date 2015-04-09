@@ -59,6 +59,7 @@ public class Javac
     public static Class<InternalExecutionResult> compile( String className, String classBody ) throws
             ClassNotFoundException
     {
+        System.out.println(classBody);
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         if ( compiler == null )
         {

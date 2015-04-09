@@ -22,6 +22,7 @@ package org.neo4j.cypher.internal.compiler.v2_3.birk
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.neo4j.cypher.internal.compiler.v2_3.CostPlannerName
+import org.neo4j.cypher.internal.compiler.v2_3.ast.{Identifier, Property}
 import org.neo4j.cypher.internal.compiler.v2_3.birk.CodeGenerator.JavaTypes.{INT, LONG}
 import org.neo4j.cypher.internal.compiler.v2_3.birk.il._
 import org.neo4j.cypher.internal.compiler.v2_3.executionplan.{PlanFingerprint, CompiledPlan}
@@ -213,7 +214,7 @@ class CodeGenerator {
           val (methodHandle, actions) = consume(stack.top, plan, stack.pop)
           (methodHandle, Seq(WhileLoop(nodeVariable, ScanForLabel(label.name, labelToken), actions)))
 
-        case _: ProduceResult | _: Expand =>
+        case _: ProduceResult | _: Expand | _: Projection =>
           produce(plan.lhs.get, stack.push(plan))
 
         case NodeHashJoin(_, lhs, rhs) =>
@@ -260,6 +261,19 @@ class CodeGenerator {
 
           val (x, action) = consume(stack.top, plan, stack.pop)
           (x, WhileLoop(relVar, ExpandC(variables(fromNode).name, relVar.name, dir, relTypes.map(t => variableName.next -> t.name).toMap,nodeVar.name, action), Instruction.empty))
+
+        case Projection(left, expressions) if expressions.values.forall(_.isInstanceOf[Property]) =>
+          val list = expressions.map {
+            case (identifier, Property(Identifier(name), propKey)) => //if name is node
+              val propValueVar = variableName.nextWithType("Object")
+              variables += identifier-> propValueVar
+              ProjectNodeProperty(propValueVar.name, propKey.name, variableName.next(), variables(name).name)
+          }.toSeq
+          //case nod
+
+          val (x, action) = consume(stack.top, plan, stack.pop)
+
+          (x, ProjectNodeProperties(list, action))
 
         case _ => throw new CantCompileQueryException(s"$plan is not yet supported")
       }

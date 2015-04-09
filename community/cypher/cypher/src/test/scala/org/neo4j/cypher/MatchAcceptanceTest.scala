@@ -1984,4 +1984,12 @@ return b
     executeWithAllPlanners("MATCH ()<-[r]-() WHERE id(r) = 42 RETURN r") shouldBe empty
     executeWithAllPlanners("MATCH ()-[r]-() WHERE id(r) = 42 RETURN r") shouldBe empty
   }
+
+  test("the test") {
+    createNode(Map("prop" -> 1))
+
+    val query = "MATCH a RETURN a.prop"
+
+    executeWithNewRuntime(query)
+  }
 }
