@@ -229,9 +229,10 @@ class CodeGenerator {
 
     def consume(plan: LogicalPlan, from: LogicalPlan, stack: Stack[LogicalPlan]): (Option[JavaSymbol], Instruction) = {
       plan match {
-        case ProduceResult(nodes, rels, _) =>
+        case ProduceResult(nodes, rels, other, _) =>
           (None, ProduceResults(nodes.map(c => c -> variables(c).name).toMap,
-            rels.map(c => c -> variables(c).name).toMap))
+            rels.map(c => c -> variables(c).name).toMap,
+            other.map(c => c -> variables(c).name).toMap))
 
         case join@NodeHashJoin(nodes, lhs, rhs) if from eq lhs =>
           val nodeId = variables(nodes.head.name)

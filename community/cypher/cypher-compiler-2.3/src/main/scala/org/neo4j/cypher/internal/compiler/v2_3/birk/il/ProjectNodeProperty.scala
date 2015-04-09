@@ -23,7 +23,7 @@ import org.neo4j.cypher.internal.compiler.v2_3.birk.CodeGenerator
 
 case class ProjectNodeProperty(propValueVar: String, propName: String, propKeyVar: String, nodeIdVar: String) extends Instruction {
 
-  def generateCode() = s"Object $propValueVar = ro.nodeGetProperty( $nodeIdVar, $propKeyVar ).value();"
+  def generateCode() = s"Object $propValueVar = ro.nodeGetProperty( $nodeIdVar, $propKeyVar ).value( null );"
 
   //TODO only generate this if property token not known at compile time
   def generateInit() =

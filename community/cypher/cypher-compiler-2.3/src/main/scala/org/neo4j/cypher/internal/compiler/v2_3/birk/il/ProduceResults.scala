@@ -22,12 +22,15 @@ package org.neo4j.cypher.internal.compiler.v2_3.birk.il
 import org.neo4j.cypher.internal.compiler.v2_3.birk.CodeGenerator.n
 
 case class ProduceResults(nodes: Map[String, String],
-                          relationships: Map[String, String]) extends Instruction {
+                          relationships: Map[String, String],
+                          other: Map[String, String]) extends Instruction {
 
-  val columns = nodes.keySet ++ relationships.keySet
+  val columns = nodes.keySet ++ relationships.keySet ++ other.keySet
+
   def generateCode() =
     s"""${nodes.toSeq.map { case (k, v) => s"""row.setNode("$k", $v);"""}.mkString(n)}
        |${relationships.toSeq.map { case (k, v) => s"""row.setRelationship("$k", $v);"""}.mkString(n)}
+       |${other.toSeq.map { case (k, v) => s"""row.set("$k", $v);"""}.mkString(n)}
        |if ( !visitor.visit(row) )
        |{
        |return;
@@ -37,12 +40,15 @@ case class ProduceResults(nodes: Map[String, String],
 
 
   def fields() = {
-    val columnsList = if (columns.isEmpty) "Collections.emptyList()" else s"Arrays.asList( ${columns.mkString("\"", ", ", "\"")} )"
+    val columnsList = columns.toList match {
+      case Nil => "Collections.emptyList()"
+      case lst => s"Arrays.asList( ${lst.mkString("\"", "\", \"", "\"")} )"
+    }
+
     s"""@Override
        |public List<String> javaColumns( )
        |{
-       |return $columnsList
-;
+       |return $columnsList;
        |}""".
       stripMargin
     }

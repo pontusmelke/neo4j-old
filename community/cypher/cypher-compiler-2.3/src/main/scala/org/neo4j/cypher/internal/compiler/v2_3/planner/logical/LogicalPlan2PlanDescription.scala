@@ -48,7 +48,7 @@ object LogicalPlan2PlanDescription extends ((LogicalPlan, Map[LogicalPlan, Id]) 
       case NodeIndexUniqueSeek(IdName(id), label, propKey, value, arguments) =>
         PlanDescriptionImpl(id = idMap(plan), "NodeIndexUniqueSeek", NoChildren, Seq(Index(label.name, propKey.name)), symbols)
 
-      case ProduceResult(nodes, rels, inner) =>
+      case ProduceResult(nodes, rels, _, inner) =>
         PlanDescriptionImpl(id = idMap(plan), "Results", SingleChild(apply(inner, idMap)), Seq(), symbols)
 
       case Expand(inner, IdName(fromName), dir, typeNames, IdName(toName), IdName(relName), mode) =>

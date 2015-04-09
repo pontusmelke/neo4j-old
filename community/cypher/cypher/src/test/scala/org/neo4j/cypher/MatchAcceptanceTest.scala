@@ -1985,11 +1985,50 @@ return b
     executeWithAllPlanners("MATCH ()-[r]-() WHERE id(r) = 42 RETURN r") shouldBe empty
   }
 
-  test("the test") {
-    createNode(Map("prop" -> 1))
+  test("should return null as value for non-existent property") {
+    createNode(Map("foo" -> 1))
+
+    val query = "MATCH a RETURN a.bar"
+
+    val result = executeWithAllPlannersAndRuntimes(query).toList
+    result should have size 1
+    result.head should equal(Map("a.bar" -> null))
+  }
+
+  test("should return property value for matched node") {
+    val props = Map("prop" -> 1)
+    createNode(props)
 
     val query = "MATCH a RETURN a.prop"
 
-    executeWithNewRuntime(query)
+    val result = executeWithAllPlannersAndRuntimes(query).toComparableList
+    result should have size 1
+    result.head should equal(asResult(props, "a"))
   }
+
+  test("should return multiple property values for matched node") {
+    val props = Map(
+      "name" -> "Philip J. Fry",
+      "age" -> 2046,
+      "seasons" -> Array(1, 2, 3, 4, 5, 6, 7))
+
+    createNode(props)
+
+    val query = "MATCH a RETURN a.name, a.age, a.seasons"
+
+    val result = executeWithAllPlannersAndRuntimes(query).toComparableList
+    result should have size 1
+    result.head should equal(asResult(props, "a"))
+  }
+
+  /**
+   * Append identifier to keys and transform value arrays to lists
+   */
+  private def asResult(data: Map[String, Any], id: String) =
+    data.map {
+      case (k, v) => (s"$id.$k", v)
+    }.mapValues {
+      case v: Array[_] => v.toList
+      case v => v
+    }
 }
