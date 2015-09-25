@@ -26,7 +26,7 @@ import org.scalatest.Suite
 
 import scala.collection.JavaConverters._
 
-class NewMatchTest extends DocumentingTest with Suite {
+class NewMatchTest extends DocumentingTest {
   override def doc = new DocBuilder {
     doc("Match", "query-match")
     initQueries(
