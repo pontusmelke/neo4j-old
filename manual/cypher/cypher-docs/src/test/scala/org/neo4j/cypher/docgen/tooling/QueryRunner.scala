@@ -26,25 +26,56 @@ import org.neo4j.cypher.internal.frontend.v2_3.InternalException
 import org.neo4j.cypher.internal.helpers.GraphIcing
 import org.neo4j.graphdb.{Transaction, GraphDatabaseService}
 
+import scala.collection.immutable.Iterable
+import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 /**
  * QueryRunner is used to actually run queries and produce either errors or
- * Content containing the result of the execution
+ * Content containing the runSingleQuery of the execution
  */
 class QueryRunner(db: GraphDatabaseService,
                   formatter: Transaction => (InternalExecutionResult, Content) => Content) extends GraphIcing {
 
-  def runQueries(init: Seq[String], queries: Seq[Query]): TestRunResult = {
+  def runQueries(contentsWithInit: Seq[ContentWithInit]): TestRunResult = {
     val engine = new ExecutionEngine(db)
 
-    val results = queries.map { case q@Query(query, assertions, content) =>
+    val groupedByInits: Map[Seq[String], Seq[Content]] = contentsWithInit.groupBy(_.init).mapValues(_.map(_.query))
 
+    val results: Iterable[QueryRunResult] = groupedByInits.flatMap {
+      case (init, queries) =>
+        val failures = initialize(engine, init, queries.head)
+
+        if (failures.nonEmpty) failures
+        else {
+          queries.map {
+            case q: Query =>
+              runSingleQuery(engine, q.queryText, q.assertions, q)
+            case gv: GraphVizBefore =>
+              QueryRunResult("", gv, Right(captureStateAsGraphViz(db)))
+              //runSingleQuery(engine, q.queryText, q.assertions, q)
+            case _ =>
+              //TODO do this with types
+              ???
+          }
+      }
+    }
+
+    TestRunResult(results.toSeq)
+  }
+
+  private def initialize(engine: ExecutionEngine, init: Seq[String], failContent: Content): Seq[QueryRunResult] =
+    init.flatMap { q =>
+      val result = Try(engine.execute(q))
+      result.failed.toOption.map((e: Throwable) => QueryRunResult(q, failContent, Left(e)))
+    }
+
+  private def runSingleQuery(engine: ExecutionEngine, queryText: String, assertions: QueryAssertions, content: Content): QueryRunResult = {
       val format: (Transaction) => (InternalExecutionResult) => Content = (tx: Transaction) => formatter(tx)(_, content)
 
-      val result: Either[Exception, Transaction => Content] =
+      val result: Either[Throwable, Transaction => Content] =
         try {
-          val resultTry = Try(engine.execute(query))
+          val resultTry = Try(engine.execute(queryText))
           (assertions, resultTry) match {
             // *** Success conditions
             case (expectation: ExpectedFailure[_], Failure(exception: Exception)) =>
@@ -69,38 +100,50 @@ class QueryRunner(db: GraphDatabaseService,
             case (e: ExpectedFailure[_], _: Success[_]) =>
               Left(new ExpectedExceptionNotFound(s"Expected exception of type ${e.getExceptionClass}"))
 
-            case (_, Failure(exception: Exception)) =>
-              q.createdAt.initCause(exception)
-              Left(q.createdAt)
+            case (_, Failure(exception: Throwable)) =>
+              Left(exception)
 
             case x =>
               throw new InternalException(s"This not see this one coming $x")
           }
         } catch {
-          case e: Exception =>
+          case e: Throwable =>
             Left(e)
         }
 
-      val formattedResult = db.withTx { tx =>
+      val formattedResult: Either[Throwable, Content] = db.withTx { tx =>
         result.right.map(contentBuilder => contentBuilder(tx))
       }
 
-      QueryRunResult(q, formattedResult)
+      QueryRunResult(queryText, content, formattedResult)
     }
-    TestRunResult(results)
-  }
 }
 
-case class QueryRunResult(query: Query, testResult: Either[Exception, Content])
+sealed trait RunResult {
+  def success: Boolean
+  def original: Content
+  def newContent: Option[Content]
+  def newFailure: Option[Throwable]
+}
 
-case class TestRunResult(queryResults: Seq[QueryRunResult]) {
-  def success = !queryResults.exists(_.testResult.isLeft)
+case class QueryRunResult(queryText: String, original: Content, testResult: Either[Throwable, Content]) extends RunResult {
+  override def success = testResult.isRight
 
-  def foreach[U](f: QueryRunResult => U) = queryResults.foreach(f)
+  override def newContent: Option[Content] = testResult.right.toOption
 
-  private val _map = queryResults.map(r => r.query.queryText -> r.testResult).toMap
+  override def newFailure: Option[Throwable] = testResult.left.toOption
+}
 
-  def apply(q: String): Either[Exception, Content] = _map(q)
+case class GraphVizRunResult(original: Content, graphViz: GraphViz) extends RunResult {
+  override def success = false
+  override def newContent = Some(graphViz)
+  override def newFailure = None
+}
+
+case class TestRunResult(queryResults: Seq[RunResult]) {
+  def success = queryResults.forall(_.success)
+
+  def foreach[U](f: RunResult => U) = queryResults.foreach(f)
 }
 
 class ExpectedExceptionNotFound(m: String) extends Exception(m)

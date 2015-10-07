@@ -22,7 +22,6 @@ package org.neo4j.cypher.docgen
 import org.neo4j.cypher.docgen.tooling._
 import org.neo4j.graphdb.Node
 import org.neo4j.tooling.GlobalGraphOperations
-import org.scalatest.Suite
 
 import scala.collection.JavaConverters._
 
@@ -69,7 +68,7 @@ class NewMatchTest extends DocumentingTest {
         p("To understand more about the patterns used in the MATCH clause, read <<query-pattern>>")
       }
       p("The following graph is used for the examples below:")
-      graphVizBefore()
+      graphVizAfter()
     }
     section("Basic node finding") {
       section("Get all nodes") {
@@ -162,6 +161,31 @@ class NewMatchTest extends DocumentingTest {
           resultTable()
         }
       }
+      section("Relationship identifier in variable length relationships") {
+        p("TODO")
+      }
+      section("Match with properties on a variable length path") {
+        val initQuery =
+          """MATCH (charlie:Person {name:'Charlie Sheen'}), (martin:Person {name:'Martin Sheen'})
+            |CREATE (charlie)-[:X {blocked:false}]->(:Unblocked)<-[:X {blocked:false}]-(martin)
+            |CREATE (charlie)-[:X {blocked:true}]->(:Blocked)<-[:X {blocked:false}]-(martin)""".stripMargin
+        p("""A variable length relationship with properties defined on in it means that all
+            |relationships in the path must have the property set to the given value. In this query,
+            |there are two paths between Charlie Sheen and his dad Martin Sheen. One of the includes a
+            |``blocked'' relationship and the other doesn't. In this case we first alter the original
+            |graph by using the following query to add ``blocked'' and ``unblocked'' relationships:""".stripMargin)
+        query(initQuery, assertBlockingRelationshipsAdded) {
+          p("This means that we are starting out with the following graph: ")
+          graphVizBefore()
+        }
+        query("MATCH p = (charlie:Person)-[* {blocked:false}]-(martin:Person) " +
+          "WHERE charlie.name = 'Charlie Sheen' AND martin.name = 'Martin Sheen' " +
+          "RETURN p", assertBlockingRelationshipsAdded) {
+          initQueries(initQuery)
+          resultTable()
+          p("")
+        }
+      }
     }
   }.build()
 
@@ -179,6 +203,7 @@ class NewMatchTest extends DocumentingTest {
       Map("movie.title" -> "Wall Street")))
   )
 
+  private def assertBlockingRelationshipsAdded = NoAssertions
   private def assertWallStreetIsReturned = ResultAssertions(result =>
     result.toList should equal(
       List(Map("movie.title" -> "Wall Street")))

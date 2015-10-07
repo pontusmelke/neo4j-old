@@ -26,16 +26,16 @@ class ContentAndResultMergerTest extends CypherFunSuite {
   test("simple doc with query") {
     // given
     val query = "match (n) return n"
-    val queryObj = Query(query, NoAssertions, QueryResultTablePlaceholder)
+    val queryObj = Query(query, NoAssertions, Seq.empty, QueryResultTablePlaceholder)
     val doc = Document("title", "myId", initQueries = Seq.empty, queryObj)
 
-    val testResult = TestRunResult(Seq(QueryRunResult(queryObj, Right(Paragraph("14")))))
+    val testResult = TestRunResult(Seq(QueryRunResult(query, queryObj, Right(Paragraph("14")))))
 
     // when
     val result = contentAndResultMerger(doc, testResult)
 
     // then
     result should equal(
-      Document("title", "myId", initQueries = Seq.empty, Query(query, NoAssertions, Paragraph("14"))))
+      Document("title", "myId", initQueries = Seq.empty, Query(query, NoAssertions, Seq.empty, Paragraph("14"))))
   }
 }

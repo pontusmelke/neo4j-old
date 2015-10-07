@@ -35,11 +35,7 @@ import org.neo4j.walk.Walker
 object captureStateAsGraphViz extends GraphIcing {
 
   // TODO: Make this cleverer, and don't produce the graph viz unless it's known to be needed
-  def apply(doc: Document, db: GraphDatabaseService, contentToReplace: Content): Document = {
-    val viz = GraphViz(emitGraphviz("apa", "", db))
-    val rewriter = replaceSingleObject(contentToReplace, viz)
-    doc.endoRewrite(rewriter)
-  }
+  def apply(db: GraphDatabaseService): GraphViz = GraphViz(emitGraphviz("apa", "", db))
 
   private def emitGraphviz(testid: String, graphVizOptions: String, db: GraphDatabaseService): String = {
     val out = new ByteArrayOutputStream()

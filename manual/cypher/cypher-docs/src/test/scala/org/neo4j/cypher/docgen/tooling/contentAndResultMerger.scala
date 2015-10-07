@@ -30,9 +30,9 @@ object contentAndResultMerger {
   def apply(originalContent: Document, result: TestRunResult): Document = {
     val rewritesToDo = for {
       runResult <- result.queryResults
-      newContent <- runResult.testResult.right.toOption
-      query = runResult.query
-    } yield query -> newContent
+      newContent <- runResult.newContent
+      original = runResult.original
+    } yield original -> newContent
 
     val rewriter = new Rewriter {
       override def apply(value: AnyRef): AnyRef = instance(value)
@@ -40,6 +40,7 @@ object contentAndResultMerger {
       private val queryResultMap = rewritesToDo.toMap
       val instance = bottomUp(Rewriter.lift {
         case q: Query if queryResultMap.contains(q) => q.copy(content = queryResultMap(q))
+        case q: GraphVizBefore if queryResultMap.contains(q) => queryResultMap(q)
       })
     }
 

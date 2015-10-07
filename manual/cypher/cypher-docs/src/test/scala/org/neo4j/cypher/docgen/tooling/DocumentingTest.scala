@@ -57,18 +57,16 @@ trait DocumentingTest extends CypherFunSuite with Assertions with Matchers with 
 
   runTestsFor(doc)
 
-  def runTestsFor(doc: Document) = {
+  def runTestsFor(doc1: Document) = {
     val db = new TestGraphDatabaseFactory().newImpermanentDatabase()
     try {
 
-      initializeDatabase(doc, db)
-      val doc2 = captureStateAsGraphViz(doc, db, GraphVizBefore)
-      val result = runQueries(doc2, db)
+      val result = runQueries(doc1, db)
       reportResults(result)
 
       if (result.success) {
-        val doc3 = captureStateAsGraphViz(doc2, db, GraphVizAfter)
-        writeResultsToFile(doc3, db, result)
+        val doc2 = captureStateAsGraphViz(doc1, db, GraphVizAfter)
+        writeResultsToFile(doc2, db, result)
       }
     } finally db.shutdown()
   }
@@ -90,12 +88,15 @@ trait DocumentingTest extends CypherFunSuite with Assertions with Matchers with 
   }
 
   private def reportResults(result: TestRunResult) {
+    var count = 0
     result foreach {
-      case QueryRunResult(q, Left(failure)) =>
-        test(q.queryText)(throw failure)
+      case QueryRunResult(q, _, Left(failure)) =>
+        count +=1
+        test(s"$q :$count" )(throw failure)
 
-      case QueryRunResult(q, Right(content)) =>
-        test(q.queryText)({})
+      case QueryRunResult(q, _, Right(content)) =>
+        count +=1
+        test(s"$q :$count")({})
     }
   }
 
@@ -103,18 +104,8 @@ trait DocumentingTest extends CypherFunSuite with Assertions with Matchers with 
     val builder = (tx: Transaction) => new QueryResultContentBuilder(new ValueFormatter(db, tx))
 
     val runner = new QueryRunner(db, builder)
-    val result = runner.runQueries(init = doc.initQueries, queries = doc.queries)
+    val result = runner.runQueries(contentsWithInit = doc.contentWithQueries)
     result
-  }
-
-  private def initializeDatabase(doc: Document, db: GraphDatabaseService) {
-    doc.initQueries.foreach { q =>
-      try {
-        db.execute(q)
-      } catch {
-        case e: Throwable => throw new scala.RuntimeException(s"Initialising database failed on query: $q", e)
-      }
-    }
   }
 }
 
