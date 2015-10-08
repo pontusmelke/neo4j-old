@@ -57,16 +57,16 @@ trait DocumentingTest extends CypherFunSuite with Assertions with Matchers with 
 
   runTestsFor(doc)
 
-  def runTestsFor(doc1: Document) = {
+  def runTestsFor(doc: Document) = {
     val db = new TestGraphDatabaseFactory().newImpermanentDatabase()
     try {
 
-      val result = runQueries(doc1, db)
+      val result = runQueries(doc, db)
       reportResults(result)
-
+      val not1 = result.queryResults.filterNot(_.success)
+      println(not1)
       if (result.success) {
-        val doc2 = captureStateAsGraphViz(doc1, db, GraphVizAfter)
-        writeResultsToFile(doc2, db, result)
+        writeResultsToFile(doc, db, result)
       }
     } finally db.shutdown()
   }
@@ -97,6 +97,8 @@ trait DocumentingTest extends CypherFunSuite with Assertions with Matchers with 
       case QueryRunResult(q, _, Right(content)) =>
         count +=1
         test(s"$q :$count")({})
+
+      case _:GraphVizRunResult => // Nothing to report here, unless we got a failure
     }
   }
 

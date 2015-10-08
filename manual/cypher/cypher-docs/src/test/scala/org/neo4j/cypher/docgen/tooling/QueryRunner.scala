@@ -24,10 +24,9 @@ import org.neo4j.cypher.internal.RewindableExecutionResult
 import org.neo4j.cypher.internal.compiler.v2_3.executionplan.InternalExecutionResult
 import org.neo4j.cypher.internal.frontend.v2_3.InternalException
 import org.neo4j.cypher.internal.helpers.GraphIcing
-import org.neo4j.graphdb.{Transaction, GraphDatabaseService}
+import org.neo4j.graphdb.{GraphDatabaseService, Transaction}
 
 import scala.collection.immutable.Iterable
-import scala.collection.mutable
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -42,7 +41,7 @@ class QueryRunner(db: GraphDatabaseService,
 
     val groupedByInits: Map[Seq[String], Seq[Content]] = contentsWithInit.groupBy(_.init).mapValues(_.map(_.query))
 
-    val results: Iterable[QueryRunResult] = groupedByInits.flatMap {
+    val results: Iterable[RunResult] = groupedByInits.flatMap {
       case (init, queries) =>
         val failures = initialize(engine, init, queries.head)
 
@@ -52,10 +51,8 @@ class QueryRunner(db: GraphDatabaseService,
             case q: Query =>
               runSingleQuery(engine, q.queryText, q.assertions, q)
             case gv: GraphVizBefore =>
-              QueryRunResult("", gv, Right(captureStateAsGraphViz(db)))
-              //runSingleQuery(engine, q.queryText, q.assertions, q)
+              GraphVizRunResult(gv, captureStateAsGraphViz(db))
             case _ =>
-              //TODO do this with types
               ???
           }
       }
@@ -135,7 +132,7 @@ case class QueryRunResult(queryText: String, original: Content, testResult: Eith
 }
 
 case class GraphVizRunResult(original: Content, graphViz: GraphViz) extends RunResult {
-  override def success = false
+  override def success = true
   override def newContent = Some(graphViz)
   override def newFailure = None
 }

@@ -239,7 +239,7 @@ case class ExpectedFailure[EXCEPTION <: Exception](f: EXCEPTION => Unit)
 trait QueryResultPlaceholder[T] {
   self: Content =>
   override def asciiDoc(level: Int) =
-    throw new InternalException("This object should have been rewritten away already")
+    throw new InternalException(s"This object should have been rewritten away already ${this.getClass.getSimpleName}")
 }
 
 case object QueryResultTablePlaceholder extends Content with QueryResultPlaceholder[QueryResultTable] with NoQueries

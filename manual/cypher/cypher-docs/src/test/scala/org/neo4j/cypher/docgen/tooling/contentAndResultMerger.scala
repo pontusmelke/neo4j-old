@@ -20,7 +20,9 @@
 package org.neo4j.cypher.docgen.tooling
 
 import org.neo4j.cypher.internal.frontend.v2_3.Rewritable._
-import org.neo4j.cypher.internal.frontend.v2_3.{bottomUp, Rewriter}
+import org.neo4j.cypher.internal.frontend.v2_3.{Rewriter, bottomUp}
+
+import scala.annotation.tailrec
 
 /**
  * Takes the document tree and the execution result and rewrites the
@@ -34,16 +36,30 @@ object contentAndResultMerger {
       original = runResult.original
     } yield original -> newContent
 
-    val rewriter = new Rewriter {
-      override def apply(value: AnyRef): AnyRef = instance(value)
-
-      private val queryResultMap = rewritesToDo.toMap
-      val instance = bottomUp(Rewriter.lift {
-        case q: Query if queryResultMap.contains(q) => q.copy(content = queryResultMap(q))
-        case q: GraphVizBefore if queryResultMap.contains(q) => queryResultMap(q)
-      })
-    }
-
-    originalContent.endoRewrite(rewriter)
+    rewriteTheDoc(rewritesToDo.toMap, originalContent)
   }
+
+  /*
+  We need to do it this way, since a Query can contain a GraphVizBefore element in it,
+  and bottomUp would replace
+   */
+  @tailrec
+  private def rewriteTheDoc(in: Map[Content, Content], doc: Document): Document = {
+    val replacer = new ContentReplacer(in)
+    val replaced = in.mapValues(_.endoRewrite(replacer))
+    if (in != replaced)
+      rewriteTheDoc(replaced, doc)
+    else
+      doc.endoRewrite(replacer)
+  }
+
+  private class ContentReplacer(rewrites: Map[Content, Content]) extends Rewriter {
+    override def apply(value: AnyRef): AnyRef = instance(value)
+
+    val instance = bottomUp(Rewriter.lift {
+      case q: Query if rewrites.contains(q) => q.copy(content = rewrites(q))
+      case q: GraphVizBefore if rewrites.contains(q) => rewrites(q)
+    })
+  }
+
 }
