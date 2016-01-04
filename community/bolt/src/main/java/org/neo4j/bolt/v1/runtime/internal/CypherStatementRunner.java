@@ -22,10 +22,15 @@ package org.neo4j.bolt.v1.runtime.internal;
 import java.util.Map;
 
 import org.neo4j.bolt.v1.runtime.spi.RecordStream;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.bolt.v1.runtime.spi.StatementRunner;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.impl.query.QueryExecutionEngine;
+import org.neo4j.kernel.impl.query.QueryExecutionKernelException;
 
 public class CypherStatementRunner implements StatementRunner
 {
@@ -42,6 +47,7 @@ public class CypherStatementRunner implements StatementRunner
     public RecordStream run( final SessionState ctx, final String statement,
             final Map<String,Object> params ) throws KernelException
     {
+        assertParameters( params );
         // Temporary until we move parsing to cypher, or run a parser up here
         if ( statement.equalsIgnoreCase( "begin" ) )
         {
@@ -74,5 +80,25 @@ public class CypherStatementRunner implements StatementRunner
                 return new CypherAdapterStream( db.execute( statement, params ) );
             }
         }
+    }
+
+    private void assertParameters( Map<String,Object> params ) throws KernelException
+    {
+        for ( Object value : params.values() )
+        {
+            if (value instanceof Node )
+            {
+                throw new QueryExecutionKernelException( Status.Request.Invalid, "Nodes can't be used as parameters");
+            }
+            if (value instanceof Relationship )
+            {
+                throw new QueryExecutionKernelException( Status.Request.Invalid, "Relationships can't be used as parameters");
+            }
+            if (value instanceof Path )
+            {
+                throw new QueryExecutionKernelException( Status.Request.Invalid, "Paths can't be used as parameters");
+            }
+        }
+
     }
 }

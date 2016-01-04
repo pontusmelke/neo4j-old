@@ -30,6 +30,11 @@ public class QueryExecutionKernelException extends KernelException
         super( cause.status(), cause, cause.getMessage() );
     }
 
+    public QueryExecutionKernelException(Status status, String message)
+    {
+        super(status, message);
+    }
+
     public QueryExecutionException asUserException()
     {
         return new QueryExecutionException( getMessage(), this, status().code().serialize() );

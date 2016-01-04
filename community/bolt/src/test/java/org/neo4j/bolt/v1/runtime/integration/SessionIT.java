@@ -37,12 +37,14 @@ import org.neo4j.bolt.v1.runtime.internal.Neo4jError;
 import org.neo4j.bolt.v1.runtime.spi.Record;
 import org.neo4j.bolt.v1.runtime.spi.RecordStream;
 import org.neo4j.bolt.v1.runtime.spi.StreamMatchers;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.kernel.api.exceptions.Status;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertTrue;
-
 import static org.neo4j.bolt.v1.runtime.integration.SessionMatchers.failedWith;
 import static org.neo4j.bolt.v1.runtime.integration.SessionMatchers.streamContaining;
 import static org.neo4j.bolt.v1.runtime.integration.SessionMatchers.success;
@@ -386,6 +388,60 @@ public class SessionIT
         // Then
         assertThat( ((Record) stream[0]).fields()[0], equalTo( (Object) 1L ) );
 
+    }
+
+    @Test
+    public void shouldFailWhenUsingNodeAsParameter() throws Throwable
+    {
+        // Given
+        Session session = env.newSession();
+        session.init( "TestClient/1.0", null, null );
+        Record[] records = (Record[]) runAndPull( session, "CREATE (a:Node) RETURN a" );
+        Node node = (Node) records[0].fields()[0];
+
+        // WHEN
+        Map<String, Object> params = new HashMap<>(  );
+        params.put("a", node);
+        session.run("RETURN {a}", params, null, responses );
+
+        // Then
+        assertThat( responses.next(), failedWith( Status.Request.Invalid ) );
+    }
+
+    @Test
+    public void shouldFailWhenUsingRelationshipAsParameter() throws Throwable
+    {
+        // Given
+        Session session = env.newSession();
+        session.init( "TestClient/1.0", null, null );
+        Record[] records = (Record[]) runAndPull( session, "CREATE ()-[r:R]->() RETURN r" );
+        Relationship relationship = (Relationship) records[0].fields()[0];
+
+        // WHEN
+        Map<String, Object> params = new HashMap<>(  );
+        params.put("r", relationship);
+        session.run("RETURN {r}", params, null, responses );
+
+        // Then
+        assertThat( responses.next(), failedWith( Status.Request.Invalid ) );
+    }
+
+    @Test
+    public void shouldFailWhenUsingPathAsParameter() throws Throwable
+    {
+        // Given
+        Session session = env.newSession();
+        session.init( "TestClient/1.0", null, null );
+        Record[] records = (Record[]) runAndPull( session, "CREATE p=()-[r:R]->() RETURN p" );
+        Path path = (Path) records[0].fields()[0];
+
+        // WHEN
+        Map<String, Object> params = new HashMap<>(  );
+        params.put("p", path);
+        session.run("RETURN {p}", params, null, responses );
+
+        // Then
+        assertThat( responses.next(), failedWith( Status.Request.Invalid ) );
     }
 
     private String createLocalIrisData( Session session ) throws IOException, InterruptedException
