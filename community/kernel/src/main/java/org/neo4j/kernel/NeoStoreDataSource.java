@@ -41,7 +41,7 @@ import org.neo4j.io.fs.FileSystemAbstraction;
 import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.kernel.api.KernelAPI;
 import org.neo4j.kernel.api.TokenNameLookup;
-import org.neo4j.kernel.api.exceptions.ProcedureException;
+import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.index.SchemaIndexProvider;
 import org.neo4j.kernel.api.labelscan.LabelScanStore;
 import org.neo4j.kernel.builtinprocs.BuiltInProcedures;
@@ -771,7 +771,7 @@ public class NeoStoreDataSource implements NeoStoresSupplier, Lifecycle, IndexPr
                                       IndexingService indexingService,
                                       StoreReadLayer storeLayer,
                                       UpdateableSchemaState updateableSchemaState, LabelScanStore labelScanStore,
-                                      StorageEngine storageEngine ) throws ProcedureException
+                                      StorageEngine storageEngine ) throws KernelException, IOException
     {
         TransactionCommitProcess transactionCommitProcess = commitProcessFactory.create( appender, storageEngine,
                 config );
@@ -803,6 +803,8 @@ public class NeoStoreDataSource implements NeoStoresSupplier, Lifecycle, IndexPr
                 legacyIndexStore ) );
 
         Procedures procedures = dependencies.satisfyDependency( new Procedures() );
+        BuiltInProcedures.addTo( procedures );
+        procedures.loadFromDirectory( config.get( GraphDatabaseSettings.plugin_dir ) );
 
         TransactionHooks hooks = new TransactionHooks();
         KernelTransactions kernelTransactions = life.add( new KernelTransactions( locks, constraintIndexCreator,
@@ -813,8 +815,6 @@ public class NeoStoreDataSource implements NeoStoresSupplier, Lifecycle, IndexPr
         final Kernel kernel = new Kernel( kernelTransactions, hooks, databaseHealth, transactionMonitor, procedures );
 
         kernel.registerTransactionHook( transactionEventHandlers );
-
-        BuiltInProcedures.addTo( kernel );
 
         final NeoStoreFileListing fileListing = new NeoStoreFileListing( storeDir, labelScanStore, indexingService,
                 legacyIndexProviderLookup );
