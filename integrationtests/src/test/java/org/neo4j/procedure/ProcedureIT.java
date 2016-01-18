@@ -26,6 +26,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterators;
 import java.util.stream.Stream;
 
 import org.neo4j.graphdb.Direction;
@@ -38,14 +39,19 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
+import org.neo4j.proc.API;
 import org.neo4j.proc.JarBuilder;
 import org.neo4j.proc.Name;
 import org.neo4j.proc.ReadOnlyProcedure;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterator.ORDERED;
+import static java.util.stream.StreamSupport.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertFalse;
+import static org.neo4j.graphdb.Label.label;
 import static org.neo4j.helpers.collection.MapUtil.map;
 
 public class ProcedureIT
@@ -194,10 +200,37 @@ public class ProcedureIT
 
         // Expect
         exception.expect( QueryExecutionException.class );
-        exception.expectMessage( "Failed to call procedure `org.neo4j.procedure.throwsExceptionInStream() :: (someVal :: INTEGER?)`: Kaboom" );
+        exception.expectMessage(
+                "Failed to call procedure `org.neo4j.procedure.throwsExceptionInStream() :: (someVal :: INTEGER?)`: " +
+                "Kaboom" );
 
         // When
         result.next();
+    }
+
+    @Test
+    public void shouldLoadBeAbleToCallProcedureWithAccessToDB() throws Throwable
+    {
+        // Given
+        new JarBuilder().createJarFor( plugins.newFile( "myProcedures.jar" ), ClassWithProcedures.class );
+
+        // When
+        GraphDatabaseService db = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
+                .setConfig( GraphDatabaseSettings.plugin_dir, plugins.getRoot().getAbsolutePath() )
+                .newGraphDatabase();
+        try ( Transaction ignore = db.beginTx() )
+        {
+            db.createNode( label( "Person" ) ).setProperty( "name", "Buddy Holly" );
+        }
+
+        // Then
+        try ( Transaction ignore = db.beginTx() )
+        {
+            Result res = db.execute(
+                    "CALL org.neo4j.procedure.listCoolPeopleInDatabase" );
+
+            assertFalse( res.hasNext() );
+        }
     }
 
     public static class Output
@@ -229,8 +262,26 @@ public class ProcedureIT
         }
     }
 
+    public static class MyOutputRecord
+    {
+        public String name;
+
+        public MyOutputRecord()
+        {
+
+        }
+
+        public MyOutputRecord( String name )
+        {
+            this.name = name;
+        }
+    }
+
     public static class ClassWithProcedures
     {
+        @API
+        public GraphDatabaseService db;
+
         @ReadOnlyProcedure
         public Stream<Output> integrationTestMe()
         {
@@ -253,7 +304,7 @@ public class ProcedureIT
         @ReadOnlyProcedure
         public Stream<Output> mapArgument( @Name( "map" )Map<String,Object> map )
         {
-            return Stream.of( new Output( map.size()) );
+            return Stream.of( new Output( map.size() ) );
         }
 
         @ReadOnlyProcedure
@@ -267,10 +318,21 @@ public class ProcedureIT
         @ReadOnlyProcedure
         public Stream<Output> throwsExceptionInStream()
         {
-            return Stream.generate( () -> { throw new RuntimeException( "Kaboom" ); });
+            return Stream.generate( () -> { throw new RuntimeException( "Kaboom" ); } );
+        }
+
+        @ReadOnlyProcedure
+
+        public Stream<MyOutputRecord> listCoolPeopleInDatabase()
+        {
+            return stream(
+                    Spliterators.spliteratorUnknownSize( db.findNodes( label( "Person" ) ), ORDERED | IMMUTABLE ),
+                    false )
+                    .map( ( n ) -> new MyOutputRecord( (String) n.getProperty( "name" ) ) );
         }
     }
 
+        //NOTE temporary, remove this when we can inject GDS/
     private static Node nodeFromId( long id )
     {
         return new Node()

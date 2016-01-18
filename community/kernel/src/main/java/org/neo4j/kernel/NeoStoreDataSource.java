@@ -77,6 +77,7 @@ import org.neo4j.kernel.impl.core.NodeManager;
 import org.neo4j.kernel.impl.core.PropertyKeyTokenHolder;
 import org.neo4j.kernel.impl.core.RelationshipTypeTokenHolder;
 import org.neo4j.kernel.impl.core.StartupStatisticsProvider;
+import org.neo4j.kernel.impl.factory.GraphDatabaseFacade;
 import org.neo4j.kernel.impl.factory.GraphDatabaseFacadeFactory;
 import org.neo4j.kernel.impl.index.IndexConfigStore;
 import org.neo4j.kernel.impl.index.LegacyIndexStore;
@@ -156,6 +157,7 @@ import org.neo4j.kernel.spi.legacyindex.IndexProviders;
 import org.neo4j.logging.Log;
 import org.neo4j.logging.LogProvider;
 import org.neo4j.logging.Logger;
+import org.neo4j.proc.API;
 import org.neo4j.proc.Procedures;
 import org.neo4j.proc.TypeMappers.SimpleConverter;
 import org.neo4j.storageengine.api.StorageEngine;
@@ -859,6 +861,11 @@ public class NeoStoreDataSource implements NeoStoresSupplier, Lifecycle, IndexPr
         procedures.registerType( Node.class, new SimpleConverter( NTNode, Node.class ) );
         procedures.registerType( Relationship.class, new SimpleConverter( NTRelationship, Relationship.class ) );
         procedures.registerType( Path.class, new SimpleConverter( NTPath, Path.class ) );
+
+        //register API
+        procedures.registerComponent( API.class,
+                () -> dependencyResolver.resolveDependency( GraphDatabaseFacade.class ) );
+
         BuiltInProcedures.addTo( procedures );
         procedures.loadFromDirectory( config.get( GraphDatabaseSettings.plugin_dir ) );
         return procedures;

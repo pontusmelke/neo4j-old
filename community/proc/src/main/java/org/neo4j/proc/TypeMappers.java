@@ -19,12 +19,14 @@
  */
 package org.neo4j.proc;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.exceptions.Status;
@@ -53,6 +55,7 @@ public class TypeMappers
     }
 
     private final Map<Type,NeoValueConverter> javaToNeo = new HashMap<>();
+    private final Map<Class<? extends Annotation>,Supplier<?>> fieldComponents = new HashMap<>();
 
     public TypeMappers()
     {
@@ -124,38 +127,16 @@ public class TypeMappers
         javaToNeo.put( javaClass, toNeo );
     }
 
-    public static class ToNeoTypeMapper implements NeoValueConverter
+
+
+    public void registerComponent( Class<? extends Annotation> annotation, Supplier<?> supplier )
     {
-        private final AnyType type;
-        private final Function<Object,Object> mapper;
+        fieldComponents.put( annotation, supplier );
+    }
 
-        public ToNeoTypeMapper( AnyType type, Function<Object,Object> mapper )
-        {
-            this.type = type;
-            this.mapper = mapper;
-        }
-
-        @Override
-        public AnyType type()
-        {
-            return type;
-        }
-
-        @Override
-        public Object toNeoValue( Object javaValue ) throws ProcedureException
-        {
-            if( javaValue == null )
-            {
-                return null;
-            }
-
-            Object out = mapper.apply( javaValue );
-            if( out != null )
-            {
-                return out;
-            }
-            throw javaToNeoMappingError( javaValue.getClass(), type() );
-        }
+    public Map<Class<? extends Annotation>,Supplier<?>> components()
+    {
+        return fieldComponents;
     }
 
     private final NeoValueConverter TO_ANY = new SimpleConverter( NTAny, Object.class );

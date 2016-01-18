@@ -21,6 +21,8 @@ package org.neo4j.proc;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.function.Supplier;
 
 import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.KernelException;
@@ -67,9 +69,24 @@ public class Procedures
         }
     }
 
+    /**
+     * Registers a type and how to convert it to a Neo4jType
+     * @param javaClass the class of the native type
+     * @param toNeo the conversion to Neo4jTypes
+     */
     public synchronized void registerType( Class<?> javaClass, TypeMappers.NeoValueConverter toNeo )
     {
         typeMappers.registerType( javaClass, toNeo );
+    }
+
+    /**
+     * Registers a component
+     * @param annotation the component to be registered
+     * @param supplier a supplier to the supplier to be injected for the component
+     */
+    public synchronized void registerComponent( Class<? extends Annotation> annotation, Supplier<?> supplier )
+    {
+        typeMappers.registerComponent( annotation, supplier );
     }
 
     /**
