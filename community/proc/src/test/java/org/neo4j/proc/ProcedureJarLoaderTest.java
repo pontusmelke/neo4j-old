@@ -192,7 +192,7 @@ public class ProcedureJarLoaderTest
     public static class ClassWithProcedureWithArgument
     {
         @ReadOnlyProcedure
-        public Stream<Output> myProcedure(@FieldName( "value" ) long value)
+        public Stream<Output> myProcedure(@Name( "value" ) long value)
         {
             return Stream.of( new Output(value) );
         }

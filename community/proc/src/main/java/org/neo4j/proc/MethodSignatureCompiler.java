@@ -45,14 +45,14 @@ public class MethodSignatureCompiler
         {
             Parameter param = params[i];
 
-            if ( !param.isAnnotationPresent( FieldName.class ) )
+            if ( !param.isAnnotationPresent( Name.class ) )
             {
                 throw new ProcedureException( Status.Procedure.FailedRegistration,
                         "Argument at position %d in method `%s` is missing an `@%s` annotation. " +
                         "Please add the annotation, recompile the class and try again.", i, method.getName(),
-                        FieldName.class.getSimpleName() );
+                        Name.class.getSimpleName() );
             }
-            String name = param.getAnnotation( FieldName.class ).value();
+            String name = param.getAnnotation( Name.class ).value();
 
             try
             {

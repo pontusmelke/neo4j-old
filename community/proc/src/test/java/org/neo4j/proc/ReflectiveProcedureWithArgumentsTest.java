@@ -98,7 +98,7 @@ public class ReflectiveProcedureWithArgumentsTest
         // Expect
         exception.expect( ProcedureException.class );
         exception.expectMessage( "Argument at position 0 in method `listCoolPeople` is missing an " +
-                                 "`@FieldName` annotation. Please add the annotation, recompile the class " +
+                                 "`@Name` annotation. Please add the annotation, recompile the class " +
                                  "and try again." );
 
         // When
@@ -119,7 +119,7 @@ public class ReflectiveProcedureWithArgumentsTest
     public static class ClassWithProcedureWithSimpleArgs
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople( @FieldName("name") String name, @FieldName("age") long age )
+        public Stream<MyOutputRecord> listCoolPeople( @Name("name") String name, @Name("age") long age )
         {
             return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ));
         }
@@ -128,8 +128,8 @@ public class ReflectiveProcedureWithArgumentsTest
     public static class ClassWithProcedureWithGenericArgs
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople( @FieldName( "names" ) List<String> names,
-                @FieldName( "age" ) List<Long> ages )
+        public Stream<MyOutputRecord> listCoolPeople( @Name( "names" ) List<String> names,
+                @Name( "age" ) List<Long> ages )
         {
             Iterator<String> nameIterator = names.iterator();
             Iterator<Long> ageIterator = ages.iterator();

@@ -36,7 +36,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.neo4j.proc.FieldName;
+import org.neo4j.proc.Name;
 import org.neo4j.proc.JarBuilder;
 import org.neo4j.proc.ReadOnlyProcedure;
 import org.neo4j.test.TestGraphDatabaseFactory;
@@ -199,26 +199,26 @@ public class ProcedureIT
         }
 
         @ReadOnlyProcedure
-        public Stream<Output> simpleArgument( @FieldName( "name" ) long someValue )
+        public Stream<Output> simpleArgument( @Name( "name" ) long someValue )
         {
             return Stream.of( new Output( someValue ) );
         }
 
         @ReadOnlyProcedure
-        public Stream<Output> genericArguments( @FieldName( "stringList" ) List<List<String>> stringList,
-                @FieldName( "longList" ) List<List<List<Long>>> longList )
+        public Stream<Output> genericArguments( @Name( "stringList" ) List<List<String>> stringList,
+                @Name( "longList" ) List<List<List<Long>>> longList )
         {
             return Stream.of( new Output( stringList.size() + longList.size() ) );
         }
 
         @ReadOnlyProcedure
-        public Stream<Output> mapArgument( @FieldName( "map" )Map<String,Object> map )
+        public Stream<Output> mapArgument( @Name( "map" )Map<String,Object> map )
         {
             return Stream.of( new Output( map.size()) );
         }
 
         @ReadOnlyProcedure
-        public Stream<NodeOutput> node( @FieldName( "id" ) long id )
+        public Stream<NodeOutput> node( @Name( "id" ) long id )
         {
             NodeOutput nodeOutput = new NodeOutput();
             nodeOutput.setNode( nodeFromId( id ) );

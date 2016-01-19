@@ -56,19 +56,19 @@ public class MethodSignatureCompilerTest
     public static class ClassWithProcedureWithSimpleArgs
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> echo( @FieldName("name") String in)
+        public Stream<MyOutputRecord> echo( @Name("name") String in)
         {
             return Stream.of( new MyOutputRecord( in ));
         }
 
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> echoWithoutAnnotations( @FieldName("name")String in1, String in2)
+        public Stream<MyOutputRecord> echoWithoutAnnotations( @Name("name")String in1, String in2)
         {
             return Stream.of( new MyOutputRecord( in1 + in2 ));
         }
 
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> echoWithInvalidType( @FieldName("name") UnmappableRecord in)
+        public Stream<MyOutputRecord> echoWithInvalidType( @Name("name") UnmappableRecord in)
         {
             return Stream.of( new MyOutputRecord( "echo" ));
         }
@@ -111,7 +111,7 @@ public class MethodSignatureCompilerTest
         // Expect
         exception.expect( ProcedureException.class );
         exception.expectMessage( "Argument at position 1 in method `echoWithoutAnnotations` is missing an " +
-                                 "`@FieldName` annotation. Please add the annotation, recompile the class and " +
+                                 "`@Name` annotation. Please add the annotation, recompile the class and " +
                                  "try again." );
 
         // When
