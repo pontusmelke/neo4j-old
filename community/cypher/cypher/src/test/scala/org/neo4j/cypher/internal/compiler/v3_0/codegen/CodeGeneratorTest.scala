@@ -499,7 +499,6 @@ class CodeGeneratorTest extends CypherFunSuite with LogicalPlanningTestSupport {
     ))
   }
 
-
   test("hash join on top of hash join") {
 
     //given
@@ -784,7 +783,6 @@ class CodeGeneratorTest extends CypherFunSuite with LogicalPlanningTestSupport {
     when(visitor.visit(any[InternalResultRow])).thenThrow(exception)
     intercept[RuntimeException] {
       compiled.accept(visitor)
-
     }
     verify(closer).close(success = false)
   }
