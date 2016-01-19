@@ -45,12 +45,6 @@ import static java.util.stream.Collectors.toList;
  */
 public class OutputMappers
 {
-
-//    public OutputMappers( )
-//    {
-//        this(new TypeMappers());
-//    }
-
     public OutputMappers( TypeMappers typeMappers )
     {
         this.typeMappers = typeMappers;
@@ -75,7 +69,7 @@ public class OutputMappers
             return signature;
         }
 
-        public Object[] apply( Object record )
+        public Object[] apply( Object record ) throws ProcedureException
         {
             Object[] output = new Object[fieldMappers.length];
             for ( int i = 0; i < fieldMappers.length; i++ )
@@ -100,15 +94,21 @@ public class OutputMappers
             this.mapper = mapper;
         }
 
-        Object apply( Object record )
+        Object apply( Object record ) throws ProcedureException
+        {
+            Object invoke = getValue( record );
+            return mapper.toNeoValue( invoke );
+        }
+
+        private Object getValue( Object record ) throws ProcedureException
         {
             try
             {
-                return mapper.toNeoValue( getter.invoke( record ) );
+                return getter.invoke( record );
             }
             catch ( Throwable throwable )
             {
-                throw new AssertionError( throwable ); // TODO test and better error
+                throw new ProcedureException( Status.Procedure.CallFailed, throwable, "Unable to read value from record: %s", throwable.getMessage() );
             }
         }
     }
@@ -118,6 +118,7 @@ public class OutputMappers
 
     /**
      * Build an output mapper for the return type of a given method.
+     *
      * @param method the procedure method
      * @return an outputmapper for the return type of the method.
      * @throws ProcedureException
@@ -125,7 +126,7 @@ public class OutputMappers
     public OutputMapper mapper( Method method ) throws ProcedureException
     {
         Class<?> cls = method.getReturnType();
-        if( cls != Stream.class )
+        if ( cls != Stream.class )
         {
             throw new ProcedureException( Status.Procedure.FailedRegistration,
                     "A procedure must return a `java.util.stream.Stream`, `%s.%s` returns `%s`.",
@@ -147,27 +148,31 @@ public class OutputMappers
         for ( int i = 0; i < fields.size(); i++ )
         {
             Field field = fields.get( i );
-            if( !isPublic( field.getModifiers() ))
+            if ( !isPublic( field.getModifiers() ) )
             {
-                throw new ProcedureException( Status.Procedure.TypeError, "Field `%s` in record `%s` cannot be accessed. Please ensure the field is marked as `public`.", field.getName(), userClass.getSimpleName() );
+                throw new ProcedureException( Status.Procedure.TypeError,
+                        "Field `%s` in record `%s` cannot be accessed. Please ensure the field is marked as `public`.", field.getName(),
+                        userClass.getSimpleName() );
             }
 
             try
             {
                 NeoValueConverter mapper = typeMappers.converterFor( field.getGenericType() );
                 MethodHandle getter = lookup.unreflectGetter( field );
-                FieldMapper fieldMapper = new FieldMapper(getter, mapper);
+                FieldMapper fieldMapper = new FieldMapper( getter, mapper );
 
                 fieldMappers[i] = fieldMapper;
                 signature[i] = new FieldSignature( field.getName(), mapper.type() );
             }
-            catch( ProcedureException e )
+            catch ( ProcedureException e )
             {
-                throw new ProcedureException( e.status(), e, "Field `%s` in record `%s` cannot be converted to a Neo4j type: %s", field.getName(), userClass.getSimpleName(), e.getMessage() );
+                throw new ProcedureException( e.status(), e, "Field `%s` in record `%s` cannot be converted to a Neo4j type: %s", field.getName(),
+                        userClass.getSimpleName(), e.getMessage() );
             }
             catch ( IllegalAccessException e )
             {
-                throw new ProcedureException( Status.Procedure.TypeError, e, "Field `%s` in record `%s` cannot be accessed: %s", field.getName(), userClass.getSimpleName(), e.getMessage() );
+                throw new ProcedureException( Status.Procedure.TypeError, e, "Field `%s` in record `%s` cannot be accessed: %s", field.getName(),
+                        userClass.getSimpleName(), e.getMessage() );
             }
         }
 
@@ -176,6 +181,6 @@ public class OutputMappers
 
     private List<Field> instanceFields( Class<?> userClass )
     {
-        return asList( userClass.getDeclaredFields()).stream().filter( (f) -> !isStatic( f.getModifiers() ) ).collect( toList() );
+        return asList( userClass.getDeclaredFields() ).stream().filter( ( f ) -> !isStatic( f.getModifiers() ) ).collect( toList() );
     }
 }

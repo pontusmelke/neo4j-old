@@ -24,8 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.exceptions.Status;
 
@@ -35,6 +35,7 @@ public class ProcedureRegistry
 
     /**
      * Register a new procedure. This method must not be called concurrently with {@link #get(ProcedureSignature.ProcedureName)}.
+     *
      * @param proc the procedure.
      */
     public synchronized void register( Procedure proc ) throws ProcedureException
@@ -45,9 +46,10 @@ public class ProcedureRegistry
         validateSignature( signature, signature.inputSignature(), "input" );
         validateSignature( signature, signature.outputSignature(), "output" );
 
-        if( procedures.putIfAbsent( name, proc ) != null )
+        if ( procedures.putIfAbsent( name, proc ) != null )
         {
-            throw new ProcedureException( Status.Procedure.FailedRegistration, "Unable to register procedure, because the name `%s` is already in use.", name );
+            throw new ProcedureException( Status.Procedure.FailedRegistration,
+                    "Unable to register procedure, because the name `%s` is already in use.", name );
         }
     }
 
@@ -57,11 +59,11 @@ public class ProcedureRegistry
         Set<String> names = new HashSet<>();
         for ( ProcedureSignature.FieldSignature field : fields )
         {
-            if( !names.add( field.name() ) )
+            if ( !names.add( field.name() ) )
             {
-                throw new ProcedureException(  Status.Procedure.FailedRegistration,
-                        "Procedure `%s` cannot be registered, because it contains a duplicated "+fieldType+" field, '%s'. " +
-                        "You need to rename or remove one of the input fields.", signature.toString(), field.name() );
+                throw new ProcedureException( Status.Procedure.FailedRegistration,
+                        "Procedure `%s` cannot be registered, because it contains a duplicated " + fieldType + " field, '%s'. " +
+                        "You need to rename or remove one of the duplicate fields.", signature.toString(), field.name() );
             }
         }
     }
@@ -69,17 +71,18 @@ public class ProcedureRegistry
     public ProcedureSignature get( ProcedureSignature.ProcedureName name ) throws ProcedureException
     {
         Procedure proc = procedures.get( name );
-        if( proc == null )
+        if ( proc == null )
         {
             throw noSuchProcedure( name );
         }
         return proc.signature();
     }
 
-    public Stream<Object[]> call( Procedure.Context ctx, ProcedureSignature.ProcedureName name, Object[] input ) throws ProcedureException
+    public RawIterator<Object[],ProcedureException> call( Procedure.Context ctx, ProcedureSignature.ProcedureName name, Object[] input )
+            throws ProcedureException
     {
         Procedure proc = procedures.get( name );
-        if( proc == null )
+        if ( proc == null )
         {
             throw noSuchProcedure( name );
         }
@@ -88,8 +91,9 @@ public class ProcedureRegistry
 
     private ProcedureException noSuchProcedure( ProcedureSignature.ProcedureName name )
     {
-        return new ProcedureException( Status.Procedure.NoSuchProcedure, "There is no procedure with the name `%s` registered for this database instance. " +
-                                                                         "Please ensure you've spelled the procedure name correctly and that the " +
-                                                                         "procedure is properly deployed.", name );
+        return new ProcedureException( Status.Procedure.NoSuchProcedure,
+                "There is no procedure with the name `%s` registered for this database instance. " +
+                "Please ensure you've spelled the procedure name correctly and that the " +
+                "procedure is properly deployed.", name );
     }
 }

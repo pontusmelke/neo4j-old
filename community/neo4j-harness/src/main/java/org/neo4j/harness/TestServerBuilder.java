@@ -107,7 +107,8 @@ public interface TestServerBuilder
 
     /**
      * Configure the server to load the specified procedure definition class. The class should contain one or more
-     * methods annotated with {@link org.neo4j.proc.ReadOnlyProcedure}, these will become available to call through cypher.
+     * methods annotated with {@link org.neo4j.proc.ReadOnlyProcedure}, these will become available to call through
+     * cypher.
      *
      * @param procedureClass a class containing one or more procedure definitions
      * @return this builder instance

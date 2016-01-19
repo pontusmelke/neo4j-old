@@ -26,14 +26,16 @@ import org.junit.rules.ExpectedException;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
+import org.neo4j.proc.Procedure.BasicContext;
 
-import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.neo4j.helpers.collection.IteratorUtil.asList;
 import static org.neo4j.proc.ProcedureSignature.procedureSignature;
 
 public class ReflectiveProcedureTest
@@ -45,14 +47,14 @@ public class ReflectiveProcedureTest
     public void shouldCompileProcedure() throws Throwable
     {
         // When
-        List<Procedure> procedures = compile(SingleReadOnlyProcedure.class );
+        List<Procedure> procedures = compile( SingleReadOnlyProcedure.class );
 
         // Then
         assertEquals( 1, procedures.size() );
         assertThat( procedures.get( 0 ).signature(), equalTo(
                 procedureSignature( "org", "neo4j", "proc", "listCoolPeople" )
                         .out( "name", Neo4jTypes.NTString )
-                        .build() ));
+                        .build() ) );
     }
 
 
@@ -63,13 +65,13 @@ public class ReflectiveProcedureTest
         Procedure proc = compile( SingleReadOnlyProcedure.class ).get( 0 );
 
         // When
-        Stream<Object[]> out = proc.apply( new Procedure.BasicContext(), new Object[0] );
+        RawIterator<Object[],ProcedureException> out = proc.apply( new BasicContext(), new Object[0] );
 
         // Then
-        assertThat( out.collect( toList() ), contains(
-            new Object[]{"Bonnie"},
-            new Object[]{"Clyde"}
-        ));
+        assertThat( asList( out ), contains(
+                new Object[]{"Bonnie"},
+                new Object[]{"Clyde"}
+        ) );
     }
 
     @Test
@@ -91,19 +93,19 @@ public class ReflectiveProcedureTest
         Procedure coolPeople = compiled.get( 1 );
 
         // When
-        Stream<Object[]> coolOut = coolPeople.apply( new Procedure.BasicContext(), new Object[0] );
-        Stream<Object[]> bananaOut = bananaPeople.apply( new Procedure.BasicContext(), new Object[0] );
+        RawIterator<Object[],ProcedureException> coolOut = coolPeople.apply( new BasicContext(), new Object[0] );
+        RawIterator<Object[],ProcedureException> bananaOut = bananaPeople.apply( new BasicContext(), new Object[0] );
 
         // Then
-        assertThat( coolOut.collect( toList() ), contains(
+        assertThat( asList( coolOut ), contains(
                 new Object[]{"Bonnie"},
                 new Object[]{"Clyde"}
-        ));
+        ) );
 
-        assertThat( bananaOut.collect( toList() ), contains(
+        assertThat( asList( bananaOut ), contains(
                 new Object[]{"Jake", 18L},
-                new Object[]{"Pontus", 2L }
-        ));
+                new Object[]{"Pontus", 2L}
+        ) );
     }
 
     @Test
@@ -111,8 +113,9 @@ public class ReflectiveProcedureTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to find a usable public no-argument constructor in the class `WierdConstructorProcedure`. " +
-                                 "Please add a valid, public constructor, recompile the class and try again." );
+        exception.expectMessage( "Unable to find a usable public no-argument constructor " +
+                                 "in the class `WierdConstructorProcedure`. Please add a " +
+                                 "valid, public constructor, recompile the class and try again." );
 
         // When
         compile( WierdConstructorProcedure.class );
@@ -123,8 +126,9 @@ public class ReflectiveProcedureTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Unable to find a usable public no-argument constructor in the class `PrivateConstructorProcedure`. " +
-                                 "Please add a valid, public constructor, recompile the class and try again." );
+        exception.expectMessage( "Unable to find a usable public no-argument constructor " +
+                                 "in the class `PrivateConstructorProcedure`. Please add " +
+                                 "a valid, public constructor, recompile the class and try again." );
 
         // When
         compile( PrivateConstructorProcedure.class );
@@ -156,27 +160,30 @@ public class ReflectiveProcedureTest
     public static class SingleReadOnlyProcedure
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople() {
+        public Stream<MyOutputRecord> listCoolPeople()
+        {
             return Stream.of(
                     new MyOutputRecord( "Bonnie" ),
-                    new MyOutputRecord( "Clyde" ));
+                    new MyOutputRecord( "Clyde" ) );
         }
     }
 
     public static class MultiProcedureProcedure
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople() {
+        public Stream<MyOutputRecord> listCoolPeople()
+        {
             return Stream.of(
                     new MyOutputRecord( "Bonnie" ),
-                    new MyOutputRecord( "Clyde" ));
+                    new MyOutputRecord( "Clyde" ) );
         }
 
         @ReadOnlyProcedure
-        public Stream<SomeOtherOutputRecord> listBananaOwningPeople() {
+        public Stream<SomeOtherOutputRecord> listBananaOwningPeople()
+        {
             return Stream.of(
                     new SomeOtherOutputRecord( "Jake", 18 ),
-                    new SomeOtherOutputRecord( "Pontus", 2 ));
+                    new SomeOtherOutputRecord( "Pontus", 2 ) );
         }
     }
 
@@ -188,10 +195,11 @@ public class ReflectiveProcedureTest
         }
 
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople() {
+        public Stream<MyOutputRecord> listCoolPeople()
+        {
             return Stream.of(
                     new MyOutputRecord( "Bonnie" ),
-                    new MyOutputRecord( "Clyde" ));
+                    new MyOutputRecord( "Clyde" ) );
         }
     }
 
@@ -203,10 +211,11 @@ public class ReflectiveProcedureTest
         }
 
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople() {
+        public Stream<MyOutputRecord> listCoolPeople()
+        {
             return Stream.of(
                     new MyOutputRecord( "Bonnie" ),
-                    new MyOutputRecord( "Clyde" ));
+                    new MyOutputRecord( "Clyde" ) );
         }
     }
 
@@ -217,13 +226,14 @@ public class ReflectiveProcedureTest
 
         }
 
-        public Stream<MyOutputRecord> thisIsNotAProcedure() {
+        public Stream<MyOutputRecord> thisIsNotAProcedure()
+        {
             return null;
         }
     }
 
-    private List<Procedure> compile(Class<?> clazz) throws KernelException
+    private List<Procedure> compile( Class<?> clazz ) throws KernelException
     {
-        return new ReflectiveProcedureCompiler(new TypeMappers()).compile( clazz);
+        return new ReflectiveProcedureCompiler( new TypeMappers() ).compile( clazz );
     }
 }

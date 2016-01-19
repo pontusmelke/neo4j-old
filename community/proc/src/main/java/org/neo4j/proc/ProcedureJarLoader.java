@@ -34,6 +34,7 @@ import java.util.zip.ZipInputStream;
 import org.neo4j.collection.PrefetchingRawIterator;
 import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.KernelException;
+import org.neo4j.logging.Log;
 
 import static java.util.stream.Collectors.toList;
 
@@ -43,20 +44,22 @@ import static java.util.stream.Collectors.toList;
 public class ProcedureJarLoader
 {
     private final ReflectiveProcedureCompiler compiler;
+    private final Log log;
 
-    public ProcedureJarLoader( ReflectiveProcedureCompiler compiler )
+    public ProcedureJarLoader( ReflectiveProcedureCompiler compiler, Log log )
     {
         this.compiler = compiler;
+        this.log = log;
     }
 
-    public List<Procedure> loadProcedures( URL jar ) throws IOException, KernelException
+    public List<Procedure> loadProcedures( URL jar ) throws Exception
     {
-        return loadProcedures( jar, new URLClassLoader( new URL[]{jar}, this.getClass().getClassLoader()), new LinkedList<>() );
+        return loadProcedures( jar, new URLClassLoader( new URL[]{jar}, this.getClass().getClassLoader() ), new LinkedList<>() );
     }
 
     public List<Procedure> loadProceduresFromDir( File root ) throws IOException, KernelException
     {
-        if(!root.exists())
+        if ( !root.exists() )
         {
             return Collections.emptyList();
         }
@@ -64,9 +67,9 @@ public class ProcedureJarLoader
         LinkedList<Procedure> out = new LinkedList<>();
 
         List<URL> list = Stream.of( root.listFiles( ( dir, name ) -> name.endsWith( ".jar" ) ) ).map( this::toURL ).collect( toList() );
-        URL[] jarFiles = list.toArray(new URL[list.size()]);
+        URL[] jarFiles = list.toArray( new URL[list.size()] );
 
-        URLClassLoader loader = new URLClassLoader( jarFiles, this.getClass().getClassLoader());
+        URLClassLoader loader = new URLClassLoader( jarFiles, this.getClass().getClassLoader() );
 
         for ( URL jarFile : jarFiles )
         {
@@ -78,7 +81,7 @@ public class ProcedureJarLoader
     private List<Procedure> loadProcedures( URL jar, ClassLoader loader, List<Procedure> target ) throws IOException, KernelException
     {
         RawIterator<Class<?>,IOException> classes = listClassesIn( jar, loader );
-        while(classes.hasNext())
+        while ( classes.hasNext() )
         {
             Class<?> next = classes.next();
             target.addAll( compiler.compile( next ) );
@@ -98,38 +101,50 @@ public class ProcedureJarLoader
         }
     }
 
-    private RawIterator<Class<?>, IOException> listClassesIn( URL jar, ClassLoader loader ) throws IOException
+    private RawIterator<Class<?>,IOException> listClassesIn( URL jar, ClassLoader loader ) throws IOException
     {
-        ZipInputStream zip = new ZipInputStream(jar.openStream());
+        ZipInputStream zip = new ZipInputStream( jar.openStream() );
 
-        return new PrefetchingRawIterator<Class<?>, IOException>()
+        return new PrefetchingRawIterator<Class<?>,IOException>()
         {
             @Override
             protected Class<?> fetchNextOrNull() throws IOException
             {
-                while(true)
+                try
                 {
-                    ZipEntry nextEntry = zip.getNextEntry();
-                    if ( nextEntry == null )
+                    while ( true )
                     {
-                        zip.close();
-                        return null;
-                    }
-
-                    String name = nextEntry.getName();
-                    if ( name.endsWith( ".class" ) )
-                    {
-                        String className = name.substring( 0, name.length() - ".class".length() ).replace( "/", "." );
-
-                        try
+                        ZipEntry nextEntry = zip.getNextEntry();
+                        if ( nextEntry == null )
                         {
-                            return loader.loadClass( className );
+                            zip.close();
+                            return null;
                         }
-                        catch ( ClassNotFoundException e1 )
+
+                        String name = nextEntry.getName();
+                        if ( name.endsWith( ".class" ) )
                         {
-                            throw new IOException( "Unable to load class `" + className + "` from jarfile `" + jar + "`", e1 );
+                            String className = name.substring( 0, name.length() - ".class".length() ).replace( "/", "." );
+
+                            try
+                            {
+                                Class<?> aClass = loader.loadClass( className );
+                                // We do getDeclaredMethods to trigger NoClassDefErrors, which loadClass above does not do.
+                                // This way, even if some of the classes in a jar cannot be loaded, we still check the others.
+                                aClass.getDeclaredMethods();
+                                return aClass;
+                            }
+                            catch ( UnsatisfiedLinkError | NoClassDefFoundError | Exception e )
+                            {
+                                log.warn( "Failed to load `%s` from plugin jar `%s`: %s", className, jar.getFile(), e.getMessage() );
+                            }
                         }
                     }
+                }
+                catch ( IOException | RuntimeException e )
+                {
+                    zip.close();
+                    throw e;
                 }
             }
         };

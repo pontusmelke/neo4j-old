@@ -24,12 +24,14 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import static org.junit.Assert.assertEquals;
+import static org.neo4j.proc.ProcedureSignature.procedureSignature;
 
 public class ProcedureSignatureTest
 {
     @Rule
     public ExpectedException exception = ExpectedException.none();
-    private final ProcedureSignature signature = ProcedureSignature.procedureSignature( "asd" ).in( "a", Neo4jTypes.NTAny ).build();
+    private final ProcedureSignature signature = procedureSignature( "asd" )
+            .in( "a", Neo4jTypes.NTAny ).build();
 
     @Test
     public void inputSignatureShouldNotBeModifiable() throws Throwable
@@ -55,7 +57,7 @@ public class ProcedureSignatureTest
     public void toStringShouldMatchCypherSyntax() throws Throwable
     {
         // When
-        String toStr = ProcedureSignature.procedureSignature( "org", "myProcedure" )
+        String toStr = procedureSignature( "org", "myProcedure" )
                 .in( "inputArg", Neo4jTypes.NTList( Neo4jTypes.NTString ) )
                 .out( "outputArg", Neo4jTypes.NTNumber )
                 .build()

@@ -21,10 +21,12 @@ package org.neo4j.proc;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.stream.Stream;
 
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
+import org.neo4j.logging.Log;
+import org.neo4j.logging.NullLog;
 
 
 public class Procedures
@@ -32,6 +34,17 @@ public class Procedures
     private final ProcedureRegistry registry = new ProcedureRegistry();
     private final TypeMappers typeMappers = new TypeMappers();
     private final ReflectiveProcedureCompiler compiler = new ReflectiveProcedureCompiler(typeMappers);
+    private final Log log;
+
+    public Procedures()
+    {
+        this( NullLog.getInstance() );
+    }
+
+    public Procedures(Log log)
+    {
+        this.log = log;
+    }
 
     /**
      * Register a new procedure. This method must not be called concurrently with {@link #get(ProcedureSignature.ProcedureName)}.
@@ -67,7 +80,7 @@ public class Procedures
      */
     public synchronized void loadFromDirectory( File dir ) throws IOException, KernelException
     {
-        for ( Procedure procedure : new ProcedureJarLoader( compiler ).loadProceduresFromDir( dir ) )
+        for ( Procedure procedure : new ProcedureJarLoader( compiler, log ).loadProceduresFromDir( dir ) )
         {
             register( procedure );
         }
@@ -78,7 +91,8 @@ public class Procedures
         return registry.get( name );
     }
 
-    public Stream<Object[]> call( Procedure.Context ctx, ProcedureSignature.ProcedureName name, Object[] input ) throws ProcedureException
+    public RawIterator<Object[], ProcedureException> call( Procedure.Context ctx, ProcedureSignature.ProcedureName name,
+                                                           Object[] input ) throws ProcedureException
     {
         return registry.call( ctx, name, input );
     }

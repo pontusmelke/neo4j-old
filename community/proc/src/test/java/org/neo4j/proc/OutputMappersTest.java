@@ -57,10 +57,9 @@ public class OutputMappersTest
         private String wat;
     }
 
-
     public static class RecordWithNonStringKeyMap
     {
-        public Map<RecordWithNonStringKeyMap, Object> wat;
+        public Map<RecordWithNonStringKeyMap,Object> wat;
     }
 
     public static class RecordWithStaticFields
@@ -79,16 +78,16 @@ public class OutputMappersTest
     public void shouldMapSimpleRecordWithString() throws Throwable
     {
         // When
-        OutputMapper mapper =mapper( SingleStringFieldRecord.class );
+        OutputMapper mapper = mapper( SingleStringFieldRecord.class );
 
         // Then
         assertThat(
-            mapper.signature(),
-            contains( new ProcedureSignature.FieldSignature( "name", Neo4jTypes.NTString ) )
+                mapper.signature(),
+                contains( new ProcedureSignature.FieldSignature( "name", Neo4jTypes.NTString ) )
         );
         assertThat(
-            asList( mapper.apply( new SingleStringFieldRecord( "hello, world!" ) ) ),
-            contains( "hello, world!" )
+                asList( mapper.apply( new SingleStringFieldRecord( "hello, world!" ) ) ),
+                contains( "hello, world!" )
         );
     }
 
@@ -96,7 +95,7 @@ public class OutputMappersTest
     public void shouldSkipStaticFields() throws Throwable
     {
         // When
-        OutputMapper mapper =mapper( RecordWithStaticFields.class );
+        OutputMapper mapper = mapper( RecordWithStaticFields.class );
 
         // Then
         assertThat(
@@ -114,10 +113,12 @@ public class OutputMappersTest
     {
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "Field `wat` in record `UnmappableRecord` cannot be converted to a Neo4j type: Don't know how to map `class org.neo4j.proc.OutputMappersTest$UnmappableRecord`" );
+        exception.expectMessage(
+                "Field `wat` in record `UnmappableRecord` cannot be converted to a Neo4j type: Don't know how to map `class org.neo4j.proc" +
+                ".OutputMappersTest$UnmappableRecord`" );
 
         // When
-       mapper( UnmappableRecord.class );
+        mapper( UnmappableRecord.class );
     }
 
     @Test
@@ -128,7 +129,7 @@ public class OutputMappersTest
         exception.expectMessage( "Field `wat` in record `RecordWithPrivateField` cannot be accessed. Please ensure the field is marked as `public`." );
 
         // When
-       mapper( RecordWithPrivateField.class );
+        mapper( RecordWithPrivateField.class );
     }
 
 
@@ -144,9 +145,9 @@ public class OutputMappersTest
         mapper( RecordWithNonStringKeyMap.class );
     }
 
-    private OutputMapper mapper(Class<?> clazz) throws ProcedureException
+    private OutputMapper mapper( Class<?> clazz ) throws ProcedureException
     {
-        return new OutputMappers( new TypeMappers() ).mapper(clazz);
+        return new OutputMappers( new TypeMappers() ).mapper( clazz );
     }
 
 

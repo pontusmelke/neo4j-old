@@ -139,8 +139,8 @@ public abstract class GraphDatabaseSettings
     public static final Setting<Long> transaction_start_timeout =
             setting( "transaction_start_timeout", DURATION, "1s" );
 
-    @Description("Location of the database plugin directory. Compiled Java JAR files that contain database procedures will be loaded if they are placed in " +
-                 "this directory.")
+    @Description("Location of the database plugin directory. Compiled Java JAR files that contain database " +
+                 "procedures will be loaded if they are placed in this directory.")
     public static final Setting<File> plugin_dir = setting("dbms.plugin.directory", PATH, "plugins" );
 
     @Description("The location of the internal diagnostics log.")

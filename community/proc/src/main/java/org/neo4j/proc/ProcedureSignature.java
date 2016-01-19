@@ -159,8 +159,8 @@ public class ProcedureSignature
     public ProcedureSignature( ProcedureName name, List<FieldSignature> inputSignature, List<FieldSignature> outputSignature )
     {
         this.name = name;
-        this.inputSignature = unmodifiableList(inputSignature);
-        this.outputSignature = unmodifiableList(outputSignature);
+        this.inputSignature = unmodifiableList( inputSignature );
+        this.outputSignature = unmodifiableList( outputSignature );
     }
 
     public ProcedureSignature( ProcedureName name )

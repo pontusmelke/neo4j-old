@@ -19,13 +19,14 @@
  */
 package org.neo4j.kernel.builtinprocs;
 
-import java.util.stream.Stream;
-
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.proc.Neo4jTypes;
 import org.neo4j.proc.Procedure;
 import org.neo4j.proc.ProcedureSignature.ProcedureName;
 
+import static org.neo4j.helpers.collection.Iterables.asRawIterator;
+import static org.neo4j.helpers.collection.Iterables.map;
 import static org.neo4j.kernel.api.ProcedureRead.readStatement;
 import static org.neo4j.proc.ProcedureSignature.procedureSignature;
 
@@ -37,8 +38,8 @@ public class ListLabelsProcedure extends Procedure.BasicProcedure
     }
 
     @Override
-    public Stream<Object[]> apply( Context ctx, Object[] input ) throws ProcedureException
+    public RawIterator<Object[], ProcedureException> apply( Context ctx, Object[] input ) throws ProcedureException
     {
-        return stream( ctx.get( readStatement ).labelsGetAllTokens() ).map( ( token) -> new Object[]{ token.name() } );
+        return map( (t) -> new Object[]{t.name()}, asRawIterator( ctx.get( readStatement ).labelsGetAllTokens() ) );
     }
 }

@@ -23,10 +23,12 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.exceptions.Status;
@@ -50,9 +52,7 @@ public class ReflectiveProcedureCompiler
     {
         inputSignatureDeterminer = new MethodSignatureCompiler(typeMappers);
         outputMappers = new OutputMappers( typeMappers );
-
     }
-
 
     public List<Procedure> compile( Class<?> procDefinition ) throws KernelException
     {
@@ -110,8 +110,9 @@ public class ReflectiveProcedureCompiler
         }
         catch ( IllegalAccessException | NoSuchMethodException e )
         {
-            throw new ProcedureException( Status.Procedure.FailedRegistration, e, "Unable to find a usable public no-argument constructor in the class `%s`. " +
-                                                                                  "Please add a valid, public constructor, recompile the class and try again.",
+            throw new ProcedureException( Status.Procedure.FailedRegistration, e,
+                    "Unable to find a usable public no-argument constructor in the class `%s`. " +
+                    "Please add a valid, public constructor, recompile the class and try again.",
                     procDefinition.getSimpleName() );
         }
     }
@@ -147,7 +148,7 @@ public class ReflectiveProcedureCompiler
         }
 
         @Override
-        public Stream<Object[]> apply( Context ctx, Object[] input ) throws ProcedureException
+        public RawIterator<Object[], ProcedureException> apply( Context ctx, Object[] input ) throws ProcedureException
         {
             // For now, create a new instance of the class for each invocation. In the future, we'd like to keep instances local to
             // at least the executing session, but we don't yet have good interfaces to the kernel to model that with.
@@ -159,13 +160,51 @@ public class ReflectiveProcedureCompiler
                 args[0] = cls;
                 System.arraycopy( input, 0, args, 1, input.length );
 
-                Stream<?> out = (Stream<?>) procedureMethod.invokeWithArguments( args );
-                return out.map( outputMapper::apply );
+                Iterator<?> out = ((Stream<?>) procedureMethod.invokeWithArguments( args )).iterator();
+
+                return new MappingIterator( out );
             }
             catch ( Throwable throwable )
             {
                 throw new ProcedureException( Status.Procedure.CallFailed, throwable,
                         "Failed to invoke procedure `%s`: %s", signature, throwable.getMessage() );
+            }
+        }
+
+        private class MappingIterator implements RawIterator<Object[],ProcedureException>
+        {
+            private final Iterator<?> out;
+
+            public MappingIterator( Iterator<?> out )
+            {
+                this.out = out;
+            }
+
+            @Override
+            public boolean hasNext() throws ProcedureException
+            {
+                try
+                {
+                    return out.hasNext();
+                }
+                catch( RuntimeException e )
+                {
+                    throw new ProcedureException( Status.Procedure.CallFailed, e, "Failed to call procedure `%s`: %s", signature, e.getMessage() );
+                }
+            }
+
+            @Override
+            public Object[] next() throws ProcedureException
+            {
+                try
+                {
+                    Object record = out.next();
+                    return outputMapper.apply( record );
+                }
+                catch( RuntimeException e )
+                {
+                    throw new ProcedureException( Status.Procedure.CallFailed, e, "Failed to call procedure `%s`: %s", signature, e.getMessage() );
+                }
             }
         }
     }

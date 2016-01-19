@@ -29,13 +29,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 
-import static java.util.stream.Collectors.toList;
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
+import static org.neo4j.helpers.collection.IteratorUtil.asList;
 import static org.neo4j.proc.ProcedureSignature.procedureSignature;
 
 public class ReflectiveProcedureWithArgumentsTest
@@ -56,40 +57,40 @@ public class ReflectiveProcedureWithArgumentsTest
                         .in( "name", Neo4jTypes.NTString )
                         .in( "age", Neo4jTypes.NTInteger )
                         .out( "name", Neo4jTypes.NTString )
-                        .build() ));
+                        .build() ) );
     }
 
     @Test
     public void shouldRunSimpleProcedure() throws Throwable
     {
         // Given
-        Procedure procedure = compile( ClassWithProcedureWithSimpleArgs.class ).get(0);
+        Procedure procedure = compile( ClassWithProcedureWithSimpleArgs.class ).get( 0 );
 
         // When
-        Stream<Object[]> out = procedure.apply( new Procedure.BasicContext(), new Object[]{"Pontus", 35L} );
+        RawIterator<Object[],ProcedureException> out = procedure.apply( new Procedure.BasicContext(), new Object[]{"Pontus", 35L} );
 
         // Then
-        List<Object[]> collect = out.collect( toList() );
-        assertThat( collect.get(0)[0], equalTo("Pontus is 35 years old."));
+        List<Object[]> collect = asList( out );
+        assertThat( collect.get( 0 )[0], equalTo( "Pontus is 35 years old." ) );
     }
 
     @Test
     public void shouldRunGenericProcedure() throws Throwable
     {
         // Given
-        Procedure procedure =compile( ClassWithProcedureWithGenericArgs.class ).get(0);
+        Procedure procedure = compile( ClassWithProcedureWithGenericArgs.class ).get( 0 );
 
         // When
-        Stream<Object[]> out = procedure.apply( new Procedure.BasicContext(), new Object[]{
-                Arrays.asList("Roland", "Eddie", "Susan", "Jake"),
-                Arrays.asList(1000L, 23L, 29L, 12L)} );
+        RawIterator<Object[],ProcedureException> out = procedure.apply( new Procedure.BasicContext(), new Object[]{
+                Arrays.asList( "Roland", "Eddie", "Susan", "Jake" ),
+                Arrays.asList( 1000L, 23L, 29L, 12L )} );
 
         // Then
-        List<Object[]> collect = out.collect( toList() );
-        assertThat( collect.get(0)[0], equalTo("Roland is 1000 years old."));
-        assertThat( collect.get(1)[0], equalTo("Eddie is 23 years old."));
-        assertThat( collect.get(2)[0], equalTo("Susan is 29 years old."));
-        assertThat( collect.get(3)[0], equalTo("Jake is 12 years old."));
+        List<Object[]> collect = asList( out );
+        assertThat( collect.get( 0 )[0], equalTo( "Roland is 1000 years old." ) );
+        assertThat( collect.get( 1 )[0], equalTo( "Eddie is 23 years old." ) );
+        assertThat( collect.get( 2 )[0], equalTo( "Susan is 29 years old." ) );
+        assertThat( collect.get( 3 )[0], equalTo( "Jake is 12 years old." ) );
     }
 
     @Test
@@ -102,7 +103,7 @@ public class ReflectiveProcedureWithArgumentsTest
                                  "and try again." );
 
         // When
-       compile( ClassWithProcedureWithoutAnnotatedArgs.class );
+        compile( ClassWithProcedureWithoutAnnotatedArgs.class );
     }
 
 
@@ -119,9 +120,9 @@ public class ReflectiveProcedureWithArgumentsTest
     public static class ClassWithProcedureWithSimpleArgs
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople( @Name("name") String name, @Name("age") long age )
+        public Stream<MyOutputRecord> listCoolPeople( @Name( "name" ) String name, @Name( "age" ) long age )
         {
-            return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ));
+            return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ) );
         }
     }
 
@@ -129,7 +130,7 @@ public class ReflectiveProcedureWithArgumentsTest
     {
         @ReadOnlyProcedure
         public Stream<MyOutputRecord> listCoolPeople( @Name( "names" ) List<String> names,
-                @Name( "age" ) List<Long> ages )
+                                                      @Name( "age" ) List<Long> ages )
         {
             Iterator<String> nameIterator = names.iterator();
             Iterator<Long> ageIterator = ages.iterator();
@@ -148,12 +149,12 @@ public class ReflectiveProcedureWithArgumentsTest
         @ReadOnlyProcedure
         public Stream<MyOutputRecord> listCoolPeople( String name, int age )
         {
-            return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ));
+            return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ) );
         }
     }
 
-    private List<Procedure> compile(Class<?> clazz) throws KernelException
+    private List<Procedure> compile( Class<?> clazz ) throws KernelException
     {
-        return new ReflectiveProcedureCompiler(new TypeMappers()).compile( clazz);
+        return new ReflectiveProcedureCompiler( new TypeMappers() ).compile( clazz );
     }
 }

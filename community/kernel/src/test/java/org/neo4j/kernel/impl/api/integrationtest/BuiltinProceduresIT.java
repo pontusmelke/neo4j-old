@@ -23,14 +23,14 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.stream.Stream;
-
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.DataWriteOperations;
+import org.neo4j.kernel.api.exceptions.ProcedureException;
 
-import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.neo4j.helpers.collection.IteratorUtil.asList;
 import static org.neo4j.proc.ProcedureSignature.procedureName;
 
 public class BuiltinProceduresIT extends KernelIntegrationTest
@@ -47,10 +47,10 @@ public class BuiltinProceduresIT extends KernelIntegrationTest
         commit();
 
         // When
-        Stream<Object[]> stream = readOperationsInNewTransaction().procedureCallRead( procedureName( "sys", "db", "labels" ), new Object[0] );
+        RawIterator<Object[],ProcedureException> stream = readOperationsInNewTransaction().procedureCallRead( procedureName( "sys", "db", "labels" ), new Object[0] );
 
         // Then
-        assertThat( stream.collect( toList() ), contains( equalTo( new Object[]{"MyLabel"} ) ) );
+        assertThat( asList( stream ), contains( equalTo( new Object[]{"MyLabel"} ) ) );
     }
 
     @Test
@@ -62,10 +62,10 @@ public class BuiltinProceduresIT extends KernelIntegrationTest
         commit();
 
         // When
-        Stream<Object[]> stream = readOperationsInNewTransaction().procedureCallRead( procedureName( "sys", "db", "propertyKeys" ), new Object[0] );
+        RawIterator<Object[],ProcedureException> stream = readOperationsInNewTransaction().procedureCallRead( procedureName( "sys", "db", "propertyKeys" ), new Object[0] );
 
         // Then
-        assertThat( stream.collect( toList() ), contains( equalTo( new Object[]{"MyProp"} ) ) );
+        assertThat( asList( stream ), contains( equalTo( new Object[]{"MyProp"} ) ) );
     }
 
     @Test
@@ -77,9 +77,9 @@ public class BuiltinProceduresIT extends KernelIntegrationTest
         commit();
 
         // When
-        Stream<Object[]> stream = readOperationsInNewTransaction().procedureCallRead( procedureName( "sys", "db", "relationshipTypes" ), new Object[0] );
+        RawIterator<Object[],ProcedureException> stream = readOperationsInNewTransaction().procedureCallRead( procedureName( "sys", "db", "relationshipTypes" ), new Object[0] );
 
         // Then
-        assertThat( stream.collect( toList() ), contains( equalTo( new Object[]{"MyRelType"} ) ) );
+        assertThat( asList( stream ), contains( equalTo( new Object[]{"MyRelType"} ) ) );
     }
 }

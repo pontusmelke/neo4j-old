@@ -19,8 +19,7 @@
  */
 package org.neo4j.kernel.api;
 
-import java.util.stream.Stream;
-
+import org.neo4j.collection.RawIterator;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.proc.Procedure;
 import org.neo4j.proc.ProcedureSignature;
@@ -34,5 +33,5 @@ public interface ProcedureRead
     ProcedureSignature procedureGet( ProcedureSignature.ProcedureName name ) throws ProcedureException;
 
     /** Invoke a read-only procedure by name */
-    Stream<Object[]> procedureCallRead( ProcedureSignature.ProcedureName name, Object[] input ) throws ProcedureException;
+    RawIterator<Object[], ProcedureException> procedureCallRead( ProcedureSignature.ProcedureName name, Object[] input ) throws ProcedureException;
 }

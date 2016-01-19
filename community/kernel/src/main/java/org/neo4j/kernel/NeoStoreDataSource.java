@@ -51,7 +51,6 @@ import org.neo4j.kernel.builtinprocs.BuiltInProcedures;
 import org.neo4j.kernel.configuration.Config;
 import org.neo4j.kernel.extension.dependency.HighestSelectionStrategy;
 import org.neo4j.kernel.guard.Guard;
-import org.neo4j.kernel.impl.store.id.IdGeneratorFactory;
 import org.neo4j.kernel.impl.api.CommitProcessFactory;
 import org.neo4j.kernel.impl.api.ConstraintEnforcingEntityOperations;
 import org.neo4j.kernel.impl.api.DataIntegrityValidatingStatementOperations;
@@ -90,6 +89,7 @@ import org.neo4j.kernel.impl.store.MetaDataStore;
 import org.neo4j.kernel.impl.store.NeoStores;
 import org.neo4j.kernel.impl.store.StoreId;
 import org.neo4j.kernel.impl.store.UnderlyingStorageException;
+import org.neo4j.kernel.impl.store.id.IdGeneratorFactory;
 import org.neo4j.kernel.impl.storemigration.DatabaseMigrator;
 import org.neo4j.kernel.impl.storemigration.monitoring.VisibleMigrationProgressMonitor;
 import org.neo4j.kernel.impl.storemigration.participant.StoreMigrator;
@@ -157,7 +157,7 @@ import org.neo4j.logging.Log;
 import org.neo4j.logging.LogProvider;
 import org.neo4j.logging.Logger;
 import org.neo4j.proc.Procedures;
-import org.neo4j.proc.TypeMappers.ToNeoTypeMapper;
+import org.neo4j.proc.TypeMappers.SimpleConverter;
 import org.neo4j.storageengine.api.StorageEngine;
 import org.neo4j.storageengine.api.StoreReadLayer;
 
@@ -855,10 +855,10 @@ public class NeoStoreDataSource implements NeoStoresSupplier, Lifecycle, IndexPr
     // register graph types, set up built-in procedures and scan for procedures on disk
     private Procedures setupProcedures() throws KernelException, IOException
     {
-        Procedures procedures = dependencies.satisfyDependency( new Procedures() );
-        procedures.registerType(Node.class, new ToNeoTypeMapper( NTNode, (v) -> v instanceof Node ? v : null ));
-        procedures.registerType(Relationship.class, new ToNeoTypeMapper( NTRelationship, (v) -> v instanceof Relationship ? v : null ));
-        procedures.registerType(Path.class, new ToNeoTypeMapper( NTPath, (v) -> v instanceof Path ? v : null ));
+        Procedures procedures = dependencies.satisfyDependency( new Procedures( msgLog ) );
+        procedures.registerType( Node.class, new SimpleConverter( NTNode, Node.class ) );
+        procedures.registerType( Relationship.class, new SimpleConverter( NTRelationship, Relationship.class ) );
+        procedures.registerType( Path.class, new SimpleConverter( NTPath, Path.class ) );
         BuiltInProcedures.addTo( procedures );
         procedures.loadFromDirectory( config.get( GraphDatabaseSettings.plugin_dir ) );
         return procedures;

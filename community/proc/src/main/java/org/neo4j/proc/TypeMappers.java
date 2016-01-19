@@ -42,8 +42,9 @@ import static org.neo4j.proc.Neo4jTypes.NTString;
 public class TypeMappers
 {
     /**
-     * Converts a java object to the specified {@link #type() neo4j type}. In practice, this is often the same java object - but this gives a guarantee
-     * that only java objects Neo4j can digest are outputted.
+     * Converts a java object to the specified {@link #type() neo4j type}. In practice, this is
+     * often the same java object - but this gives a guarantee that only java objects Neo4j can
+     * digest are outputted.
      */
     interface NeoValueConverter
     {
@@ -59,10 +60,11 @@ public class TypeMappers
     }
 
     /**
-     * We don't have Node, Relationship, Property available down here - and don't strictly want to, we want the procedures to be independent of which
-     * Graph API is being used (and we don't want them to get tangled up with kernel code). So, we only register the "core" type system here, scalars and
-     * collection types. Node, Relationship, Path and any other future graph types should be registered from the outside in the same place APIs to work
-     * with those types is registered.
+     * We don't have Node, Relationship, Property available down here - and don't strictly want to,
+     * we want the procedures to be independent of which Graph API is being used (and we don't want
+     * them to get tangled up with kernel code). So, we only register the "core" type system here,
+     * scalars and collection types. Node, Relationship, Path and any other future graph types should
+     * be registered from the outside in the same place APIs to work with those types is registered.
      */
     private void registerScalarsAndCollections()
     {
@@ -106,7 +108,9 @@ public class TypeMappers
                 Type type = pt.getActualTypeArguments()[0];
                 if( type != String.class )
                 {
-                    throw new ProcedureException( Status.Procedure.FailedRegistration, "Maps are required to have `String` keys - but this map has `%s` keys.", type.getTypeName() );
+                    throw new ProcedureException( Status.Procedure.FailedRegistration,
+                            "Maps are required to have `String` keys - but this map has `%s` keys.",
+                            type.getTypeName() );
                 }
                 return TO_MAP;
             }
@@ -173,7 +177,7 @@ public class TypeMappers
         return new ProcedureException( Status.Statement.InvalidType, "Don't know how to map `%s` to `%s`", cls, neoType );
     }
 
-    private static class SimpleConverter implements NeoValueConverter
+    public static class SimpleConverter implements NeoValueConverter
     {
         private final AnyType type;
         private final Class<?> javaClass;
@@ -197,7 +201,8 @@ public class TypeMappers
             {
                 return javaValue;
             }
-            throw new ProcedureException( Status.Procedure.CallFailed, "Expected `%s` to be a `%s`, found `%s`.", javaValue, javaClass.getSimpleName(), javaValue.getClass());
+            throw new ProcedureException( Status.Procedure.CallFailed,
+                    "Expected `%s` to be a `%s`, found `%s`.", javaValue, javaClass.getSimpleName(), javaValue.getClass());
         }
     }
 }

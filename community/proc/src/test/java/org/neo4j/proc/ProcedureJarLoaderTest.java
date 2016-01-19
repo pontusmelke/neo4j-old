@@ -31,12 +31,14 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 import org.neo4j.kernel.api.exceptions.ProcedureException;
+import org.neo4j.logging.NullLog;
 
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.neo4j.helpers.collection.IteratorUtil.asList;
 import static org.neo4j.proc.Neo4jTypes.NTInteger;
 import static org.neo4j.proc.ProcedureSignature.procedureSignature;
 
@@ -46,7 +48,7 @@ public class ProcedureJarLoaderTest
     @Rule public ExpectedException exception = ExpectedException.none();
 
     private final ProcedureJarLoader jarloader =
-            new ProcedureJarLoader( new ReflectiveProcedureCompiler( new TypeMappers() ) );
+            new ProcedureJarLoader( new ReflectiveProcedureCompiler( new TypeMappers() ), NullLog.getInstance() );
 
     @Test
     public void shouldLoadProcedureFromJar() throws Throwable
@@ -62,7 +64,7 @@ public class ProcedureJarLoaderTest
         assertThat( signatures, contains(
                 procedureSignature( "org","neo4j", "proc", "myProcedure" ).out( "someNumber", NTInteger ).build() ));
 
-        assertThat( procedures.get( 0 ).apply( new Procedure.BasicContext(), new Object[0] ).collect( toList() ),
+        assertThat( asList( procedures.get( 0 ).apply( new Procedure.BasicContext(), new Object[0] ) ),
                 contains( equalTo( new Object[]{1337L} )) );
     }
 
@@ -83,7 +85,7 @@ public class ProcedureJarLoaderTest
                         .out( "someNumber", NTInteger )
                         .build() ));
 
-        assertThat( procedures.get( 0 ).apply( new Procedure.BasicContext(), new Object[]{42L} ).collect( toList() ),
+        assertThat( asList(procedures.get( 0 ).apply( new Procedure.BasicContext(), new Object[]{42L} ) ),
                 contains( equalTo( new Object[]{42L} )) );
     }
 
@@ -111,7 +113,8 @@ public class ProcedureJarLoaderTest
 
         // Expect
         exception.expect( ProcedureException.class );
-        exception.expectMessage( "A procedure must return a `java.util.stream.Stream`, `ClassWithInvalidProcedure.booleansAreNotAcceptableReturnTypes` returns `boolean`." );
+        exception.expectMessage( "A procedure must return a `java.util.stream.Stream`, " +
+                                 "`ClassWithInvalidProcedure.booleansAreNotAcceptableReturnTypes` returns `boolean`." );
 
         // When
         jarloader.loadProcedures( jar );

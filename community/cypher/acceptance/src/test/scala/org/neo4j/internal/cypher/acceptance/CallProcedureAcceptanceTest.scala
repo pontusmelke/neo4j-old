@@ -21,7 +21,8 @@ package org.neo4j.internal.cypher.acceptance
 
 import java.util.stream.Stream
 
-import org.neo4j.cypher.{CypherTypeException, ExecutionEngineFunSuite, InvalidArgumentException}
+import org.neo4j.collection.RawIterator
+import org.neo4j.cypher.{CypherExecutionException, CypherTypeException, ExecutionEngineFunSuite, InvalidArgumentException}
 import org.neo4j.kernel.api.KernelAPI
 import org.neo4j.kernel.api.exceptions.ProcedureException
 import org.neo4j.proc.Procedure.{BasicProcedure, Context}
@@ -285,7 +286,7 @@ class CallProcedureAcceptanceTest extends ExecutionEngineFunSuite {
   }
 
   test("should fail if calling non-existent procedure") {
-    a [ProcedureException] shouldBe thrownBy(execute("CALL no.such.thing.exists(42)"))
+    a [CypherExecutionException] shouldBe thrownBy(execute("CALL no.such.thing.exists(42)"))
   }
 
   private def register(types: Neo4jTypes.AnyType*) = {
@@ -300,8 +301,8 @@ class CallProcedureAcceptanceTest extends ExecutionEngineFunSuite {
     }
 
     val proc = new BasicProcedure(builder.build) {
-      override def apply(ctx: Context, input: Array[AnyRef]): Stream[Array[AnyRef]] =
-        java.util.stream.Stream.of[Array[AnyRef]](input)
+      override def apply(ctx: Context, input: Array[AnyRef]): RawIterator[Array[AnyRef], ProcedureException] =
+        RawIterator.of[Array[AnyRef], ProcedureException](input)
     }
     kernel.registerProcedure(proc)
   }

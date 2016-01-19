@@ -38,8 +38,8 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.neo4j.proc.Name;
 import org.neo4j.proc.JarBuilder;
+import org.neo4j.proc.Name;
 import org.neo4j.proc.ReadOnlyProcedure;
 import org.neo4j.test.TestGraphDatabaseFactory;
 
@@ -181,6 +181,24 @@ public class ProcedureIT
         db.execute( "CALL someProcedureThatDoesNotExist" );
     }
 
+    @Test
+    public void shouldGiveHelpfulErrorOnExceptionMidStream() throws Throwable
+    {
+        // Given
+        new JarBuilder().createJarFor( plugins.newFile( "myProcedures.jar" ), ClassWithProcedures.class );
+        GraphDatabaseService db = new TestGraphDatabaseFactory().newImpermanentDatabaseBuilder()
+                .setConfig( GraphDatabaseSettings.plugin_dir, plugins.getRoot().getAbsolutePath() )
+                .newGraphDatabase();
+
+        Result result = db.execute( "CALL org.neo4j.procedure.throwsExceptionInStream" );
+
+        // Expect
+        exception.expect( QueryExecutionException.class );
+        exception.expectMessage( "Failed to call procedure `org.neo4j.procedure.throwsExceptionInStream() :: (someVal :: INTEGER?)`: Kaboom" );
+
+        // When
+        result.next();
+    }
 
     public static class Output
     {
@@ -244,6 +262,12 @@ public class ProcedureIT
             NodeOutput nodeOutput = new NodeOutput();
             nodeOutput.setNode( nodeFromId( id ) );
             return Stream.of( nodeOutput );
+        }
+
+        @ReadOnlyProcedure
+        public Stream<Output> throwsExceptionInStream()
+        {
+            return Stream.generate( () -> { throw new RuntimeException( "Kaboom" ); });
         }
     }
 
