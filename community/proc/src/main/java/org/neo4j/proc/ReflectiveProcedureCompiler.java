@@ -30,8 +30,8 @@ import java.util.stream.Stream;
 import org.neo4j.kernel.api.exceptions.KernelException;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.exceptions.Status;
-import org.neo4j.proc.InputMappers.InputMapper;
 import org.neo4j.proc.OutputMappers.OutputMapper;
+import org.neo4j.proc.ProcedureSignature.FieldSignature;
 import org.neo4j.proc.ProcedureSignature.ProcedureName;
 
 import static java.util.Arrays.asList;
@@ -44,11 +44,11 @@ public class ReflectiveProcedureCompiler
 {
     private final MethodHandles.Lookup lookup = MethodHandles.lookup();
     private final OutputMappers outputMappers;
-    private final InputMappers inputMappers;
+    private final MethodSignatureCompiler inputSignatureDeterminer;
 
     public ReflectiveProcedureCompiler( TypeMappers typeMappers )
     {
-        inputMappers = new InputMappers(typeMappers);
+        inputSignatureDeterminer = new MethodSignatureCompiler(typeMappers);
         outputMappers = new OutputMappers( typeMappers );
 
     }
@@ -93,13 +93,13 @@ public class ReflectiveProcedureCompiler
     {
         ProcedureName procName = extractName( procDefinition, method );
 
-        InputMapper inputMapper = inputMappers.mapper( method );
+        List<FieldSignature> inputSignature = inputSignatureDeterminer.signatureFor( method );
         OutputMapper outputMapper = outputMappers.mapper( method );
         MethodHandle procedureMethod = lookup.unreflect( method );
 
-        ProcedureSignature signature = new ProcedureSignature( procName, inputMapper.signature(), outputMapper.signature() );
+        ProcedureSignature signature = new ProcedureSignature( procName, inputSignature, outputMapper.signature() );
 
-        return new ReflectiveProcedure( signature, constructor, procedureMethod, inputMapper, outputMapper );
+        return new ReflectiveProcedure( signature, constructor, procedureMethod, outputMapper );
     }
 
     private MethodHandle constructor( Class<?> procDefinition ) throws ProcedureException
@@ -128,17 +128,15 @@ public class ReflectiveProcedureCompiler
         private final ProcedureSignature signature;
         private final MethodHandle constructor;
         private final MethodHandle procedureMethod;
-        private final InputMapper inputMapper;
         private final OutputMapper outputMapper;
 
 
         public ReflectiveProcedure( ProcedureSignature signature, MethodHandle constructor,
-                MethodHandle procedureMethod, InputMapper inputMapper, OutputMapper outputMapper )
+                                    MethodHandle procedureMethod, OutputMapper outputMapper )
         {
             this.signature = signature;
             this.constructor = constructor;
             this.procedureMethod = procedureMethod;
-            this.inputMapper = inputMapper;
             this.outputMapper = outputMapper;
         }
 
@@ -156,11 +154,11 @@ public class ReflectiveProcedureCompiler
             try
             {
                 Object cls = constructor.invoke();
+
                 Object[] args = new Object[signature.inputSignature().size() + 1];
                 args[0] = cls;
-                //in place converts to correct type
-                inputMapper.apply( input );
                 System.arraycopy( input, 0, args, 1, input.length );
+
                 Stream<?> out = (Stream<?>) procedureMethod.invokeWithArguments( args );
                 return out.map( outputMapper::apply );
             }

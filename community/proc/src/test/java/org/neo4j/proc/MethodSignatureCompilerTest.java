@@ -24,14 +24,16 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.neo4j.kernel.api.exceptions.ProcedureException;
+import org.neo4j.proc.ProcedureSignature.FieldSignature;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 
-public class InputMappersTest
+public class MethodSignatureCompilerTest
 {
     @Rule
     public ExpectedException exception = ExpectedException.none();
@@ -77,10 +79,10 @@ public class InputMappersTest
     {
         // When
         Method echo = ClassWithProcedureWithSimpleArgs.class.getMethod( "echo", String.class );
-        InputMappers.InputMapper mapper = new InputMappers(new TypeMappers()).mapper( echo );
+        List<FieldSignature> signature = new MethodSignatureCompiler( new TypeMappers() ).signatureFor( echo );
 
         // THen
-        assertThat(mapper.signature(), contains( new ProcedureSignature.FieldSignature("name", Neo4jTypes.NTString)));
+        assertThat(signature, contains( new FieldSignature("name", Neo4jTypes.NTString)));
     }
 
 
@@ -94,10 +96,10 @@ public class InputMappersTest
         exception.expect( ProcedureException.class );
         exception.expectMessage( "Argument `name` at position 0 in `echoWithInvalidType` with type `UnmappableRecord` " +
                                  "cannot be converted to a Neo4j type: Don't know how to map " +
-                                 "`class org.neo4j.proc.InputMappersTest$UnmappableRecord` to `Any`" );
+                                 "`class org.neo4j.proc.MethodSignatureCompilerTest$UnmappableRecord` to `Any`" );
 
         // When
-        new InputMappers(new TypeMappers()).mapper( echo );
+        new MethodSignatureCompiler(new TypeMappers()).signatureFor( echo );
     }
 
     @Test
@@ -113,6 +115,6 @@ public class InputMappersTest
                                  "try again." );
 
         // When
-        new InputMappers(new TypeMappers()).mapper( echo );
+        new MethodSignatureCompiler(new TypeMappers()).signatureFor( echo );
     }
 }

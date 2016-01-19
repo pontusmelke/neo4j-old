@@ -144,9 +144,9 @@ public class ReflectiveProcedureTest
     public static class SomeOtherOutputRecord
     {
         public String name;
-        public int bananas;
+        public long bananas;
 
-        public SomeOtherOutputRecord( String name, int bananas )
+        public SomeOtherOutputRecord( String name, long bananas )
         {
             this.name = name;
             this.bananas = bananas;

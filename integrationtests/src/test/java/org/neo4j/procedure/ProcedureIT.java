@@ -163,13 +163,13 @@ public class ProcedureIT
 
     public static class Output
     {
-        public int someVal = 1337;
+        public long someVal = 1337;
 
         public Output()
         {
         }
 
-        public Output( int someVal )
+        public Output( long someVal )
         {
             this.someVal = someVal;
         }
@@ -199,17 +199,16 @@ public class ProcedureIT
         }
 
         @ReadOnlyProcedure
-        public Stream<Output> simpleArgument( @FieldName( "name" ) int someValue )
+        public Stream<Output> simpleArgument( @FieldName( "name" ) long someValue )
         {
             return Stream.of( new Output( someValue ) );
         }
 
         @ReadOnlyProcedure
         public Stream<Output> genericArguments( @FieldName( "stringList" ) List<List<String>> stringList,
-                @FieldName( "intList" ) List<List<List<Integer>>> intList )
+                @FieldName( "longList" ) List<List<List<Long>>> longList )
         {
-
-            return Stream.of( new Output( stringList.size() + intList.size() ) );
+            return Stream.of( new Output( stringList.size() + longList.size() ) );
         }
 
         @ReadOnlyProcedure

@@ -141,14 +141,14 @@ public class ProcedureJarLoaderTest
 
     public static class Output
     {
-        public int someNumber = 1337;
+        public long someNumber = 1337;
 
         public Output()
         {
 
         }
 
-        public Output( int anotherNumber )
+        public Output( long anotherNumber )
         {
             this.someNumber = anotherNumber;
         }
@@ -192,7 +192,7 @@ public class ProcedureJarLoaderTest
     public static class ClassWithProcedureWithArgument
     {
         @ReadOnlyProcedure
-        public Stream<Output> myProcedure(@FieldName( "value" ) int value)
+        public Stream<Output> myProcedure(@FieldName( "value" ) long value)
         {
             return Stream.of( new Output(value) );
         }

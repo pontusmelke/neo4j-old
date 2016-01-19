@@ -19,9 +19,6 @@
  */
 package org.neo4j.proc;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +63,6 @@ public class TypeMappers
     }
 
     private final Map<Class<?>, ToNeoValue> javaToNeo = new HashMap<>();
-    private final Map<Type,ToProcedureValue> unsafeTypes = new HashMap<>();
 
     public TypeMappers()
     {
@@ -82,12 +78,8 @@ public class TypeMappers
     private void registerScalarsAndCollections()
     {
         registerType( String.class, TO_STRING );
-        registerType( int.class, TO_INTEGER );
-        registerType( Integer.class, TO_INTEGER );
         registerType( long.class, TO_INTEGER );
         registerType( Long.class, TO_INTEGER );
-        registerType( float.class, TO_FLOAT );
-        registerType( Float.class, TO_FLOAT );
         registerType( double.class, TO_FLOAT );
         registerType( Double.class, TO_FLOAT );
         registerType( Number.class, TO_NUMBER );
@@ -96,14 +88,6 @@ public class TypeMappers
         registerType( Map.class, TO_MAP );
         registerType( List.class, TO_LIST );
         registerType( Object.class, TO_ANY );
-
-        //unsafe types are types we accept in procedures signature but are not
-        //the types used natively by Neo4j. For these types we must resort to lossy
-        //conversion
-        unsafeTypes.put( int.class, LONG_TO_INT );
-        unsafeTypes.put( Integer.class, LONG_TO_INT );
-        unsafeTypes.put( float.class, DOUBLE_TO_FLOAT );
-        unsafeTypes.put( Float.class, DOUBLE_TO_FLOAT );
     }
 
     public ToNeoValue javaToNeo( Class<?> javaType ) throws ProcedureException
@@ -114,50 +98,6 @@ public class TypeMappers
             return converter;
         }
         throw javaToNeoMappingError( javaType, Neo4jTypes.NTAny );
-    }
-
-
-    private boolean isUnsafe( Type javaType )
-    {
-        if ( javaType instanceof ParameterizedType )
-        {
-            ParameterizedType pType = (ParameterizedType) javaType;
-            return isUnsafe( pType.getActualTypeArguments()[0] );
-        }
-        else
-        {
-            return unsafeTypes.containsKey( javaType );
-        }
-    }
-
-    private ToProcedureValue innerMapper( Type javaType )
-    {
-        if ( javaType instanceof ParameterizedType )
-        {
-            ParameterizedType pType = (ParameterizedType) javaType;
-            return innerMapper( pType.getActualTypeArguments()[0] );
-        }
-        else
-        {
-            Class<?> clazz = (Class<?>) javaType;
-            ToProcedureValue toProcedureValue = unsafeTypes.get( clazz );
-            return toProcedureValue == null ? NO_OP : toProcedureValue;
-        }
-
-    }
-
-    public ToProcedureValue neoToJava( Type javaType ) throws ProcedureException
-    {
-        boolean unsafe = isUnsafe( javaType );
-        ToProcedureValue mapper = innerMapper( javaType );
-        if ( unsafe && javaType instanceof ParameterizedType )
-        {
-            return new ToGenericListProcedureTypeMapper( mapper );
-        }
-        else
-        {
-            return mapper;
-        }
     }
 
     public void registerType( Class<?> javaClass, ToNeoValue toNeo )
@@ -199,77 +139,6 @@ public class TypeMappers
         }
     }
 
-    public static class ToProcedureTypeMapper implements ToProcedureValue
-    {
-        private final Function<Object,Object> mapper;
-
-        public ToProcedureTypeMapper( Function<Object,Object> mapper )
-        {
-            this.mapper = mapper;
-        }
-
-
-        @Override
-        public Object apply( Object javaValue ) throws ProcedureException
-        {
-            if ( javaValue == null )
-            {
-                return null;
-            }
-
-            Object out = mapper.apply( javaValue );
-            if ( out != null )
-            {
-                return out;
-            }
-            throw new ProcedureException( Status.Statement.InvalidType, "Don't know how to map %s to a native type",
-                    javaValue.getClass().getSimpleName() );
-        }
-    }
-
-    /**
-     * Recursively converts a generic list to the signature the user asked for.
-     */
-    public static class ToGenericListProcedureTypeMapper implements ToProcedureValue
-    {
-        private final ToProcedureValue mapper;
-
-        public ToGenericListProcedureTypeMapper( ToProcedureValue mapper )
-        {
-            this.mapper = mapper;
-        }
-
-        @Override
-        public Object apply( Object neoValue ) throws ProcedureException
-        {
-            if ( neoValue == null )
-            {
-                return null;
-            }
-            else if ( neoValue instanceof List<?> )
-            {
-                List<?> list = (List<?>) neoValue;
-                List<Object> objects = new ArrayList<>( list.size() );
-                for ( Object item : list )
-                {
-                    Object apply = apply( item );
-                    objects.add( apply );
-                }
-                return objects;
-            }
-            else
-            {
-                Object out = mapper.apply( neoValue );
-                if ( out != null )
-                {
-                    return out;
-                }
-                throw new ProcedureException( Status.Statement.InvalidType, "Don't know how to map %s to a native type",
-                        neoValue.getClass().getSimpleName() );
-            }
-        }
-    }
-
     private final ToNeoValue TO_STRING = new ToNeoTypeMapper( NTString, ( v ) -> v instanceof String ? v : null );
     private final ToNeoValue TO_INTEGER =
             new ToNeoTypeMapper( NTInteger, ( v ) -> v instanceof Number ? ((Number) v).longValue() : null );
@@ -280,14 +149,6 @@ public class TypeMappers
     private final ToNeoValue TO_MAP = new ToNeoTypeMapper( NTMap, ( v ) -> v instanceof Map ? v : null );
     private final ToNeoValue TO_LIST = new ToNeoTypeMapper( NTList( NTAny ), ( v ) -> v instanceof List ? v : null );
     private final ToNeoValue TO_ANY = new ToNeoTypeMapper( NTAny, ( v ) -> v );
-
-    private final ToProcedureValue NO_OP = new ToProcedureTypeMapper( ( v ) -> v );
-    private final ToProcedureValue LONG_TO_INT =
-            new ToProcedureTypeMapper( ( v ) ->
-                    v instanceof Long ? ((Long) v).intValue() : null );
-    private final ToProcedureValue DOUBLE_TO_FLOAT =
-            new ToProcedureTypeMapper( ( v ) -> v instanceof Double ? ((Double) v).floatValue() : null );
-
 
     private static ProcedureException javaToNeoMappingError( Class<?> cls, AnyType neoType )
     {

@@ -47,7 +47,7 @@ public class ReflectiveProcedureWithArgumentsTest
     public void shouldCompileSimpleProcedure() throws Throwable
     {
         // When
-        List<Procedure> procedures =compile( ClassWithProcedureWithSimpleArgs.class );
+        List<Procedure> procedures = compile( ClassWithProcedureWithSimpleArgs.class );
 
         // Then
         assertEquals( 1, procedures.size() );
@@ -63,7 +63,7 @@ public class ReflectiveProcedureWithArgumentsTest
     public void shouldRunSimpleProcedure() throws Throwable
     {
         // Given
-        Procedure procedure =compile( ClassWithProcedureWithSimpleArgs.class ).get(0);
+        Procedure procedure = compile( ClassWithProcedureWithSimpleArgs.class ).get(0);
 
         // When
         Stream<Object[]> out = procedure.apply( new Procedure.BasicContext(), new Object[]{"Pontus", 35L} );
@@ -119,7 +119,7 @@ public class ReflectiveProcedureWithArgumentsTest
     public static class ClassWithProcedureWithSimpleArgs
     {
         @ReadOnlyProcedure
-        public Stream<MyOutputRecord> listCoolPeople( @FieldName("name") String name, @FieldName("age") int age )
+        public Stream<MyOutputRecord> listCoolPeople( @FieldName("name") String name, @FieldName("age") long age )
         {
             return Stream.of( new MyOutputRecord( name + " is " + age + " years old." ));
         }
@@ -129,14 +129,14 @@ public class ReflectiveProcedureWithArgumentsTest
     {
         @ReadOnlyProcedure
         public Stream<MyOutputRecord> listCoolPeople( @FieldName( "names" ) List<String> names,
-                @FieldName( "age" ) List<Integer> ages )
+                @FieldName( "age" ) List<Long> ages )
         {
             Iterator<String> nameIterator = names.iterator();
-            Iterator<Integer> ageIterator = ages.iterator();
+            Iterator<Long> ageIterator = ages.iterator();
             List<MyOutputRecord> result = new ArrayList<>( names.size() );
             while ( nameIterator.hasNext() )
             {
-                int age = ageIterator.hasNext() ? ageIterator.next() : -1;
+                long age = ageIterator.hasNext() ? ageIterator.next() : -1;
                 result.add( new MyOutputRecord( nameIterator.next() + " is " + age + " years old." ) );
             }
             return result.stream();
