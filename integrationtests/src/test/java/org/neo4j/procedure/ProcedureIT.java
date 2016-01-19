@@ -21,6 +21,7 @@ package org.neo4j.procedure;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
@@ -31,6 +32,7 @@ import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.QueryExecutionException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Result;
@@ -50,6 +52,9 @@ public class ProcedureIT
 {
     @Rule
     public TemporaryFolder plugins = new TemporaryFolder();
+
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
 
     @Test
     public void shouldLoadProcedureFromPluginDirectory() throws Throwable
@@ -158,6 +163,22 @@ public class ProcedureIT
             assertThat(node.getId(), equalTo( 42L ));
             assertFalse( res.hasNext() );
         }
+    }
+
+    @Test
+    public void shouldGiveHelpfulErrorOnMissingProcedure() throws Throwable
+    {
+        // Given
+        GraphDatabaseService db = new TestGraphDatabaseFactory().newImpermanentDatabase();
+
+        // Expect
+        exception.expect( QueryExecutionException.class );
+        exception.expectMessage( "There is no procedure with the name `someProcedureThatDoesNotExist` " +
+                                 "registered for this database instance. Please ensure you've spelled the " +
+                                 "procedure name correctly and that the procedure is properly deployed." );
+
+        // When
+        db.execute( "CALL someProcedureThatDoesNotExist" );
     }
 
 

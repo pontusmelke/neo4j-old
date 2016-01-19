@@ -46,7 +46,7 @@ public class Neo4jTypes
 
         public AnyType()
         {
-            this( "Any" );
+            this( "ANY?" );
         }
 
         protected AnyType( String name )
@@ -65,7 +65,7 @@ public class Neo4jTypes
     {
         public TextType()
         {
-            super( "String" );
+            super( "STRING?" );
         }
     }
 
@@ -73,7 +73,7 @@ public class Neo4jTypes
     {
         public NumberType()
         {
-            super( "Number" );
+            super( "NUMBER?" );
         }
 
         protected NumberType( String name )
@@ -86,7 +86,7 @@ public class Neo4jTypes
     {
         public IntegerType()
         {
-            super( "Integer" );
+            super( "INTEGER?" );
         }
     }
 
@@ -94,7 +94,7 @@ public class Neo4jTypes
     {
         public FloatType()
         {
-            super( "Float");
+            super( "FLOAT?");
         }
     }
 
@@ -102,7 +102,7 @@ public class Neo4jTypes
     {
         public BooleanType()
         {
-            super( "Boolean" );
+            super( "BOOLEAN?" );
         }
     }
 
@@ -113,7 +113,7 @@ public class Neo4jTypes
 
         public ListType( AnyType innerType )
         {
-            super( "List[" + innerType.toString() + "]" );
+            super( "LIST? OF " + innerType.toString() );
             this.innerType = innerType;
         }
 
@@ -142,7 +142,7 @@ public class Neo4jTypes
     {
         public MapType()
         {
-            super( "Map" );
+            super( "MAP?" );
         }
 
         protected MapType( String name )
@@ -155,7 +155,7 @@ public class Neo4jTypes
     {
         public NodeType()
         {
-            super( "Node" );
+            super( "NODE?" );
         }
     }
 
@@ -163,7 +163,7 @@ public class Neo4jTypes
     {
         public RelationshipType()
         {
-            super( "Relationship" );
+            super( "RELATIONSHIP?" );
         }
     }
 
@@ -171,7 +171,7 @@ public class Neo4jTypes
     {
         public PathType()
         {
-            super( "Path" );
+            super( "PATH?" );
         }
     }
 }

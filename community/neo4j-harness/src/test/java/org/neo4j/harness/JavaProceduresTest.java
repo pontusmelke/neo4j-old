@@ -44,13 +44,19 @@ public class JavaProceduresTest
     {
         public static class OutputRecord
         {
-            public int someNumber = 1337;
+            public long someNumber = 1337;
         }
 
         @ReadOnlyProcedure
         public Stream<OutputRecord> myProc()
         {
             return Stream.of( new OutputRecord() );
+        }
+
+        @ReadOnlyProcedure
+        public Stream<OutputRecord> procThatThrows()
+        {
+            throw new RuntimeException( "This is an exception" );
         }
     }
 
@@ -67,6 +73,21 @@ public class JavaProceduresTest
             JsonNode result = response.get( "results" ).get( 0 );
             assertEquals( "someNumber", result.get( "columns" ).get( 0 ).asText() );
             assertEquals( 1337, result.get( "data" ).get( 0 ).get( "row" ).get( 0 ).asInt() );
+        }
+    }
+
+    @Test
+    public void shouldGetHelpfulErrorOnProcedureThrowsException() throws Exception
+    {
+        // When
+        try(ServerControls server = TestServerBuilders.newInProcessBuilder().withProcedure( MyProcedures.class ).newServer())
+        {
+            // Then
+            HTTP.Response response = HTTP.POST( server.httpURI().resolve( "db/data/transaction/commit" ).toString(),
+                    quotedJson( "{ 'statements': [ { 'statement': 'CALL org.neo4j.harness.procThatThrows' } ] }" ) );
+
+            String error = response.get( "errors" ).get( 0 ).get( "message" ).asText();
+            assertEquals( "Failed to invoke procedure `org.neo4j.harness.procThatThrows() :: (someNumber :: INTEGER?)`: This is an exception", error );
         }
     }
 }

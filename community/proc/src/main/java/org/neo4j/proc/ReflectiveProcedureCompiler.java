@@ -164,7 +164,8 @@ public class ReflectiveProcedureCompiler
             }
             catch ( Throwable throwable )
             {
-                throw new ProcedureException( Status.Procedure.CallFailed, throwable, "Failed to invoke procedure." ); // TODO
+                throw new ProcedureException( Status.Procedure.CallFailed, throwable,
+                        "Failed to invoke procedure `%s`: %s", signature, throwable.getMessage() );
             }
         }
     }

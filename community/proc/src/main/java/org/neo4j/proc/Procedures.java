@@ -54,7 +54,7 @@ public class Procedures
         }
     }
 
-    public synchronized void registerType( Class<?> javaClass, TypeMappers.ToNeoValue toNeo )
+    public synchronized void registerType( Class<?> javaClass, TypeMappers.NeoValueConverter toNeo )
     {
         typeMappers.registerType( javaClass, toNeo );
     }

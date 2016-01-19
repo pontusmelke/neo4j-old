@@ -23,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import static org.junit.Assert.assertEquals;
+
 public class ProcedureSignatureTest
 {
     @Rule
@@ -47,5 +49,19 @@ public class ProcedureSignatureTest
 
         // When
         signature.outputSignature().add( new ProcedureSignature.FieldSignature( "b", Neo4jTypes.NTAny ) );
+    }
+
+    @Test
+    public void toStringShouldMatchCypherSyntax() throws Throwable
+    {
+        // When
+        String toStr = ProcedureSignature.procedureSignature( "org", "myProcedure" )
+                .in( "inputArg", Neo4jTypes.NTList( Neo4jTypes.NTString ) )
+                .out( "outputArg", Neo4jTypes.NTNumber )
+                .build()
+                .toString();
+
+        // Then
+        assertEquals( "org.myProcedure(inputArg :: LIST? OF STRING?) :: (outputArg :: NUMBER?)", toStr );
     }
 }

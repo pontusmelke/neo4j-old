@@ -23,6 +23,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Map;
+
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.proc.OutputMappers.OutputMapper;
 
@@ -53,6 +55,12 @@ public class OutputMappersTest
     public static class RecordWithPrivateField
     {
         private String wat;
+    }
+
+
+    public static class RecordWithNonStringKeyMap
+    {
+        public Map<RecordWithNonStringKeyMap, Object> wat;
     }
 
     public static class RecordWithStaticFields
@@ -121,6 +129,19 @@ public class OutputMappersTest
 
         // When
        mapper( RecordWithPrivateField.class );
+    }
+
+
+    @Test
+    public void shouldGiveHelpfulErrorOnMapWithNonStringKeyMap() throws Throwable
+    {
+        // Expect
+        exception.expect( ProcedureException.class );
+        exception.expectMessage( "Field `wat` in record `RecordWithNonStringKeyMap` cannot be converted to a Neo4j type: Maps are required to have `String` " +
+                                 "keys - but this map has `org.neo4j.proc.OutputMappersTest$RecordWithNonStringKeyMap` keys." );
+
+        // When
+        mapper( RecordWithNonStringKeyMap.class );
     }
 
     private OutputMapper mapper(Class<?> clazz) throws ProcedureException

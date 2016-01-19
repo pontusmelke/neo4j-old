@@ -207,7 +207,7 @@ public class ProcedureSignature
     {
         String strInSig = inputSignature == null ? "..." : iterableToString( inputSignature, ", " );
         String strOutSig = outputSignature == null ? "..." : iterableToString( outputSignature, ", " );
-        return String.format( "%s(%s) : (%s)", name, strInSig, strOutSig );
+        return String.format( "%s(%s) :: (%s)", name, strInSig, strOutSig );
     }
 
     public static class Builder
@@ -261,15 +261,5 @@ public class ProcedureSignature
     public static ProcedureName procedureName( String ... namespaceAndName)
     {
         return procedureSignature( namespaceAndName ).build().name();
-    }
-
-    private static List<AnyType> typesOf( List<FieldSignature> namedSig )
-    {
-        List<AnyType> out = new LinkedList<>();
-        for ( int i = 0; i < namedSig.size(); i++ )
-        {
-            out.add( namedSig.get( i ).neo4jType() );
-        }
-        return out;
     }
 }

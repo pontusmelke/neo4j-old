@@ -19,6 +19,8 @@
  */
 package org.neo4j.proc;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,26 +45,13 @@ public class TypeMappers
      * Converts a java object to the specified {@link #type() neo4j type}. In practice, this is often the same java object - but this gives a guarantee
      * that only java objects Neo4j can digest are outputted.
      */
-    interface ToNeoValue
+    interface NeoValueConverter
     {
         AnyType type();
-
-        Object apply( Object javaValue ) throws ProcedureException;
+        Object toNeoValue( Object javaValue ) throws ProcedureException;
     }
 
-    /**
-     * Converts from the internal representation back to the types, defined by the procedure. In most cases this is the
-     * same object but in some cases the value must be casted to fit the signature of the procedure. For example if
-     * the signature declares an argument using int, float (or the corresponding reference types or lists thereof)
-     * the value
-     * coming from Neo4j must be casted to fit the signature.
-     */
-    interface ToProcedureValue
-    {
-        Object apply( Object neoValue ) throws ProcedureException;
-    }
-
-    private final Map<Class<?>, ToNeoValue> javaToNeo = new HashMap<>();
+    private final Map<Type,NeoValueConverter> javaToNeo = new HashMap<>();
 
     public TypeMappers()
     {
@@ -90,22 +79,48 @@ public class TypeMappers
         registerType( Object.class, TO_ANY );
     }
 
-    public ToNeoValue javaToNeo( Class<?> javaType ) throws ProcedureException
+    public AnyType neoTypeFor( Type javaType ) throws ProcedureException
     {
-        ToNeoValue converter = javaToNeo.get( javaType );
+        return converterFor( javaType ).type();
+    }
+
+    public NeoValueConverter converterFor( Type javaType ) throws ProcedureException
+    {
+        NeoValueConverter converter = javaToNeo.get( javaType );
         if( converter != null )
         {
             return converter;
         }
+
+        if( javaType instanceof ParameterizedType )
+        {
+            ParameterizedType pt = (ParameterizedType) javaType;
+            Type rawType = pt.getRawType();
+
+            if( rawType == List.class )
+            {
+                return toList( converterFor( pt.getActualTypeArguments()[0] ) );
+            }
+            else if( rawType == Map.class )
+            {
+                Type type = pt.getActualTypeArguments()[0];
+                if( type != String.class )
+                {
+                    throw new ProcedureException( Status.Procedure.FailedRegistration, "Maps are required to have `String` keys - but this map has `%s` keys.", type.getTypeName() );
+                }
+                return TO_MAP;
+            }
+        }
+
         throw javaToNeoMappingError( javaType, Neo4jTypes.NTAny );
     }
 
-    public void registerType( Class<?> javaClass, ToNeoValue toNeo )
+    public void registerType( Class<?> javaClass, NeoValueConverter toNeo )
     {
         javaToNeo.put( javaClass, toNeo );
     }
 
-    public static class ToNeoTypeMapper implements ToNeoValue
+    public static class ToNeoTypeMapper implements NeoValueConverter
     {
         private final AnyType type;
         private final Function<Object,Object> mapper;
@@ -123,7 +138,7 @@ public class TypeMappers
         }
 
         @Override
-        public Object apply( Object javaValue ) throws ProcedureException
+        public Object toNeoValue( Object javaValue ) throws ProcedureException
         {
             if( javaValue == null )
             {
@@ -139,19 +154,50 @@ public class TypeMappers
         }
     }
 
-    private final ToNeoValue TO_STRING = new ToNeoTypeMapper( NTString, ( v ) -> v instanceof String ? v : null );
-    private final ToNeoValue TO_INTEGER =
-            new ToNeoTypeMapper( NTInteger, ( v ) -> v instanceof Number ? ((Number) v).longValue() : null );
-    private final ToNeoValue TO_FLOAT =
-            new ToNeoTypeMapper( NTFloat, ( v ) -> v instanceof Number ? ((Number) v).doubleValue() : null );
-    private final ToNeoValue TO_NUMBER = new ToNeoTypeMapper( NTNumber, ( v ) -> v instanceof Number ? v : null );
-    private final ToNeoValue TO_BOOLEAN = new ToNeoTypeMapper( NTBoolean, ( v ) -> v instanceof Boolean ? v : null );
-    private final ToNeoValue TO_MAP = new ToNeoTypeMapper( NTMap, ( v ) -> v instanceof Map ? v : null );
-    private final ToNeoValue TO_LIST = new ToNeoTypeMapper( NTList( NTAny ), ( v ) -> v instanceof List ? v : null );
-    private final ToNeoValue TO_ANY = new ToNeoTypeMapper( NTAny, ( v ) -> v );
+    private final NeoValueConverter TO_ANY = new SimpleConverter( NTAny, Object.class );
+    private final NeoValueConverter TO_STRING = new SimpleConverter( NTString, String.class );
+    private final NeoValueConverter TO_INTEGER = new SimpleConverter( NTInteger, Long.class );
+    private final NeoValueConverter TO_FLOAT = new SimpleConverter( NTFloat, Double.class );
+    private final NeoValueConverter TO_NUMBER = new SimpleConverter( NTNumber, Number.class );
+    private final NeoValueConverter TO_BOOLEAN = new SimpleConverter( NTBoolean, Boolean.class );
+    private final NeoValueConverter TO_MAP = new SimpleConverter( NTMap, Map.class );
+    private final NeoValueConverter TO_LIST = toList( TO_ANY );
 
-    private static ProcedureException javaToNeoMappingError( Class<?> cls, AnyType neoType )
+    private NeoValueConverter toList( NeoValueConverter inner )
+    {
+        return new SimpleConverter( NTList( inner.type() ), List.class );
+    }
+
+    private static ProcedureException javaToNeoMappingError( Type cls, AnyType neoType )
     {
         return new ProcedureException( Status.Statement.InvalidType, "Don't know how to map `%s` to `%s`", cls, neoType );
+    }
+
+    private static class SimpleConverter implements NeoValueConverter
+    {
+        private final AnyType type;
+        private final Class<?> javaClass;
+
+        public SimpleConverter( AnyType type, Class<?> javaClass )
+        {
+            this.type = type;
+            this.javaClass = javaClass;
+        }
+
+        @Override
+        public AnyType type()
+        {
+            return type;
+        }
+
+        @Override
+        public Object toNeoValue( Object javaValue ) throws ProcedureException
+        {
+            if( javaValue == null || javaClass.isInstance( javaValue ) )
+            {
+                return javaValue;
+            }
+            throw new ProcedureException( Status.Procedure.CallFailed, "Expected `%s` to be a `%s`, found `%s`.", javaValue, javaClass.getSimpleName(), javaValue.getClass());
+        }
     }
 }

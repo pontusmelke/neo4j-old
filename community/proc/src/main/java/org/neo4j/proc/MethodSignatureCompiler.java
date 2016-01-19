@@ -21,6 +21,7 @@ package org.neo4j.proc;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,10 +41,12 @@ public class MethodSignatureCompiler
     public List<FieldSignature> signatureFor( Method method ) throws ProcedureException
     {
         Parameter[] params = method.getParameters();
+        Type[] types = method.getGenericParameterTypes();
         List<FieldSignature> signature = new ArrayList<>(params.length);
         for ( int i = 0; i < params.length; i++ )
         {
             Parameter param = params[i];
+            Type type = types[i];
 
             if ( !param.isAnnotationPresent( Name.class ) )
             {
@@ -56,7 +59,7 @@ public class MethodSignatureCompiler
 
             try
             {
-                signature.add(new FieldSignature( name, typeMappers.javaToNeo( param.getType() ).type() ));
+                signature.add(new FieldSignature( name, typeMappers.neoTypeFor( type ) ));
             }
             catch ( ProcedureException e )
             {

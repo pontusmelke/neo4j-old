@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 import org.neo4j.kernel.api.exceptions.ProcedureException;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.proc.ProcedureSignature.FieldSignature;
-import org.neo4j.proc.TypeMappers.ToNeoValue;
+import org.neo4j.proc.TypeMappers.NeoValueConverter;
 
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
@@ -92,9 +92,9 @@ public class OutputMappers
     private static class FieldMapper
     {
         private final MethodHandle getter;
-        private final ToNeoValue mapper;
+        private final NeoValueConverter mapper;
 
-        public FieldMapper( MethodHandle getter, ToNeoValue mapper )
+        public FieldMapper( MethodHandle getter, NeoValueConverter mapper )
         {
             this.getter = getter;
             this.mapper = mapper;
@@ -104,7 +104,7 @@ public class OutputMappers
         {
             try
             {
-                return mapper.apply( getter.invoke( record ) );
+                return mapper.toNeoValue( getter.invoke( record ) );
             }
             catch ( Throwable throwable )
             {
@@ -154,7 +154,7 @@ public class OutputMappers
 
             try
             {
-                ToNeoValue mapper = typeMappers.javaToNeo( field.getType() );
+                NeoValueConverter mapper = typeMappers.converterFor( field.getGenericType() );
                 MethodHandle getter = lookup.unreflectGetter( field );
                 FieldMapper fieldMapper = new FieldMapper(getter, mapper);
 
