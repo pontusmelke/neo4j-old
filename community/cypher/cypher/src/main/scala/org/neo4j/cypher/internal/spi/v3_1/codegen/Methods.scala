@@ -24,6 +24,7 @@ import java.util
 import org.neo4j.collection.primitive.{PrimitiveLongIntMap, PrimitiveLongIterator}
 import org.neo4j.cypher.internal.codegen.CompiledConversionUtils.CompositeKey
 import org.neo4j.cypher.internal.codegen._
+import org.neo4j.cypher.internal.codegen.collection.{LongStack, RelationshipList}
 import org.neo4j.cypher.internal.compiler.v3_1.codegen.{QueryExecutionEvent, QueryExecutionTracer, ResultRowImpl}
 import org.neo4j.cypher.internal.compiler.v3_1.planDescription.Id
 import org.neo4j.cypher.internal.compiler.v3_1.spi.{InternalResultRow, InternalResultVisitor}
@@ -83,6 +84,7 @@ object Methods {
   val nodesGetFromIndexLookup = method[ReadOperations, PrimitiveLongIterator]("nodesGetFromIndexSeek", typeRef[IndexDescriptor], typeRef[Object])
   val nodeGetUniqueFromIndexLookup = method[ReadOperations, Long]("nodeGetFromUniqueIndexSeek", typeRef[IndexDescriptor], typeRef[Object])
   val relationshipGetProperty = method[ReadOperations, Object]("relationshipGetProperty", typeRef[Long], typeRef[Int])
+  val relListAdd = method[RelationshipList, Boolean]("addId", typeRef[Long])
   val nodesGetForLabel = method[ReadOperations, PrimitiveLongIterator]("nodesGetForLabel", typeRef[Int])
   val nodeHasLabel = method[ReadOperations, Boolean]("nodeHasLabel", typeRef[Long], typeRef[Int])
   val nextLong = method[PrimitiveLongIterator, Long]("next")

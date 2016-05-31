@@ -23,7 +23,7 @@ import org.neo4j.cypher.internal.compiler.v3_1.codegen.ir.expressions
 import org.neo4j.cypher.internal.compiler.v3_1.codegen.ir.functions.functionConverter
 import org.neo4j.cypher.internal.compiler.v3_1.codegen.{CodeGenContext, MethodStructure}
 import org.neo4j.cypher.internal.compiler.v3_1.planner.CantCompileQueryException
-import org.neo4j.cypher.internal.frontend.v3_1.symbols.{CTBoolean, CTNode, CTRelationship}
+import org.neo4j.cypher.internal.frontend.v3_1.symbols.{CTBoolean, CTNode, CTRelationship, ListType}
 import org.neo4j.cypher.internal.frontend.v3_1.{InternalException, ast}
 
 object ExpressionConverter {
@@ -88,7 +88,7 @@ object ExpressionConverter {
     }
   }
 
-  def createExpressionForVariable(variableQueryVariable: String)
+  def createProjectionForVariable(variableQueryVariable: String)
                                  (implicit context: CodeGenContext): CodeGenExpression = {
 
     val variable = context.getVariable(variableQueryVariable)
@@ -96,6 +96,7 @@ object ExpressionConverter {
     variable.codeGenType.ct match {
       case CTNode => NodeProjection(variable)
       case CTRelationship => RelationshipProjection(variable)
+      case ListType(CTRelationship) => LoadVariable(variable)
       case _ => throw new InternalException("The compiled runtime only handles variables pointing to rels and nodes at this time")
     }
   }

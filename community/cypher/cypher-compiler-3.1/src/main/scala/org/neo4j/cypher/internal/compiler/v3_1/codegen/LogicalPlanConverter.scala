@@ -40,6 +40,7 @@ object LogicalPlanConverter {
     case p: NodeByIdSeek => nodeByIdSeekAsCodeGenPlan(p)
     case p: NodeUniqueIndexSeek => nodeUniqueIndexSeekAsCodeGen(p)
     case p: Expand => expandAsCodeGenPlan(p)
+    case p: VarExpand => varExpandAsCodeGenPlan(p)
     case p: OptionalExpand => optExpandAsCodeGenPlan(p)
     case p: NodeHashJoin => nodeHashJoinAsCodeGenPlan(p)
     case p: CartesianProduct => cartesianProductAsCodeGenPlan(p)
@@ -100,7 +101,7 @@ object LogicalPlanConverter {
         // if lhs is projection than we can simply load things that it projected
         case _: plans.Projection => produceResults.columns.map(c => c -> LoadVariable(context.getVariable(c)))
         // else we have to evaluate all expressions ourselves
-        case _ => produceResults.columns.map(c => c -> ExpressionConverter.createExpressionForVariable(c)(context))
+        case _ => produceResults.columns.map(c => c -> ExpressionConverter.createProjectionForVariable(c)(context))
       }).toMap
 
       (None, AcceptVisitor(produceResultOpName, projections))
@@ -299,6 +300,63 @@ object LogicalPlanConverter {
       val expandGenerator = ExpandAllLoopDataGenerator(opName, fromNodeVar, expand.dir, typeVar2TypeName, toNodeVar, relVar)
 
       (methodHandle, WhileLoop(relVar, expandGenerator, action))
+    }
+
+    private def expandIntoConsume(context: CodeGenContext,
+                                  child: CodeGenPlan): (Option[JoinTableMethod], Instruction) = {
+      val relVar = Variable(context.namer.newVarName(), CodeGenType.primitiveRel)
+      context.addVariable(expand.relName.name, relVar)
+
+      val (methodHandle, action) = context.popParent().consume(context, this)
+      val fromNodeVar = context.getVariable(expand.from.name)
+      val toNodeVar = context.getVariable(expand.to.name)
+      val typeVar2TypeName = expand.types.map(t => context.namer.newVarName() -> t.name).toMap
+      val opName = context.registerOperator(expand)
+      val expandGenerator = ExpandIntoLoopDataGenerator(opName, fromNodeVar, expand.dir, typeVar2TypeName, toNodeVar, relVar)
+
+      (methodHandle, WhileLoop(relVar, expandGenerator, action))
+    }
+  }
+
+  private def varExpandAsCodeGenPlan(expand: VarExpand) = new CodeGenPlan with SingleChildPlan {
+
+    override val logicalPlan: LogicalPlan = expand
+
+    override def consume(context: CodeGenContext, child: CodeGenPlan): (Option[JoinTableMethod], Instruction) =
+      expand.mode match {
+        case ExpandAll => expandAllConsume(context, child)
+        case ExpandInto => expandIntoConsume(context, child)
+      }
+
+    private def expandAllConsume(context: CodeGenContext,
+                                 child: CodeGenPlan): (Option[JoinTableMethod], Instruction) = {
+
+      //TODO relVar we add to context should really be a Seq[Rel]
+      val relVar = Variable(context.namer.newVarName(), CodeGenType.primitiveRel)
+      val relVarArray = Variable(context.namer.newVarName(), CodeGenType(symbols.CTList(symbols.CTRelationship), ReferenceType))
+      val toNodeVar = Variable(context.namer.newVarName(), CodeGenType.primitiveNode)
+      context.addVariable(expand.relName.name, relVarArray)
+      context.addVariable(expand.to.name, toNodeVar)
+
+      val (methodHandle, action) = context.popParent().consume(context, this)
+      val fromNodeVar = context.getVariable(expand.from.name)
+      val typeVar2TypeName = expand.types.map(t => context.namer.newVarName() -> t.name).toMap
+      val opName = context.registerOperator(expand)
+
+//      TODO predicates, copy paste from Selection should do similar
+//      val predicates = expand.predicates.predicates.map(
+//        ExpressionConverter.createPredicate(_)(context)
+//      )
+//      val instruction = predicates.reverse.foldLeft[Instruction](innerBlock) {
+//        case (acc, predicate) => If(predicate, acc)
+//      }
+
+
+      val varExpand = VarExpandInstruction(opName, fromNodeVar, expand.dir,
+                                           typeVar2TypeName, toNodeVar, relVar, relVarArray, expand.length.min,
+                                           expand.length.max.getOrElse(Int.MaxValue),  action)
+
+      (methodHandle, varExpand)
     }
 
     private def expandIntoConsume(context: CodeGenContext,

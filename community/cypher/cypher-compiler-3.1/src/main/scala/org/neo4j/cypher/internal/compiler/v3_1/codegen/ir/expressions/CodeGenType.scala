@@ -23,7 +23,7 @@ import org.neo4j.cypher.internal.frontend.v3_1.symbols
 import org.neo4j.cypher.internal.frontend.v3_1.symbols.CypherType
 
 case class CodeGenType(ct: CypherType, repr: RepresentationType) {
-  def isPrimitive = repr != ReferenceType
+  def isPrimitive = repr == IntType || repr == FloatType || repr == BoolType
 }
 
 object CodeGenType {

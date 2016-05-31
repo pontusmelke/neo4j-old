@@ -28,6 +28,7 @@ import org.neo4j.collection.primitive.hopscotch.LongKeyIntValueTable
 import org.neo4j.collection.primitive.{PrimitiveLongIntMap, PrimitiveLongIterator, PrimitiveLongObjectMap}
 import org.neo4j.cypher.internal.codegen.CompiledConversionUtils.CompositeKey
 import org.neo4j.cypher.internal.codegen._
+import org.neo4j.cypher.internal.codegen.collection.{LongStack, RelationshipList}
 import org.neo4j.cypher.internal.compiler.v3_1.ast.convert.commands.DirectionConverter.toGraphDb
 import org.neo4j.cypher.internal.compiler.v3_1.codegen._
 import org.neo4j.cypher.internal.compiler.v3_1.codegen.ir.expressions.{BoolType, CodeGenType, FloatType, IntType, ReferenceType}
@@ -37,12 +38,11 @@ import org.neo4j.cypher.internal.frontend.v3_1.symbols.{CTNode, CTRelationship}
 import org.neo4j.cypher.internal.frontend.v3_1.{ParameterNotFoundException, SemanticDirection, symbols}
 import org.neo4j.cypher.internal.spi.v3_1.codegen.Methods._
 import org.neo4j.cypher.internal.spi.v3_1.codegen.Templates.{createNewInstance, handleKernelExceptions, newRelationshipDataExtractor, tryCatch}
-import org.neo4j.graphdb.{Direction, NotFoundException}
-import org.neo4j.kernel.api.exceptions.EntityNotFoundException
+import org.neo4j.graphdb.Direction
 import org.neo4j.kernel.api.index.IndexDescriptor
 import org.neo4j.kernel.impl.api.RelationshipDataExtractor
 import org.neo4j.kernel.impl.api.store.RelationshipIterator
-import org.neo4j.storageengine.api.EntityType
+import org.neo4j.kernel.impl.core.NodeManager
 
 import scala.collection.mutable
 
@@ -145,8 +145,8 @@ case class GeneratedMethodStructure(fields: Fields, generator: CodeBlock, aux: A
   override def hasNextRelationship(iterVar: String) =
     invoke(generator.load(iterVar), hasMoreRelationship)
 
-  override def whileLoop(test: Expression)(block: MethodStructure[Expression] => Unit) =
-    using(generator.whileLoop(test)) { body =>
+  override def whileLoop(tests: Expression*)(block: MethodStructure[Expression] => Unit) =
+    using(generator.whileLoop(tests:_*)) { body =>
       block(copy(generator = body))
     }
 
@@ -305,6 +305,8 @@ case class GeneratedMethodStructure(fields: Fields, generator: CodeBlock, aux: A
 
   override def threeValuedOrExpression(lhs: Expression, rhs: Expression) = invoke(Methods.or, lhs, rhs)
 
+  override def andExpression(lhs: Expression, rhs: Expression) = and(lhs, rhs)
+
   override def markAsNull(varName: String, codeGenType: CodeGenType) =
     generator.assign(lowerType(codeGenType), varName, nullValue(codeGenType))
 
@@ -333,19 +335,19 @@ case class GeneratedMethodStructure(fields: Fields, generator: CodeBlock, aux: A
 
   override def toFloat(expression: Expression) = toDouble(expression)
 
-  override def nodeGetAllRelationships(iterVar: String, nodeVar: String, direction: SemanticDirection) = {
+  override def nodeGetAllRelationships(iterVar: String, node: Expression, direction: SemanticDirection) = {
     val local = generator.declare(typeRef[RelationshipIterator], iterVar)
     handleKernelExceptions(generator, fields.ro, fields.close) { body =>
-      body.assign(local, invoke(readOperations, Methods.nodeGetAllRelationships, body.load(nodeVar), dir(direction)))
+      body.assign(local, invoke(readOperations, Methods.nodeGetAllRelationships, node, dir(direction)))
     }
   }
 
-  override def nodeGetRelationships(iterVar: String, nodeVar: String, direction: SemanticDirection,
+  override def nodeGetRelationships(iterVar: String, node: Expression, direction: SemanticDirection,
                                     typeVars: Seq[String]) = {
     val local = generator.declare(typeRef[RelationshipIterator], iterVar)
     handleKernelExceptions(generator, fields.ro, fields.close) { body =>
       body.assign(local, invoke(readOperations, Methods.nodeGetRelationships,
-                                body.load(nodeVar), dir(direction),
+                                node, dir(direction),
                                 newArray(typeRef[Int], typeVars.map(body.load): _*)))
     }
   }
@@ -759,6 +761,112 @@ case class GeneratedMethodStructure(fields: Fields, generator: CodeBlock, aux: A
 
   override def coerceToBoolean(propertyExpression: Expression): Expression =
     invoke(coerceToPredicate, propertyExpression)
+
+  override def setUpVarExpand(startNode: String, relListVar: String, nodeStackVar: String, continueFlag: String, depthVar: String) = {
+
+    val depthVariable = generator.declare(typeRef[Int], depthVar)
+    locals += depthVar -> depthVariable
+
+    //int countDepth =0;
+    generator.assign(depthVariable, constant(0))
+    //RelationshipList relList = new RelationshipList(nodeManager);
+    generator.assign(typeRef[RelationshipList], relListVar,
+                     createNewInstance(typeRef[RelationshipList], (typeRef[NodeManager], nodeManager)) )
+    //LongStack stack = new LongStack();
+    generator.assign(typeRef[LongStack], nodeStackVar,
+                     createNewInstance(typeRef[LongStack]) )
+    //stack.push(startNode);
+    generator.expression(invoke(generator.load(nodeStackVar), method[LongStack, Unit]("push", typeRef[Long]), generator.load(startNode)))
+    //boolean continueFlag = true;
+    declareFlag(continueFlag, initialValue = true)
+
+  }
+
+
+  override def continueVarExpand(iterVar: String, continueFlag: String) = {
+    generator.assign(locals(continueFlag), invoke(generator.load(iterVar), hasMoreRelationship))
+  }
+
+  override def addRelVarExpand(relVar: String, relListVar: String) = {
+    invoke(generator.load(relListVar), relListAdd, generator.load(relVar))
+  }
+
+
+  override def popFromStack(nodeStackVar: String): Expression = {
+    invoke(generator.load(nodeStackVar), method[LongStack, Long]("pop"))
+  }
+
+  override def varExpand(fromNode: String, types: Map[String, String], relVar: String, relListVar: String,
+                         dir: SemanticDirection, toNode:String,
+                         minValue: Int, maxValue: Int)(block: MethodStructure[Expression] => Unit) = {
+    val nodeStackVar = context.namer.newVarName()
+    val iterVar = context.namer.newVarName()
+    val continueFlag = context.namer.newVarName()
+    val depthVar = generator.declare(typeRef[Int], context.namer.newVarName())
+
+
+    def produceIterator(structure: MethodStructure[Expression]) {
+      if (types.isEmpty)
+        structure
+          .nodeGetAllRelationships(iterVar, invoke(structure.loadVariable(nodeStackVar), method[LongStack, Long]("pop")), dir)
+      else
+        structure.nodeGetRelationships(iterVar, invoke(structure.loadVariable(nodeStackVar), method[LongStack, Long]("pop")), dir,
+                             types.keys.toSeq)
+      structure.incrementDbHits()
+    }
+    def accept: Seq[Expression] = if (minValue > 1) Seq(gt(load(depthVar), constant(minValue), typeRef[Int])) else Seq.empty
+
+    //int countDepth =0;
+    generator.assign(depthVar, constant(0))
+
+    //RelationshipList relList = new RelationshipList(nodeManager);
+    generator.assign(typeRef[RelationshipList], relListVar,
+                     createNewInstance(typeRef[RelationshipList], (typeRef[NodeManager], nodeManager)))
+    //LongStack stack = new LongStack();
+    generator.assign(typeRef[LongStack], nodeStackVar,
+                     createNewInstance(typeRef[LongStack]))
+    //stack.push(startNode);
+    generator.expression(
+      invoke(generator.load(nodeStackVar), method[LongStack, Unit]("push", typeRef[Long]), generator.load(fromNode)))
+
+    //boolean continueFlag = true;
+    declareFlag(continueFlag, initialValue = true)
+    // while( continueFlag && stack.nonEmpty() )
+    using(generator.whileLoop(generator.load(continueFlag), invoke(generator.load(nodeStackVar), method[LongStack, Boolean]("nonEmpty")))) { loop =>
+      produceIterator(copy(generator = loop))
+      using(loop.whileLoop(invoke(loop.load(iterVar), hasMoreRelationship))) { innerLoop =>
+        copy(generator = innerLoop).nextRelationshipAndNode(toNode, iterVar, dir, fromNode, relVar)
+        using(innerLoop.ifStatement(
+          invoke(generator.load(relListVar), relListAdd, innerLoop.load(relVar)) +: accept :_*)) { continuation =>
+          block(copy(generator = continuation))
+        }
+
+        //stack.push(node);
+        innerLoop.expression(
+          invoke(innerLoop.load(nodeStackVar), method[LongStack, Unit]("push", typeRef[Long]), innerLoop.load(toNode)))
+
+      }
+      //depth = depth + 1;
+      loop.assign(depthVar, addInts(load(depthVar), constant(1)))
+      //continue = max > depth;
+      loop.assign(locals(continueFlag),
+                       gt(constant(maxValue), load(depthVar), typeRef[Int]))
+    }
+  }
+
+
+  override def updateVarExpand(nodeStackVar: String, nextNode: String, relListVar: String, continueFlag: String,
+                               depthVar: String, maxValue: Int) = {
+    //stack.push(startNode);
+    generator.expression(
+      invoke(generator.load(nodeStackVar), method[LongStack, Unit]("push", typeRef[Long]), generator.load(nextNode)))
+    //depth = depth + 1;
+    val depth = locals(depthVar)
+    generator.assign(depth, addInts(load(depth), constant(1)))
+    //continue = max > depth;
+    generator.assign(locals(continueFlag),
+                     gt(constant(maxValue), load(depth), typeRef[Int]))
+  }
 
   override def newTableValue(targetVar: String, structure: Map[String, CodeGenType]) = {
     val valueType = aux.typeReference(structure)

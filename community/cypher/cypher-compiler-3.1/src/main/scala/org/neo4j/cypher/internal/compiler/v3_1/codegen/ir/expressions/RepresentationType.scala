@@ -30,5 +30,7 @@ case object BoolType extends RepresentationType
 
 case object FloatType extends RepresentationType
 
+case class ArrayType(innerType: RepresentationType)
+
 case object ReferenceType extends RepresentationType
 

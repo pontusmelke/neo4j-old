@@ -61,6 +61,7 @@ case class LongsToListTable(structure: Map[String, CodeGenType], localMap: Map[S
   */
 trait MethodStructure[E] {
 
+
   // misc
   def projectVariable(variableName: String, value: E)
   def declareFlag(name: String, initialValue: Boolean)
@@ -76,6 +77,11 @@ trait MethodStructure[E] {
   def allocateProbeTable(tableVar: String, tableType: JoinTableType): Unit
   def invokeMethod(resultType: JoinTableType, resultVar: String, methodName: String)(block: MethodStructure[E]=>Unit): Unit
   def coerceToBoolean(propertyExpression: E): E
+  def setUpVarExpand(startNode: String, relListVar: String, nodeVar: String, continueFlag: String, depthVar: String): Unit
+  def continueVarExpand(iterVar: String, continueFlag: String): Unit
+  def addRelVarExpand(relVar: String, relListVar: String): E
+  def updateVarExpand(nodeVar: String, nextNodeVar: String, relListVar: String, continueFlag: String, depthVar: String, maxValue: Int): Unit
+
 
   // expressions
   def decreaseCounterAndCheckForZero(name: String): E
@@ -84,12 +90,13 @@ trait MethodStructure[E] {
   def constantExpression(value: Object): E
   def asMap(map: Map[String, E]): E
   def asList(values: Seq[E]): E
-
   def toSet(value: E): E
-
   def castToCollection(value: E): E
-
+  def popFromStack(nodeStackVar: String): E
   def loadVariable(varName: String): E
+  def varExpand(fromNode: String, types: Map[String, String], relVar: String, relListVar: String,
+                dir: SemanticDirection, toNode:String,
+                minValue: Int, maxValue: Int)(block: MethodStructure[E] => Unit): Unit
 
   // arithmetic
   def add(lhs: E, rhs: E): E
@@ -105,6 +112,7 @@ trait MethodStructure[E] {
   def equalityExpression(lhs: E, rhs: E, codeGenType: CodeGenType): E
   def orExpression(lhs: E, rhs: E): E
   def threeValuedOrExpression(lhs: E, rhs: E): E
+  def andExpression(lhs: E, rhs: E)
 
   // object handling
   def markAsNull(varName: String, codeGenType: CodeGenType): Unit
@@ -130,8 +138,8 @@ trait MethodStructure[E] {
   def allNodesScan(iterVar: String): Unit
   def lookupLabelId(labelIdVar: String, labelName: String): Unit
   def lookupRelationshipTypeId(typeIdVar: String, typeName: String): Unit
-  def nodeGetAllRelationships(iterVar: String, nodeVar: String, direction: SemanticDirection): Unit
-  def nodeGetRelationships(iterVar: String, nodeVar: String, direction: SemanticDirection, typeVars: Seq[String]): Unit
+  def nodeGetAllRelationships(iterVar: String, node: E, direction: SemanticDirection): Unit
+  def nodeGetRelationships(iterVar: String, node: E, direction: SemanticDirection, typeVars: Seq[String]): Unit
   def connectingRelationships(iterVar: String, fromNode: String, dir: SemanticDirection, toNode:String)
   def connectingRelationships(iterVar: String, fromNode: String, dir: SemanticDirection, types: Seq[String], toNode: String)
   def nextNode(targetVar: String, iterVar: String): Unit
@@ -153,7 +161,7 @@ trait MethodStructure[E] {
 
 
   // code structure
-  def whileLoop(test: E)(block: MethodStructure[E] => Unit): Unit
+  def whileLoop(tests: E*)(block: MethodStructure[E] => Unit): Unit
   def forEach(varName: String, codeGenType: CodeGenType, iterable: E)(block: MethodStructure[E] => Unit): Unit
   def ifStatement(test: E)(block: MethodStructure[E] => Unit): Unit
   def ifNotStatement(test: E)(block: MethodStructure[E] => Unit): Unit

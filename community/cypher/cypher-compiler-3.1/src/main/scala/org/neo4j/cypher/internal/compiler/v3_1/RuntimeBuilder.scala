@@ -124,7 +124,7 @@ case class InterpretedPlanBuilder(clock: Clock, monitors: Monitors, publicTypeCo
 
 case class CompiledPlanBuilder(clock: Clock, structure:CodeStructure[GeneratedQuery]) {
 
-  private val codeGen = new CodeGenerator(structure, CodeGenConfiguration(mode = ByteCodeMode, clock = clock))
+  private val codeGen = new CodeGenerator(structure, CodeGenConfiguration(mode = SourceCodeMode, clock = clock))
 
   def apply(logicalPlan: LogicalPlan, semanticTable: SemanticTable, planContext: PlanContext,
             monitor: NewRuntimeSuccessRateMonitor, tracer: CompilationPhaseTracer,
