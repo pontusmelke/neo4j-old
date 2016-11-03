@@ -30,10 +30,10 @@ import org.neo4j.cypher.internal.compiler.v3_1.planner.LogicalPlanningTestSuppor
 import org.neo4j.cypher.internal.compiler.v3_1.planner.logical.plans._
 import org.neo4j.cypher.internal.compiler.v3_1.spi.{InternalResultRow, InternalResultVisitor, QueryContext}
 import org.neo4j.cypher.internal.compiler.v3_1.{CostBasedPlannerName, NormalMode, TaskCloser}
+import org.neo4j.cypher.internal.frontend.v3_1._
 import org.neo4j.cypher.internal.frontend.v3_1.ast._
 import org.neo4j.cypher.internal.frontend.v3_1.symbols._
 import org.neo4j.cypher.internal.frontend.v3_1.test_helpers.CypherFunSuite
-import org.neo4j.cypher.internal.frontend.v3_1.{ParameterNotFoundException, SemanticDirection, SemanticTable}
 import org.neo4j.cypher.internal.spi.TransactionalContextWrapperv3_1
 import org.neo4j.cypher.internal.spi.v3_1.codegen.GeneratedQueryStructure
 import org.neo4j.graphdb.{Direction, Node, Relationship}
@@ -42,7 +42,7 @@ import org.neo4j.kernel.impl.api.RelationshipVisitor
 import org.neo4j.kernel.impl.api.store.RelationshipIterator
 import org.neo4j.kernel.impl.core.{NodeManager, NodeProxy, RelationshipProxy}
 
-import scala.collection.JavaConverters
+import scala.collection.{JavaConverters, mutable}
 
 class CodeGeneratorTest extends CypherFunSuite with LogicalPlanningTestSupport {
 
@@ -888,6 +888,25 @@ class CodeGeneratorTest extends CypherFunSuite with LogicalPlanningTestSupport {
     result.toSet should equal(Set(Map(name -> 1)))
   }
 
+  test("count no grouping key") {
+    when(semanticTable.resolvedPropertyKeyNames).thenReturn(mutable.Map.empty[String, PropertyKeyId])
+    val scan = AllNodesScan(IdName("a"), Set.empty)(solved)
+    val ns: Namespace = Namespace(List())(pos)
+    val count: FunctionName = FunctionName("count")(pos)
+    val property = Property(ast.Variable("a")(pos), PropertyKeyName("prop")(pos))(pos)
+    val invocation: FunctionInvocation = FunctionInvocation(ns, count, distinct = false, Vector(property))(pos)
+    val aggregation = Aggregation(scan, Map.empty, Map("count(a.prop)" -> invocation))(solved)
+    val plan = ProduceResult(List("count(a.prop)"), aggregation)
+
+    //when
+    val compiled = compileAndExecute(plan)
+
+    val result = getResult(compiled, "count(a.prop)")
+
+    //then
+    result.toList should equal(List(Map("count(a.prop)" -> 3)))
+  }
+
   private def compile(plan: LogicalPlan) = {
     generator.generate(plan, newMockedPlanContext, semanticTable, CostBasedPlannerName.default)
   }
@@ -966,6 +985,13 @@ class CodeGeneratorTest extends CypherFunSuite with LogicalPlanningTestSupport {
   when(queryContext.transactionalContext).thenReturn(transactionalContext)
   when(transactionalContext.readOperations).thenReturn(ro)
   when(queryContext.entityAccessor).thenReturn(nodeManager.asInstanceOf[queryContext.EntityAccessor])
+  when(ro.nodeGetProperty(anyLong(), anyInt())).thenAnswer(new Answer[Object] {
+    override def answer(invocationOnMock: InvocationOnMock): Object = {
+      val id = invocationOnMock.getArguments()(0).asInstanceOf[Long]
+      if (id < 3) "value"
+      else null
+    }
+  })
   when(ro.nodesGetAll()).thenAnswer(new Answer[PrimitiveLongIterator] {
     override def answer(invocationOnMock: InvocationOnMock): PrimitiveLongIterator = primitiveIterator(allNodes.map(_.getId))
   })
@@ -1127,5 +1153,4 @@ class CodeGeneratorTest extends CypherFunSuite with LogicalPlanningTestSupport {
       }
     )
   }
-
 }

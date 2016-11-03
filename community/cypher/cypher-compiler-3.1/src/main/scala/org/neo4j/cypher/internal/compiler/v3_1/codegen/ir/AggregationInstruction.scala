@@ -19,30 +19,28 @@
  */
 package org.neo4j.cypher.internal.compiler.v3_1.codegen.ir
 
-import org.neo4j.cypher.internal.compiler.v3_1.codegen.ir.expressions.CodeGenExpression
-import org.neo4j.cypher.internal.compiler.v3_1.codegen.{CodeGenContext, LessThan, MethodStructure}
+import org.neo4j.cypher.internal.compiler.v3_1.codegen.ir.expressions.AggregateExpression
+import org.neo4j.cypher.internal.compiler.v3_1.codegen.{CodeGenContext, MethodStructure, Variable}
 
-case class SkipInstruction(opName: String, variableName: String, action: Instruction, numberToSkip: CodeGenExpression)
+case class AggregationInstruction(opName: String, aggregationFunctions: Map[Variable, AggregateExpression])
   extends Instruction {
 
-  override def init[E](generator: MethodStructure[E])(implicit context: CodeGenContext): Unit = {
-    numberToSkip.init(generator)
-    val expression = generator.box(numberToSkip.generateExpression(generator), numberToSkip.codeGenType)
-    generator.declareCounter(variableName, expression)
-    action.init(generator)
+  override def init[E](generator: MethodStructure[E])(implicit context: CodeGenContext) {
+    aggregationFunctions.values.foreach(e => e.init(generator))
+    aggregationFunctions.foreach {
+      case (v, e) => generator.assign(v.name, v.codeGenType, e.initialValue(generator))
+    }
   }
 
-  override def body[E](generator: MethodStructure[E])(implicit context: CodeGenContext): Unit = {
+  override def body[E](generator: MethodStructure[E])(implicit context: CodeGenContext) = {
     generator.trace(opName) { l1 =>
-      l1.incrementRows()
-      l1.decrementInteger(variableName)
-      l1.ifStatement(l1.checkInteger(variableName, LessThan, 0L)) { l2 =>
-        action.body(l2)
+      aggregationFunctions.foreach {
+        case (v, e) => l1.assign(v.name, v.codeGenType, e.generateExpression(l1))
       }
     }
   }
 
-  override protected def children: Seq[Instruction] = Seq(action)
+  override protected def children: Seq[Instruction] = Seq.empty
 
   override protected def operatorId = Set(opName)
 }

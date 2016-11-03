@@ -37,7 +37,7 @@ import org.neo4j.cypher.internal.spi.v3_1.TransactionBoundQueryContext.IndexSear
 import org.neo4j.cypher.internal.spi.v3_1.codegen.GeneratedQueryStructure
 import org.neo4j.graphdb.GraphDatabaseService
 import org.neo4j.kernel.GraphDatabaseQueryService
-import org.neo4j.kernel.api.security.{AnonymousContext, SecurityContext}
+import org.neo4j.kernel.api.security.AnonymousContext
 import org.neo4j.kernel.api.{KernelTransaction, Statement}
 import org.neo4j.kernel.impl.coreapi.PropertyContainerLocker
 import org.neo4j.kernel.impl.query.{Neo4jTransactionalContextFactory, QuerySource}

@@ -19,6 +19,7 @@
  */
 package org.neo4j.cypher.internal.compiler.v3_1.planner.logical
 
+import org.neo4j.cypher.internal.compiler.v3_1.planDescription.InternalPlanDescription.Arguments
 import org.neo4j.cypher.internal.compiler.v3_1.planDescription.InternalPlanDescription.Arguments._
 import org.neo4j.cypher.internal.compiler.v3_1.planDescription._
 import org.neo4j.cypher.internal.compiler.v3_1.planner.CantCompileQueryException
@@ -87,6 +88,10 @@ object LogicalPlan2PlanDescription extends ((LogicalPlan, Map[LogicalPlan, Id]) 
       case Skip(lhs, count) =>
         PlanDescriptionImpl(id = idMap(plan), name = "Skip", children = SingleChild(apply(lhs, idMap)),
                             Seq(Expression(count)), symbols)
+
+      case Aggregation(source, grouping, aggregation) =>
+        PlanDescriptionImpl(id = idMap(plan), name = "EagerAggregation", children = SingleChild(apply(source, idMap)),
+                            Seq(Arguments.KeyNames(grouping.keys.toSeq)), symbols)
 
       case row: SingleRow =>
         new SingleRowPlanDescription(id = idMap(plan), Seq.empty, row.argumentIds.map(_.name))
