@@ -91,7 +91,7 @@ object ExpressionConverter {
   def createExpressionForVariable(variableQueryVariable: String)
                                  (implicit context: CodeGenContext): CodeGenExpression = {
 
-    val variable = context.getVariable(variableQueryVariable)
+    val variable = context.getProjection(variableQueryVariable)
 
     variable.codeGenType.ct match {
       case CTNode => NodeProjection(variable)

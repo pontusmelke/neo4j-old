@@ -20,23 +20,18 @@
 package org.neo4j.cypher.internal.compiler.v3_1.codegen.ir
 
 import org.neo4j.cypher.internal.compiler.v3_1.codegen.ir.expressions.AggregateExpression
-import org.neo4j.cypher.internal.compiler.v3_1.codegen.{CodeGenContext, MethodStructure, Variable}
+import org.neo4j.cypher.internal.compiler.v3_1.codegen.{CodeGenContext, MethodStructure}
 
-case class AggregationInstruction(opName: String, aggregationFunctions: Map[Variable, AggregateExpression])
+case class AggregationInstruction(opName: String, aggregationFunctions: Iterable[AggregateExpression])
   extends Instruction {
 
   override def init[E](generator: MethodStructure[E])(implicit context: CodeGenContext) {
-    aggregationFunctions.values.foreach(e => e.init(generator))
-    aggregationFunctions.foreach {
-      case (v, e) => generator.assign(v.name, v.codeGenType, e.initialValue(generator))
-    }
+    aggregationFunctions.foreach(_.init(generator))
   }
 
   override def body[E](generator: MethodStructure[E])(implicit context: CodeGenContext) = {
     generator.trace(opName) { l1 =>
-      aggregationFunctions.foreach {
-        case (v, e) => l1.assign(v.name, v.codeGenType, e.generateExpression(l1))
-      }
+      aggregationFunctions.foreach(_.update(l1))
     }
   }
 
