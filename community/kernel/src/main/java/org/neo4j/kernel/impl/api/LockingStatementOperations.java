@@ -450,6 +450,7 @@ public class LockingStatementOperations implements
 
         acquireExclusiveNodeLock( state, nodeId );
         state.assertOpen();
+        // TODO: should we release the lock if it turns out we changed the property to the same value?
         return entityWriteDelegate.nodeSetProperty( state, nodeId, property );
     }
 

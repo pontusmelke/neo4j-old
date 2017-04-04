@@ -146,9 +146,21 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations, Sc
                     new CastingIterator<>( constraints, IndexBackedConstraintDescriptor.class );
 
             nodeSchemaMatcher.onMatchingSchema( state, uniquenessConstraints, node, property.propertyKeyId(),
-                    constraint -> validateNoExistingNodeWithExactValues( state, constraint,
-                            getAllPropertyValues( state, constraint.schema(), node, property ),
-                            node.id() ) );
+                    (constraint, propertyIds) ->
+                    {
+                        if ( propertyIds.contains( property.propertyKeyId() ) )
+                        {
+                            Object previousValue = nodeGetProperty( state, node, property.propertyKeyId() );
+                            if ( property.valueEquals( previousValue ) )
+                            {
+                                // since we are changing to the same value, there is no need to check
+                                return;
+                            }
+                        }
+                        validateNoExistingNodeWithExactValues( state, constraint,
+                                getAllPropertyValues( state, constraint.schema(), node, property ),
+                                node.id() );
+                    } );
         }
 
         return entityWriteOperations.nodeSetProperty( state, nodeId, property );

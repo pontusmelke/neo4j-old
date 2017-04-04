@@ -76,6 +76,12 @@ public interface ActiveLock
         }
 
         @Override
+        public String toString()
+        {
+            return String.format( "%sLock{%s:%d}",  mode(), resourceType, resourceId );
+        }
+
+        @Override
         public abstract String mode();
 
         @Override

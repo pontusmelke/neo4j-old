@@ -23,7 +23,7 @@ import java.util.Iterator;
 
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntSet;
-import org.neo4j.function.ThrowingConsumer;
+import org.neo4j.function.ThrowingBiConsumer;
 import org.neo4j.kernel.api.schema_new.LabelSchemaDescriptor;
 import org.neo4j.kernel.api.schema_new.LabelSchemaSupplier;
 import org.neo4j.kernel.impl.api.KernelStatement;
@@ -65,7 +65,7 @@ public class NodeSchemaMatcher
             Iterator<SUPPLIER> schemaSuppliers,
             NodeItem node,
             int specialPropertyId,
-            ThrowingConsumer<SUPPLIER, EXCEPTION> callback
+            ThrowingBiConsumer<SUPPLIER, PrimitiveIntSet, EXCEPTION> callback
     ) throws EXCEPTION
     {
         PrimitiveIntSet nodePropertyIds = null;
@@ -83,7 +83,7 @@ public class NodeSchemaMatcher
 
                 if ( nodeHasSchemaProperties( nodePropertyIds, schema.getPropertyIds(), specialPropertyId ) )
                 {
-                    callback.accept( schemaSupplier );
+                    callback.accept( schemaSupplier, nodePropertyIds );
                 }
             }
         }
