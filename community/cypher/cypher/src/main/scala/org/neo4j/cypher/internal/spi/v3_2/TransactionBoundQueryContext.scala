@@ -56,6 +56,7 @@ import org.neo4j.kernel.api.schema.constaints.ConstraintDescriptorFactory
 import org.neo4j.kernel.api.schema.{IndexQuery, SchemaDescriptorFactory}
 import org.neo4j.kernel.impl.core.NodeManager
 import org.neo4j.kernel.impl.locking.ResourceTypes
+import org.neo4j.values.Values
 
 import scala.collection.Iterator
 import scala.collection.JavaConverters._
@@ -340,7 +341,7 @@ final class TransactionBoundQueryContext(val transactionalContext: Transactional
 
     override def setProperty(id: Long, propertyKeyId: Int, value: Any) {
       try {
-        transactionalContext.statement.dataWriteOperations().nodeSetProperty(id, properties.Property.property(propertyKeyId, value) )
+        transactionalContext.statement.dataWriteOperations().nodeSetProperty(id, propertyKeyId, Values.of(value))
       } catch {
         case _: exceptions.EntityNotFoundException => //ignore
       }
@@ -414,7 +415,7 @@ final class TransactionBoundQueryContext(val transactionalContext: Transactional
 
     override def setProperty(id: Long, propertyKeyId: Int, value: Any) {
       try {
-        transactionalContext.statement.dataWriteOperations().relationshipSetProperty(id, properties.Property.property(propertyKeyId, value))
+        transactionalContext.statement.dataWriteOperations().relationshipSetProperty(id, propertyKeyId, Values.of(value))
       } catch {
         case _: exceptions.EntityNotFoundException => //ignore
       }

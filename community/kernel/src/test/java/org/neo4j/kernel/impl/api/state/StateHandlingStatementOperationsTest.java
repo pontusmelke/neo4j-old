@@ -59,6 +59,8 @@ import org.neo4j.storageengine.api.schema.IndexReader;
 import org.neo4j.storageengine.api.txstate.PropertyContainerState;
 import org.neo4j.storageengine.api.txstate.ReadableTransactionState;
 import org.neo4j.storageengine.api.txstate.WritableTransactionState;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static java.util.Collections.emptyIterator;
 import static org.junit.Assert.assertEquals;
@@ -510,13 +512,14 @@ public class StateHandlingStatementOperationsTest
         StateHandlingStatementOperations operations = newTxStateOps( storeReadLayer, autoIndexing );
 
         // WHEN
-        DefinedProperty newProperty = Property.stringProperty( propertyKeyId, value );
-        operations.nodeSetProperty( kernelStatement, nodeId, newProperty );
+        Value newValue = Values.of( value );
+        operations.nodeSetProperty( kernelStatement, nodeId, propertyKeyId, newValue );
 
         // THEN
         // although auto-indexing should still be notified
-        verify( autoIndexOps ).propertyChanged( any( DataWriteOperations.class ), eq( nodeId ),
-                eq( Property.stringProperty( propertyKeyId, value ) ), eq( newProperty ) );
+        verify( autoIndexOps ).propertyChanged(
+                any( DataWriteOperations.class ), eq( nodeId ),
+                eq( propertyKeyId ), eq( Values.of( value ) ), eq( newValue ) );
     }
 
     @Test
@@ -545,14 +548,15 @@ public class StateHandlingStatementOperationsTest
         StateHandlingStatementOperations operations = newTxStateOps( storeReadLayer, autoIndexing );
 
         // WHEN
-        DefinedProperty newProperty = Property.stringProperty( propertyKeyId, value );
-        operations.relationshipSetProperty( kernelStatement, relationshipId, newProperty );
+        Value newValue = Values.of( value );
+        operations.relationshipSetProperty( kernelStatement, relationshipId, propertyKeyId, newValue );
 
         // THEN
         verifyZeroInteractions( writableTransactionState );
         // although auto-indexing should still be notified
-        verify( autoIndexOps ).propertyChanged( any( DataWriteOperations.class ), eq( relationshipId ),
-                eq( newProperty ), eq( newProperty ) );
+        verify( autoIndexOps ).propertyChanged(
+                any( DataWriteOperations.class ), eq( relationshipId ),
+                eq( propertyKeyId ), eq( newValue ), eq( newValue ) );
     }
 
     @Test
@@ -571,8 +575,8 @@ public class StateHandlingStatementOperationsTest
         StateHandlingStatementOperations operations = newTxStateOps( inner );
 
         // WHEN
-        DefinedProperty newProperty = Property.stringProperty( propertyKeyId, value );
-        operations.graphSetProperty( kernelStatement, newProperty );
+        Value newValue = Values.of( value );
+        operations.graphSetProperty( kernelStatement, propertyKeyId, newValue );
 
         // THEN
         verifyZeroInteractions( writableTransactionState );

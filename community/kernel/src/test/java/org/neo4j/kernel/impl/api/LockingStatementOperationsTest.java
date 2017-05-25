@@ -60,6 +60,8 @@ import org.neo4j.storageengine.api.RelationshipItem;
 import org.neo4j.storageengine.api.SchemaResources;
 import org.neo4j.storageengine.api.txstate.ReadableTransactionState;
 import org.neo4j.storageengine.api.txstate.WritableTransactionState;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static java.util.Collections.emptyIterator;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -150,14 +152,15 @@ public class LockingStatementOperationsTest
     public void shouldAcquireEntityWriteLockBeforeSettingPropertyOnNode() throws Exception
     {
         // given
-        DefinedProperty property = Property.property( 8, 9 );
+        int propertyKeyId = 8;
+        Value value = Values.of( 9 );
 
         // when
-        lockingOps.nodeSetProperty( state, 123, property );
+        lockingOps.nodeSetProperty( state, 123, propertyKeyId, value );
 
         // then
         order.verify( locks ).acquireExclusive( LockTracer.NONE, ResourceTypes.NODE, 123 );
-        order.verify( entityWriteOps ).nodeSetProperty( state, 123, property );
+        order.verify( entityWriteOps ).nodeSetProperty( state, 123, propertyKeyId, value );
     }
 
     @Test
@@ -165,28 +168,30 @@ public class LockingStatementOperationsTest
     {
         // given
         txState.nodeDoCreate( 123 );
-        DefinedProperty property = Property.property( 8, 9 );
+        int propertyKeyId = 8;
+        Value value = Values.of( 9 );
 
         // when
-        lockingOps.nodeSetProperty( state, 123, property );
+        lockingOps.nodeSetProperty( state, 123, propertyKeyId, value );
 
         // then
         order.verify( locks, never() ).acquireExclusive( LockTracer.NONE, ResourceTypes.NODE, 123 );
-        order.verify( entityWriteOps ).nodeSetProperty( state, 123, property );
+        order.verify( entityWriteOps ).nodeSetProperty( state, 123, propertyKeyId, value );
     }
 
     @Test
     public void shouldAcquireSchemaReadLockBeforeSettingPropertyOnNode() throws Exception
     {
         // given
-        DefinedProperty property = Property.property( 8, 9 );
+        int propertyKeyId = 8;
+        Value value = Values.of( 9 );
 
         // when
-        lockingOps.nodeSetProperty( state, 123, property );
+        lockingOps.nodeSetProperty( state, 123, propertyKeyId, value );
 
         // then
         order.verify( locks ).acquireShared( LockTracer.NONE, ResourceTypes.SCHEMA, schemaResource() );
-        order.verify( entityWriteOps ).nodeSetProperty( state, 123, property );
+        order.verify( entityWriteOps ).nodeSetProperty( state, 123, propertyKeyId, value );
     }
 
     @Test
@@ -471,14 +476,15 @@ public class LockingStatementOperationsTest
     public void shouldAcquireEntityWriteLockBeforeSettingPropertyOnRelationship() throws Exception
     {
         // given
-        DefinedProperty property = Property.property( 8, 9 );
+        int propertyKeyId = 8;
+        Value value = Values.of( 9 );
 
         // when
-        lockingOps.relationshipSetProperty( state, 123, property );
+        lockingOps.relationshipSetProperty( state, 123, propertyKeyId, value );
 
         // then
         order.verify( locks ).acquireExclusive( LockTracer.NONE, ResourceTypes.RELATIONSHIP, 123 );
-        order.verify( entityWriteOps ).relationshipSetProperty( state, 123, property );
+        order.verify( entityWriteOps ).relationshipSetProperty( state, 123, propertyKeyId, value );
     }
 
     @Test
@@ -486,14 +492,15 @@ public class LockingStatementOperationsTest
     {
         // given
         txState.relationshipDoCreate( 123, 1, 2, 3 );
-        DefinedProperty property = Property.property( 8, 9 );
+        int propertyKeyId = 8;
+        Value value = Values.of( 9 );
 
         // when
-        lockingOps.relationshipSetProperty( state, 123, property );
+        lockingOps.relationshipSetProperty( state, 123, propertyKeyId, value );
 
         // then
         order.verify( locks, never() ).acquireExclusive( LockTracer.NONE, ResourceTypes.RELATIONSHIP, 123 );
-        order.verify( entityWriteOps ).relationshipSetProperty( state, 123, property );
+        order.verify( entityWriteOps ).relationshipSetProperty( state, 123, propertyKeyId, value );
     }
 
     @Test

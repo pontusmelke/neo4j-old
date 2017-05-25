@@ -32,7 +32,7 @@ import org.neo4j.graphdb.event.LabelEntry;
 import org.neo4j.graphdb.event.PropertyEntry;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.api.security.AccessMode;
 import org.neo4j.kernel.api.security.AnonymousContext;
 import org.neo4j.kernel.api.security.AuthSubject;
@@ -51,6 +51,8 @@ import org.neo4j.storageengine.api.txstate.NodeState;
 import org.neo4j.storageengine.api.txstate.NodeTransactionStateView;
 import org.neo4j.storageengine.api.txstate.ReadableTransactionState;
 import org.neo4j.storageengine.api.txstate.RelationshipState;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -194,13 +196,14 @@ public class TxStateTransactionDataViewTest
     {
         // Given
         int propertyKeyId = 1;
-        DefinedProperty prevProp = stringProperty( propertyKeyId, "prevValue" );
-        state.nodeDoChangeProperty( 1L, prevProp, stringProperty( propertyKeyId, "newValue" ) );
+        Value prevValue = Values.of( "prevValue" );
+        state.nodeDoChangeProperty( 1L, propertyKeyId, prevValue, Values.of( "newValue" ) );
         when( ops.propertyKeyGetName( propertyKeyId ) ).thenReturn( "theKey" );
         long propertyId = 20L;
         NodeItem node = asNode( 1L, propertyId, labels() );
         when( ops.nodeGetSingleCursor( 1L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( node ) );
-        when( ops.nodeGetProperty( node, propertyKeyId, NodeState.EMPTY ) ).thenReturn( asPropertyCursor( prevProp ) );
+        when( ops.nodeGetProperty( node, propertyKeyId, NodeState.EMPTY ) )
+                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
 
         // When
         Iterable<PropertyEntry<Node>> propertyEntries = snapshot().assignedNodeProperties();
@@ -218,13 +221,14 @@ public class TxStateTransactionDataViewTest
     {
         // Given
         int propertyKeyId = 1;
-        DefinedProperty prevProp = stringProperty( propertyKeyId, "prevValue" );
-        state.nodeDoRemoveProperty( 1L, prevProp );
+        Value prevValue = Values.of( "prevValue" );
+        state.nodeDoRemoveProperty( 1L, propertyKeyId, prevValue );
         when( ops.propertyKeyGetName( propertyKeyId ) ).thenReturn( "theKey" );
         long propertyId = 20L;
         NodeItem node = asNode( 1L, propertyId, labels() );
         when( ops.nodeGetSingleCursor( 1L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( node ) );
-        when( ops.nodeGetProperty( node, propertyKeyId, NodeState.EMPTY ) ).thenReturn( asPropertyCursor( prevProp ) );
+        when( ops.nodeGetProperty( node, propertyKeyId, NodeState.EMPTY ) )
+                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
 
         // When
         Iterable<PropertyEntry<Node>> propertyEntries = snapshot().removedNodeProperties();
@@ -241,15 +245,15 @@ public class TxStateTransactionDataViewTest
     {
         // Given
         int propertyKeyId = 1;
-        DefinedProperty prevValue = stringProperty( propertyKeyId, "prevValue" );
-        state.relationshipDoRemoveProperty( 1L, prevValue );
+        Value prevValue = Values.of( "prevValue" );
+        state.relationshipDoRemoveProperty( 1L, propertyKeyId, prevValue );
         when( ops.propertyKeyGetName( propertyKeyId ) ).thenReturn( "theKey" );
         long propertyId = 40L;
         RelationshipItem relationshipItem = asRelationship( 1, 0, 0, 0, propertyId );
         when( ops.relationshipGetSingleCursor( 1, ReadableTransactionState.EMPTY ) )
                 .thenReturn( cursor( relationshipItem ) );
         when( ops.relationshipGetProperty( relationshipItem, propertyKeyId, RelationshipState.EMPTY ) )
-                .thenReturn( asPropertyCursor( prevValue ) );
+                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
 
         // When
         Iterable<PropertyEntry<Relationship>> propertyEntries = snapshot().removedRelationshipProperties();
@@ -266,8 +270,8 @@ public class TxStateTransactionDataViewTest
     {
         // Given
         int propertyKeyId = 1;
-        DefinedProperty prevProp = stringProperty( propertyKeyId, "prevValue" );
-        state.relationshipDoReplaceProperty( 1L, prevProp, stringProperty( propertyKeyId, "newValue" ) );
+        Value prevValue = Values.of( "prevValue" );
+        state.relationshipDoReplaceProperty( 1L, propertyKeyId, prevValue, Values.of( "newValue" ) );
 
         when( ops.propertyKeyGetName( propertyKeyId ) ).thenReturn( "theKey" );
         long propertyId = 40L;
@@ -275,7 +279,7 @@ public class TxStateTransactionDataViewTest
         when( ops.relationshipGetSingleCursor( 1, ReadableTransactionState.EMPTY ) )
                 .thenReturn( cursor( relationshipItem ) );
         when( ops.relationshipGetProperty( relationshipItem, propertyKeyId, RelationshipState.EMPTY ) )
-                .thenReturn( asPropertyCursor( prevProp ) );
+                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
 
         // When
         Iterable<PropertyEntry<Relationship>> propertyEntries = snapshot().assignedRelationshipProperties();
