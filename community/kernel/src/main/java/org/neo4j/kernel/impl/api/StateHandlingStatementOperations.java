@@ -57,7 +57,6 @@ import org.neo4j.kernel.api.exceptions.schema.UniquePropertyValueValidationExcep
 import org.neo4j.kernel.api.index.InternalIndexState;
 import org.neo4j.kernel.api.legacyindex.AutoIndexing;
 import org.neo4j.kernel.api.properties.DefinedProperty;
-import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.api.properties.PropertyKeyIdIterator;
 import org.neo4j.kernel.api.schema.IndexQuery;
 import org.neo4j.kernel.api.schema.LabelSchemaDescriptor;
@@ -232,21 +231,21 @@ public class StateHandlingStatementOperations
     }
 
     @Override
-    public Object nodeGetProperty( KernelStatement statement, NodeItem node, int propertyKeyId )
+    public Value nodeGetProperty( KernelStatement statement, NodeItem node, int propertyKeyId )
     {
         try ( Cursor<PropertyItem> cursor = nodeGetPropertyCursor( statement, node, propertyKeyId ) )
         {
             if ( cursor.next() )
             {
-                return cursor.get().value();
+                return Values.of( cursor.get().value() );
             }
         }
         catch ( NotFoundException e )
         {
-            return null;
+            return Values.NO_VALUE;
         }
 
-        return null;
+        return Values.NO_VALUE;
     }
 
     @Override
@@ -288,21 +287,21 @@ public class StateHandlingStatementOperations
     }
 
     @Override
-    public Object relationshipGetProperty( KernelStatement statement, RelationshipItem relationship, int propertyKeyId )
+    public Value relationshipGetProperty( KernelStatement statement, RelationshipItem relationship, int propertyKeyId )
     {
         try ( Cursor<PropertyItem> cursor = relationshipGetPropertyCursor( statement, relationship, propertyKeyId ) )
         {
             if ( cursor.next() )
             {
-                return cursor.get().value();
+                return Values.of( cursor.get().value() );
             }
         }
         catch ( NotFoundException e )
         {
-            return null;
+            return Values.NO_VALUE;
         }
 
-        return null;
+        return Values.NO_VALUE;
     }
 
     @Override
@@ -916,8 +915,7 @@ public class StateHandlingStatementOperations
     @Override
     public Value graphSetProperty( KernelStatement state, int propertyKeyId, Value value )
     {
-        Object existingPropertyValue = graphGetProperty( state, propertyKeyId );
-        Value existingValue = existingPropertyValue == null ? Values.NO_VALUE : Values.of( existingPropertyValue );
+        Value existingValue = graphGetProperty( state, propertyKeyId );
 
         if ( !value.equals( existingValue ) )
         {
@@ -980,14 +978,12 @@ public class StateHandlingStatementOperations
     @Override
     public Value graphRemoveProperty( KernelStatement state, int propertyKeyId )
     {
-        Object existingPropertyValue = graphGetProperty( state, propertyKeyId );
-        if ( existingPropertyValue != null )
+        Value existingValue = graphGetProperty( state, propertyKeyId );
+        if ( existingValue != Values.NO_VALUE )
         {
-            Value existingValue = Values.of( existingPropertyValue );
             state.writableTxState().graphDoRemoveProperty( propertyKeyId, existingValue );
-            return existingValue;
         }
-        return Values.NO_VALUE;
+        return existingValue;
     }
 
     @Override
@@ -1004,11 +1000,11 @@ public class StateHandlingStatementOperations
     @Override
     public boolean graphHasProperty( KernelStatement state, int propertyKeyId )
     {
-        return graphGetProperty( state, propertyKeyId ) != null;
+        return graphGetProperty( state, propertyKeyId ) != Values.NO_VALUE;
     }
 
     @Override
-    public Object graphGetProperty( KernelStatement state, int propertyKeyId )
+    public Value graphGetProperty( KernelStatement state, int propertyKeyId )
     {
         Iterator<StorageProperty> properties = graphGetAllProperties( state );
         while ( properties.hasNext() )
@@ -1016,10 +1012,10 @@ public class StateHandlingStatementOperations
             DefinedProperty property = (DefinedProperty) properties.next();
             if ( property.propertyKeyId() == propertyKeyId )
             {
-                return property.value();
+                return Values.of( property.value() );
             }
         }
-        return null;
+        return Values.NO_VALUE;
     }
 
     private Iterator<StorageProperty> graphGetAllProperties( KernelStatement state )

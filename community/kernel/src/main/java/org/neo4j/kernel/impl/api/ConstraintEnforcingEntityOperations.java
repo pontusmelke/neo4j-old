@@ -158,8 +158,8 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations, Sc
 
                         if ( propertyIds.contains( propertyKeyId ) )
                         {
-                            Object previousValue = nodeGetProperty( state, node, propertyKeyId );
-                            if ( value.equals( Values.of( previousValue ) ) )
+                            Value previousValue = nodeGetProperty( state, node, propertyKeyId );
+                            if ( value.equals( previousValue ) )
                             {
                                 // since we are changing to the same value, there is no need to check
                                 return;
@@ -318,7 +318,8 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations, Sc
     }
 
     @Override
-    public Value relationshipSetProperty( KernelStatement state, long relationshipId, int propertyKeyId, Value value ) throws EntityNotFoundException, AutoIndexingKernelException, InvalidTransactionTypeKernelException
+    public Value relationshipSetProperty( KernelStatement state, long relationshipId, int propertyKeyId, Value value )
+            throws EntityNotFoundException, AutoIndexingKernelException, InvalidTransactionTypeKernelException
     {
         return entityWriteOperations.relationshipSetProperty( state, relationshipId, propertyKeyId, value );
     }
@@ -435,7 +436,7 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations, Sc
     }
 
     @Override
-    public Object graphGetProperty( KernelStatement state, int propertyKeyId )
+    public Value graphGetProperty( KernelStatement state, int propertyKeyId )
     {
         return entityReadOperations.graphGetProperty( state, propertyKeyId );
     }
@@ -507,7 +508,7 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations, Sc
     }
 
     @Override
-    public Object nodeGetProperty( KernelStatement statement, NodeItem node, int propertyKeyId )
+    public Value nodeGetProperty( KernelStatement statement, NodeItem node, int propertyKeyId )
     {
         return entityReadOperations.nodeGetProperty( statement, node, propertyKeyId );
     }
@@ -531,7 +532,7 @@ public class ConstraintEnforcingEntityOperations implements EntityOperations, Sc
     }
 
     @Override
-    public Object relationshipGetProperty( KernelStatement statement, RelationshipItem relationship, int propertyKeyId )
+    public Value relationshipGetProperty( KernelStatement statement, RelationshipItem relationship, int propertyKeyId )
     {
         return entityReadOperations.relationshipGetProperty( statement, relationship, propertyKeyId );
     }

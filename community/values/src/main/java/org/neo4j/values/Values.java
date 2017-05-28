@@ -20,6 +20,7 @@
 package org.neo4j.values;
 
 import java.lang.reflect.Array;
+import java.util.Comparator;
 
 @SuppressWarnings( "WeakerAccess" )
 public class Values
@@ -36,6 +37,9 @@ public class Values
     class ValueLoadException extends RuntimeException
     {
     }
+
+    public static ValueComparator VALUE_COMPARATOR =
+            new ValueComparator( Comparator.comparingInt( ValueGroup.Id::comparabilityGroup ) );
 
     // DIRECT FACTORY METHODS
 
@@ -121,6 +125,10 @@ public class Values
         if ( number instanceof Short )
         {
             return shortValue( number.shortValue() );
+        }
+        if ( number == null )
+        {
+            return NO_VALUE;
         }
 
         throw new UnsupportedOperationException( "Unsupported type of Number " + number.toString() );

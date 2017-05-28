@@ -206,7 +206,7 @@ public class GuardingStatementOperations implements
     }
 
     @Override
-    public Object graphGetProperty( KernelStatement statement, int propertyKeyId )
+    public Value graphGetProperty( KernelStatement statement, int propertyKeyId )
     {
         guard.check( statement );
         return entityReadDelegate.graphGetProperty( statement, propertyKeyId );
@@ -300,7 +300,7 @@ public class GuardingStatementOperations implements
     }
 
     @Override
-    public Object nodeGetProperty( KernelStatement statement, NodeItem node, int propertyKeyId )
+    public Value nodeGetProperty( KernelStatement statement, NodeItem node, int propertyKeyId )
     {
         guard.check( statement );
         return entityReadDelegate.nodeGetProperty( statement, node, propertyKeyId );
@@ -328,7 +328,7 @@ public class GuardingStatementOperations implements
     }
 
     @Override
-    public Object relationshipGetProperty( KernelStatement statement, RelationshipItem relationship, int propertyKeyId )
+    public Value relationshipGetProperty( KernelStatement statement, RelationshipItem relationship, int propertyKeyId )
     {
         guard.check( statement );
         return entityReadDelegate.relationshipGetProperty( statement, relationship, propertyKeyId );

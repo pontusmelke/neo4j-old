@@ -112,6 +112,7 @@ import org.neo4j.storageengine.api.lock.ResourceType;
 import org.neo4j.storageengine.api.schema.PopulationProgress;
 import org.neo4j.storageengine.api.schema.SchemaRule;
 import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static java.lang.String.format;
 import static org.neo4j.collection.primitive.PrimitiveIntCollections.deduplicate;
@@ -290,12 +291,12 @@ public class OperationsFacade
     }
 
     @Override
-    public Object nodeGetProperty( long nodeId, int propertyKeyId ) throws EntityNotFoundException
+    public Value nodeGetProperty( long nodeId, int propertyKeyId ) throws EntityNotFoundException
     {
         statement.assertOpen();
         if ( propertyKeyId == StatementConstants.NO_SUCH_PROPERTY_KEY )
         {
-            return null;
+            return Values.NO_VALUE;
         }
         EntityReadOperations dataRead = dataRead();
         try ( Cursor<NodeItem> node = dataRead.nodeCursorById( statement, nodeId ) )
@@ -404,12 +405,12 @@ public class OperationsFacade
     }
 
     @Override
-    public Object relationshipGetProperty( long relationshipId, int propertyKeyId ) throws EntityNotFoundException
+    public Value relationshipGetProperty( long relationshipId, int propertyKeyId ) throws EntityNotFoundException
     {
         statement.assertOpen();
         if ( propertyKeyId == StatementConstants.NO_SUCH_PROPERTY_KEY )
         {
-            return null;
+            return Values.NO_VALUE;
         }
         EntityReadOperations dataRead = dataRead();
         try ( Cursor<RelationshipItem> relationship = dataRead.relationshipCursorById( statement, relationshipId ) )
@@ -434,7 +435,7 @@ public class OperationsFacade
     }
 
     @Override
-    public Object graphGetProperty( int propertyKeyId )
+    public Value graphGetProperty( int propertyKeyId )
     {
         statement.assertOpen();
         if ( propertyKeyId == StatementConstants.NO_SUCH_PROPERTY_KEY )

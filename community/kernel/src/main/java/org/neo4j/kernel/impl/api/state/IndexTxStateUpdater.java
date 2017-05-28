@@ -155,7 +155,7 @@ public class IndexTxStateUpdater
                         }
                         else
                         {
-                            Object value = readOps.nodeGetProperty( state, node, indexPropertyId );
+                            Object value = readOps.nodeGetProperty( state, node, indexPropertyId ).asPublic();
                             valuesBefore[i] = value;
                             valuesAfter[i] = value;
                         }

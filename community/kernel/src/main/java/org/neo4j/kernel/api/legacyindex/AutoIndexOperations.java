@@ -60,7 +60,8 @@ public interface AutoIndexOperations
     AutoIndexOperations UNSUPPORTED = new AutoIndexOperations()
     {
         @Override
-        public void propertyAdded( DataWriteOperations ops, long entityId, int propertyKeyId, Value value ) throws AutoIndexingKernelException
+        public void propertyAdded( DataWriteOperations ops, long entityId, int propertyKeyId, Value value )
+                throws AutoIndexingKernelException
         {
             throw new UnsupportedOperationException();
         }

@@ -452,7 +452,8 @@ public class LockingStatementOperations implements
     }
 
     @Override
-    public Value relationshipSetProperty( KernelStatement state, long relationshipId, int propertyKeyId, Value value ) throws EntityNotFoundException, AutoIndexingKernelException, InvalidTransactionTypeKernelException
+    public Value relationshipSetProperty( KernelStatement state, long relationshipId, int propertyKeyId, Value value )
+            throws EntityNotFoundException, AutoIndexingKernelException, InvalidTransactionTypeKernelException
     {
         acquireExclusiveRelationshipLock( state, relationshipId );
         state.assertOpen();

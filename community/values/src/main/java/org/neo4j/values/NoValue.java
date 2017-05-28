@@ -31,7 +31,7 @@ final class NoValue extends Value
     @Override
     public boolean equals( Object other )
     {
-        return false;
+        return other == this;
     }
 
     @Override

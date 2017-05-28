@@ -55,14 +55,14 @@ public class ValueGroup
         Id valueGroupId();
     }
 
-    interface VNumber extends WithId
+    public interface VNumber extends WithId
     {
         int compareTo( VInteger other );
 
         int compareTo( VFloatingPoint other );
     }
 
-    interface VInteger extends VNumber
+    public interface VInteger extends VNumber
     {
         long longValue();
 
@@ -72,7 +72,7 @@ public class ValueGroup
         }
     }
 
-    interface VFloatingPoint extends VNumber
+    public interface VFloatingPoint extends VNumber
     {
         double doubleValue();
 
@@ -82,7 +82,7 @@ public class ValueGroup
         }
     }
 
-    interface VBoolean extends WithId
+    public interface VBoolean extends WithId
     {
         boolean booleanValue();
 
@@ -94,7 +94,7 @@ public class ValueGroup
         int compareTo( VBoolean other );
     }
 
-    interface VText extends WithId
+    public interface VText extends WithId
     {
         String stringValue();
 
@@ -115,7 +115,7 @@ public class ValueGroup
         int compareTo( VFloatingPointArray other );
     }
 
-    interface VIntegerArray extends VNumberArray
+    public interface VIntegerArray extends VNumberArray
     {
         long longValue( int offset );
 
@@ -125,7 +125,7 @@ public class ValueGroup
         }
     }
 
-    interface VFloatingPointArray extends VNumberArray
+    public interface VFloatingPointArray extends VNumberArray
     {
         double doubleValue( int offset );
 
@@ -135,7 +135,7 @@ public class ValueGroup
         }
     }
 
-    interface VBooleanArray extends WithId
+    public interface VBooleanArray extends WithId
     {
         int length();
 
@@ -149,7 +149,7 @@ public class ValueGroup
         int compareTo( VBooleanArray other );
     }
 
-    interface VTextArray extends WithId
+    public interface VTextArray extends WithId
     {
         int length();
 

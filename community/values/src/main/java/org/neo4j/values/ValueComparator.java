@@ -23,7 +23,7 @@ import java.util.Comparator;
 
 import static java.lang.String.format;
 
-class ValueComparator implements Comparator<Value>
+public class ValueComparator implements Comparator<Value>
 {
     private final Comparator<ValueGroup.Id> valueGroupComparator;
 
