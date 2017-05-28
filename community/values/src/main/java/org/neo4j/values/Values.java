@@ -47,6 +47,10 @@ public class Values
 
     public static Value stringValue( String value )
     {
+        if ( value == null )
+        {
+            return NO_VALUE;
+        }
         return new DirectString( value );
     }
 
