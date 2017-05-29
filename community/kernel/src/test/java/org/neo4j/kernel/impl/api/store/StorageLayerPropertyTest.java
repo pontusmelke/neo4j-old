@@ -24,11 +24,12 @@ import org.junit.Test;
 import java.lang.reflect.Array;
 
 import org.neo4j.cursor.Cursor;
-import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.impl.api.operations.KeyReadOperations;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.txstate.NodeState;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
@@ -102,11 +103,11 @@ public class StorageLayerPropertyTest extends StorageLayerTest
                 {
                     if ( props.next() )
                     {
-                        Object propVal = props.get().value();
+                        Value propVal = props.get().value();
 
                         //then
-                        assertTrue( propVal + ".valueEquals(" + value + ")",
-                                Property.property( propKey, propVal ).valueEquals( value ) );
+                        assertTrue( propVal + ".equals(" + value + ")",
+                                propVal.equals( Values.of( value ) ) );
                     }
                     else
                     {

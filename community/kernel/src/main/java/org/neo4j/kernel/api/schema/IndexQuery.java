@@ -27,12 +27,10 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import java.util.function.Predicate;
 
 import org.neo4j.kernel.api.ReadOperations;
-import org.neo4j.kernel.api.properties.DefinedProperty;
-import org.neo4j.kernel.api.properties.Property;
 import org.neo4j.kernel.api.schema.index.IndexDescriptor;
-import org.neo4j.kernel.impl.api.PropertyValueComparison;
 import org.neo4j.values.Value;
 import org.neo4j.values.ValueGroup;
+import org.neo4j.values.ValueTuple;
 import org.neo4j.values.Values;
 
 public abstract class IndexQuery implements Predicate<Value>
@@ -135,6 +133,16 @@ public abstract class IndexQuery implements Predicate<Value>
         return new StringSuffixPredicate( propertyKeyId, suffix );
     }
 
+    public static ValueTuple asValueTuple( IndexQuery.ExactPredicate... query )
+    {
+        Value[] values = new Value[query.length];
+        for ( int i = 0; i < query.length; i++ )
+        {
+            values[i] = query[i].value();
+        }
+        return ValueTuple.of( values );
+    }
+
     private final int propertyKeyId;
 
     protected IndexQuery( int propertyKeyId )
@@ -200,7 +208,7 @@ public abstract class IndexQuery implements Predicate<Value>
         @Override
         public boolean test( Value value )
         {
-            return value != null;
+            return value != null && value != Values.NO_VALUE;
         }
     }
 
@@ -226,9 +234,9 @@ public abstract class IndexQuery implements Predicate<Value>
             return exactValue.equals( value );
         }
 
-        public Object value()
+        public Value value()
         {
-            return exactValue.asPublic();
+            return exactValue;
         }
     }
 
@@ -397,7 +405,8 @@ public abstract class IndexQuery implements Predicate<Value>
         @Override
         public boolean test( Value value )
         {
-            return value != null && value instanceof ValueGroup.VText && ((String)value.asPublic()).startsWith( prefix );
+            return value != null && value instanceof ValueGroup.VText &&
+                    ((ValueGroup.VText)value).stringValue().startsWith( prefix );
         }
 
         public String prefix()

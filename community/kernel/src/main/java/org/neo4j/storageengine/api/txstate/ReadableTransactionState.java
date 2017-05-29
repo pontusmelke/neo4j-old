@@ -25,13 +25,13 @@ import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.helpers.collection.Iterables;
 import org.neo4j.kernel.api.exceptions.schema.ConstraintValidationException;
 import org.neo4j.kernel.api.exceptions.schema.CreateConstraintFailureException;
-import org.neo4j.kernel.api.schema.OrderedPropertyValues;
 import org.neo4j.kernel.api.schema.SchemaDescriptor;
 import org.neo4j.kernel.api.schema.constaints.ConstraintDescriptor;
 import org.neo4j.kernel.api.schema.index.IndexDescriptor;
 import org.neo4j.kernel.impl.api.RelationshipVisitor;
 import org.neo4j.kernel.impl.api.store.RelationshipIterator;
 import org.neo4j.storageengine.api.StorageProperty;
+import org.neo4j.values.ValueTuple;
 
 /**
  * This interface contains the methods for reading transaction state from the transaction state.
@@ -102,7 +102,7 @@ public interface ReadableTransactionState extends NodeTransactionStateView
 
     ReadableDiffSets<Long> indexUpdatesForScan( IndexDescriptor index );
 
-    ReadableDiffSets<Long> indexUpdatesForSeek( IndexDescriptor index, OrderedPropertyValues values );
+    ReadableDiffSets<Long> indexUpdatesForSeek( IndexDescriptor index, ValueTuple values );
 
     ReadableDiffSets<Long> indexUpdatesForRangeSeekByNumber( IndexDescriptor index,
                                                              Number lower, boolean includeLower,
@@ -275,7 +275,7 @@ public interface ReadableTransactionState extends NodeTransactionStateView
         }
 
         @Override
-        public ReadableDiffSets<Long> indexUpdatesForSeek( IndexDescriptor index, OrderedPropertyValues values )
+        public ReadableDiffSets<Long> indexUpdatesForSeek( IndexDescriptor index, ValueTuple values )
         {
             return ReadableDiffSets.Empty.instance();
         }

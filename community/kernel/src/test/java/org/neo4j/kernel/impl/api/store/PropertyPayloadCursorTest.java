@@ -45,6 +45,8 @@ import org.neo4j.kernel.impl.store.StandaloneDynamicRecordAllocator;
 import org.neo4j.kernel.impl.store.record.DynamicRecord;
 import org.neo4j.kernel.impl.store.record.PropertyBlock;
 import org.neo4j.kernel.impl.store.record.RecordLoad;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -476,11 +478,11 @@ public class PropertyPayloadCursorTest
         }
     }
 
-    private static void assertNextAndSameValue( boolean next, Param param, PropertyType type, Object value )
+    private static void assertNextAndSameValue( boolean next, Param param, PropertyType type, Value value )
     {
         assertTrue( next );
         assertEquals( param.type, type );
-        assertObjectOrArrayEquals( param.value, value );
+        assertEquals( param.value, value );
     }
 
     private static PropertyPayloadCursor allProperties( Params input )
@@ -543,13 +545,13 @@ public class PropertyPayloadCursorTest
 
     static class Param
     {
-        final Object value;
+        final Value value;
         final PropertyType type;
         final int keyId;
 
         private Param( Object value, PropertyType type, int keyId )
         {
-            this.value = value;
+            this.value = Values.of( value );
             this.type = type;
             this.keyId = keyId;
         }
@@ -562,7 +564,7 @@ public class PropertyPayloadCursorTest
         @Override
         public String toString()
         {
-            return "Param{keyId=" + keyId + ", type=" + type + ", value=" + Strings.prettyPrint( value ) + '}';
+            return "Param{keyId=" + keyId + ", type=" + type + ", value=" + Strings.prettyPrint( value.asPublic() ) + '}';
         }
     }
 

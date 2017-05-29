@@ -19,12 +19,26 @@
  */
 package org.neo4j.values;
 
+import java.util.Comparator;
+
 public class ValueTuple
 {
     public static ValueTuple of( Value... values )
     {
         assert values.length > 0 : "Empty ValueTuple is not allowed";
         assert noNulls( values );
+        return new ValueTuple( values );
+    }
+
+    public static ValueTuple of( Object... objects )
+    {
+        assert objects.length > 0 : "Empty ValueTuple is not allowed";
+        assert noNulls( objects );
+        Value[] values = new Value[objects.length];
+        for ( int i = 0; i < values.length; i++ )
+        {
+            values[i] = Values.of( objects[i] );
+        }
         return new ValueTuple( values );
     }
 
@@ -106,9 +120,9 @@ public class ValueTuple
         return sb.toString();
     }
 
-    private static boolean noNulls( Value[] values )
+    private static boolean noNulls( Object[] values )
     {
-        for ( Value v : values )
+        for ( Object v : values )
         {
             if ( v == null )
             {
@@ -117,4 +131,23 @@ public class ValueTuple
         }
         return true;
     }
+
+    public static Comparator<ValueTuple> COMPARATOR = ( left, right ) ->
+    {
+        if ( left.values.length != right.values.length )
+        {
+            throw new IllegalStateException( "Comparing two ValueTuples of different lengths!" );
+        }
+
+        int compare = 0;
+        for ( int i = 0; i < left.values.length; i++ )
+        {
+            compare = Values.VALUE_COMPARATOR.compare( left.valueAt( i ), right.valueAt( i ) );
+            if ( compare != 0 )
+            {
+                return compare;
+            }
+        }
+        return compare;
+    };
 }

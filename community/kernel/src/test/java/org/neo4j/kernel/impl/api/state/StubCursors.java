@@ -22,16 +22,16 @@ package org.neo4j.kernel.impl.api.state;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.neo4j.collection.primitive.PrimitiveIntCollection;
 import org.neo4j.collection.primitive.PrimitiveIntCollections;
 import org.neo4j.collection.primitive.PrimitiveIntSet;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.helpers.collection.Iterables;
-import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.api.properties.PropertyKeyValue;
 import org.neo4j.kernel.impl.locking.Lock;
 import org.neo4j.storageengine.api.NodeItem;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.RelationshipItem;
+import org.neo4j.values.Value;
 
 import static org.neo4j.collection.primitive.PrimitiveIntCollections.emptySet;
 import static org.neo4j.helpers.collection.Iterables.map;
@@ -256,12 +256,12 @@ public class StubCursors
         return PrimitiveIntCollections.asSet( labels );
     }
 
-    public static Cursor<PropertyItem> asPropertyCursor( final DefinedProperty... properties )
+    public static Cursor<PropertyItem> asPropertyCursor( final PropertyKeyValue... properties )
     {
         return cursor( map( StubCursors::asPropertyItem, Arrays.asList( properties ) ) );
     }
 
-    private static PropertyItem asPropertyItem( final DefinedProperty property )
+    private static PropertyItem asPropertyItem( final PropertyKeyValue property )
     {
         return new PropertyItem()
         {
@@ -272,9 +272,9 @@ public class StubCursors
             }
 
             @Override
-            public Object value()
+            public Value value()
             {
-                return property.value();
+                return property.valueForced();
             }
         };
     }

@@ -21,7 +21,7 @@ package org.neo4j.kernel.impl.api.store;
 
 import java.util.function.Consumer;
 
-import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.api.properties.PropertyKeyValue;
 import org.neo4j.kernel.impl.locking.Lock;
 import org.neo4j.kernel.impl.store.PropertyStore;
 import org.neo4j.storageengine.api.txstate.PropertyContainerState;
@@ -59,9 +59,9 @@ public class SinglePropertyCursor extends AbstractPropertyCursor
     }
 
     @Override
-    protected DefinedProperty nextAdded()
+    protected PropertyKeyValue nextAdded()
     {
-        return !fetched ? (DefinedProperty) state.getAddedProperty( propertyKeyId ) : null;
+        return !fetched ? (PropertyKeyValue) state.getAddedProperty( propertyKeyId ) : null;
     }
 
     @Override

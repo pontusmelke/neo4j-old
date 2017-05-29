@@ -36,6 +36,8 @@ import org.neo4j.kernel.impl.store.record.PropertyBlock;
 import org.neo4j.kernel.impl.store.record.Record;
 import org.neo4j.kernel.impl.util.Bits;
 import org.neo4j.string.UTF8;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
 
 import static org.neo4j.kernel.impl.store.record.RecordLoad.FORCE;
 
@@ -142,47 +144,47 @@ class PropertyPayloadCursor implements Disposable
         return PropertyBlock.keyIndexId( currentHeader() );
     }
 
-    Object value()
+    Value value()
     {
         switch ( type() )
         {
         case BOOL:
-            return PropertyBlock.fetchByte( currentHeader() ) == 1;
+            return Values.booleanValue( PropertyBlock.fetchByte( currentHeader() ) == 1 );
         case BYTE:
-            return PropertyBlock.fetchByte( currentHeader() );
+            return Values.byteValue( PropertyBlock.fetchByte( currentHeader() ) );
         case SHORT:
-            return PropertyBlock.fetchShort( currentHeader() );
+            return Values.shortValue( PropertyBlock.fetchShort( currentHeader() ) );
         case CHAR:
-            return (char) PropertyBlock.fetchShort( currentHeader() );
+            return Values.charValue( (char) PropertyBlock.fetchShort( currentHeader() ) );
         case INT:
-            return PropertyBlock.fetchInt( currentHeader() );
+            return Values.intValue( PropertyBlock.fetchInt( currentHeader() ) );
         case LONG:
         {
             if ( PropertyBlock.valueIsInlined( currentHeader() ) )
             {
-                return PropertyBlock.fetchLong( currentHeader() ) >>> 1;
+                return Values.longValue( PropertyBlock.fetchLong( currentHeader() ) >>> 1 );
             }
-            return blocks[position + 1];
+            return Values.longValue( blocks[position + 1] );
         }
         case FLOAT:
-            return Float.intBitsToFloat( PropertyBlock.fetchInt( currentHeader() ) );
+            return Values.floatValue( Float.intBitsToFloat( PropertyBlock.fetchInt( currentHeader() ) ) );
         case DOUBLE:
-            return Double.longBitsToDouble( blocks[position + 1] );
+            return Values.doubleValue( Double.longBitsToDouble( blocks[position + 1] ) );
         case SHORT_STRING:
-            return LongerShortString.decode( blocks, position, currentBlocksUsed() );
+            return Values.stringValue( LongerShortString.decode( blocks, position, currentBlocksUsed() ) );
         case STRING:
         {
             readFromStore( stringStore, stringCursor );
             buffer.flip();
-            return UTF8.decode( buffer.array(), 0, buffer.limit() );
+            return Values.stringValue( UTF8.decode( buffer.array(), 0, buffer.limit() ) );
         }
         case SHORT_ARRAY:
-            return ShortArray.decode( valueAsBits() );
+            return Values.of( ShortArray.decode( valueAsBits() ) );
         case ARRAY:
         {
             readFromStore( arrayStore, arrayCursor );
             buffer.flip();
-            return readArrayFromBuffer( buffer );
+            return Values.of( readArrayFromBuffer( buffer ) );
         }
         default:
             throw new IllegalStateException( "No such type:" + type() );

@@ -106,10 +106,13 @@ public class ValueGroup
         int compareTo( VText other );
     }
 
-    interface VNumberArray extends WithId
+    public interface VArray extends WithId
     {
         int length();
+    }
 
+    public interface VNumberArray extends VArray
+    {
         int compareTo( VIntegerArray other );
 
         int compareTo( VFloatingPointArray other );
@@ -135,7 +138,7 @@ public class ValueGroup
         }
     }
 
-    public interface VBooleanArray extends WithId
+    public interface VBooleanArray extends VArray
     {
         int length();
 
@@ -149,7 +152,7 @@ public class ValueGroup
         int compareTo( VBooleanArray other );
     }
 
-    public interface VTextArray extends WithId
+    public interface VTextArray extends VArray
     {
         int length();
 

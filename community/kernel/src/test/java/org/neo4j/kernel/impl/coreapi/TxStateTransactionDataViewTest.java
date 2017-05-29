@@ -32,7 +32,7 @@ import org.neo4j.graphdb.event.LabelEntry;
 import org.neo4j.graphdb.event.PropertyEntry;
 import org.neo4j.kernel.api.KernelTransaction;
 import org.neo4j.kernel.api.Statement;
-import org.neo4j.kernel.api.properties.Property;
+import org.neo4j.kernel.api.properties.PropertyKeyValue;
 import org.neo4j.kernel.api.security.AccessMode;
 import org.neo4j.kernel.api.security.AnonymousContext;
 import org.neo4j.kernel.api.security.AuthSubject;
@@ -63,7 +63,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.neo4j.helpers.collection.Iterables.single;
 import static org.neo4j.helpers.collection.MapUtil.genericMap;
-import static org.neo4j.kernel.api.properties.Property.stringProperty;
 import static org.neo4j.kernel.impl.api.state.StubCursors.asNode;
 import static org.neo4j.kernel.impl.api.state.StubCursors.asNodeCursor;
 import static org.neo4j.kernel.impl.api.state.StubCursors.asPropertyCursor;
@@ -108,7 +107,7 @@ public class TxStateTransactionDataViewTest
         when( ops.nodeGetSingleCursor( 2L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( node1 ) );
 
         when( ops.nodeGetProperties( node1, NodeState.EMPTY ) )
-                .thenReturn( asPropertyCursor( stringProperty( 1, "p" ) ) );
+                .thenReturn( asPropertyCursor( new PropertyKeyValue( 1, Values.of( "p" ) ) ) );
 
         NodeItem node2 = asNode( 1L, 21L, labels() );
         when( ops.nodeGetSingleCursor( 1L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( node2 ) );
@@ -149,7 +148,7 @@ public class TxStateTransactionDataViewTest
         RelationshipItem rel2 = asRelationship( 2L, 1, 1L, 1L, 40L );
         when( ops.relationshipGetSingleCursor( 2L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( rel2 ) );
         when( ops.relationshipGetProperties( rel2, RelationshipState.EMPTY ) )
-                .thenReturn( asPropertyCursor( stringProperty( 1, "p" ) ) );
+                .thenReturn( asPropertyCursor( new PropertyKeyValue( 1, Values.of( "p" ) ) ) );
 
         when( ops.propertyKeyGetName( 1 ) ).thenReturn( "key" );
 
@@ -203,7 +202,7 @@ public class TxStateTransactionDataViewTest
         NodeItem node = asNode( 1L, propertyId, labels() );
         when( ops.nodeGetSingleCursor( 1L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( node ) );
         when( ops.nodeGetProperty( node, propertyKeyId, NodeState.EMPTY ) )
-                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
+                .thenReturn( asPropertyCursor( new PropertyKeyValue( propertyKeyId, prevValue ) ) );
 
         // When
         Iterable<PropertyEntry<Node>> propertyEntries = snapshot().assignedNodeProperties();
@@ -228,7 +227,7 @@ public class TxStateTransactionDataViewTest
         NodeItem node = asNode( 1L, propertyId, labels() );
         when( ops.nodeGetSingleCursor( 1L, ReadableTransactionState.EMPTY ) ).thenReturn( cursor( node ) );
         when( ops.nodeGetProperty( node, propertyKeyId, NodeState.EMPTY ) )
-                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
+                .thenReturn( asPropertyCursor( new PropertyKeyValue( propertyKeyId, prevValue ) ) );
 
         // When
         Iterable<PropertyEntry<Node>> propertyEntries = snapshot().removedNodeProperties();
@@ -253,7 +252,7 @@ public class TxStateTransactionDataViewTest
         when( ops.relationshipGetSingleCursor( 1, ReadableTransactionState.EMPTY ) )
                 .thenReturn( cursor( relationshipItem ) );
         when( ops.relationshipGetProperty( relationshipItem, propertyKeyId, RelationshipState.EMPTY ) )
-                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
+                .thenReturn( asPropertyCursor( new PropertyKeyValue( propertyKeyId, prevValue ) ) );
 
         // When
         Iterable<PropertyEntry<Relationship>> propertyEntries = snapshot().removedRelationshipProperties();
@@ -279,7 +278,7 @@ public class TxStateTransactionDataViewTest
         when( ops.relationshipGetSingleCursor( 1, ReadableTransactionState.EMPTY ) )
                 .thenReturn( cursor( relationshipItem ) );
         when( ops.relationshipGetProperty( relationshipItem, propertyKeyId, RelationshipState.EMPTY ) )
-                .thenReturn( asPropertyCursor( Property.property( propertyKeyId, prevValue.asPublic() ) ) );
+                .thenReturn( asPropertyCursor( new PropertyKeyValue( propertyKeyId, prevValue ) ) );
 
         // When
         Iterable<PropertyEntry<Relationship>> propertyEntries = snapshot().assignedRelationshipProperties();

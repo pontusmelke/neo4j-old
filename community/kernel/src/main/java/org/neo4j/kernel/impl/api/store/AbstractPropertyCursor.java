@@ -24,13 +24,14 @@ import java.util.function.IntPredicate;
 import org.neo4j.cursor.Cursor;
 import org.neo4j.function.Disposable;
 import org.neo4j.io.pagecache.PageCursor;
-import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.api.properties.PropertyKeyValue;
 import org.neo4j.kernel.impl.locking.Lock;
 import org.neo4j.kernel.impl.store.PropertyStore;
 import org.neo4j.kernel.impl.store.record.PropertyRecord;
 import org.neo4j.kernel.impl.store.record.Record;
 import org.neo4j.storageengine.api.PropertyItem;
 import org.neo4j.storageengine.api.txstate.PropertyContainerState;
+import org.neo4j.values.Value;
 
 import static org.neo4j.kernel.api.StatementConstants.NO_SUCH_PROPERTY;
 import static org.neo4j.kernel.impl.store.record.RecordLoad.FORCE;
@@ -44,7 +45,7 @@ public abstract class AbstractPropertyCursor implements PropertyItem, Cursor<Pro
 
     protected boolean fetched;
     private boolean doneTraversingTheChain;
-    private DefinedProperty property;
+    private PropertyKeyValue property;
     private IntPredicate propertyKeyIds;
     private long nextPropertyId;
     private Lock lock;
@@ -121,7 +122,7 @@ public abstract class AbstractPropertyCursor implements PropertyItem, Cursor<Pro
             if ( !state.isPropertyRemoved( propertyKeyId ) )
             {
                 assert property == null;
-                property = (DefinedProperty) state.getChangedProperty( propertyKeyId );
+                property = (PropertyKeyValue) state.getChangedProperty( propertyKeyId );
                 return true;
             }
             next = payload.next();
@@ -131,7 +132,7 @@ public abstract class AbstractPropertyCursor implements PropertyItem, Cursor<Pro
 
     protected abstract boolean loadNextFromDisk();
 
-    protected abstract DefinedProperty nextAdded();
+    protected abstract PropertyKeyValue nextAdded();
 
     @Override
     public final PropertyItem get()
@@ -151,9 +152,9 @@ public abstract class AbstractPropertyCursor implements PropertyItem, Cursor<Pro
     }
 
     @Override
-    public final Object value()
+    public final Value value()
     {
-        return property == null ? payload.value() : property.value();
+        return property == null ? payload.value() : property.valueForced();
     }
 
     @Override

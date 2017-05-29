@@ -25,16 +25,21 @@ import java.util.Comparator;
 @SuppressWarnings( "WeakerAccess" )
 public class Values
 {
+    public static final Value MIN_NUMBER = Values.doubleValue( Double.NEGATIVE_INFINITY );
+    public static final Value MAX_NUMBER = Values.doubleValue( Double.NaN );
+    public static final Value MIN_STRING = Values.stringValue( "" );
+    public static final Value MAX_STRING = Values.booleanValue( false );
+
     private Values()
     {
     }
 
-    interface ValueLoader<T>
+    public interface ValueLoader<T>
     {
         T load() throws ValueLoadException;
     }
 
-    class ValueLoadException extends RuntimeException
+    public class ValueLoadException extends RuntimeException
     {
     }
 

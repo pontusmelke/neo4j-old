@@ -22,7 +22,7 @@ package org.neo4j.kernel.impl.api.store;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
-import org.neo4j.kernel.api.properties.DefinedProperty;
+import org.neo4j.kernel.api.properties.PropertyKeyValue;
 import org.neo4j.kernel.impl.locking.Lock;
 import org.neo4j.kernel.impl.store.PropertyStore;
 import org.neo4j.storageengine.api.StorageProperty;
@@ -59,11 +59,11 @@ public class PropertyCursor extends AbstractPropertyCursor
     }
 
     @Override
-    protected DefinedProperty nextAdded()
+    protected PropertyKeyValue nextAdded()
     {
         if ( storagePropertyIterator.hasNext() )
         {
-            return (DefinedProperty) storagePropertyIterator.next();
+            return (PropertyKeyValue) storagePropertyIterator.next();
         }
         return null;
     }
