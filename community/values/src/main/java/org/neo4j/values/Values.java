@@ -228,6 +228,15 @@ public class Values
         return new DirectShortArray( value );
     }
 
+    // Utilities
+    public static boolean isArray( Value value )
+    {
+        int group = value.valueGroupId().comparabilityGroup();
+
+        return group >= ValueGroup.Id.INTEGER_ARRAY.comparabilityGroup() &&
+               group <= ValueGroup.Id.BOOLEAN_ARRAY.comparabilityGroup();
+    }
+
     // BOXED FACTORY METHODS
 
     public static Value of( Object value )
