@@ -125,7 +125,7 @@ final class NoValue extends Value
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return null;
     }

@@ -61,7 +61,13 @@ final class DirectFloat extends DirectFloatingPointNumber
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public float asFloat()
     {
         return value;
     }

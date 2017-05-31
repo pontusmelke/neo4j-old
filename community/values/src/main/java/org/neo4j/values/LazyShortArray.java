@@ -89,9 +89,21 @@ final class LazyShortArray extends LazyIntegralArray<short[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public short[] asShortArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ShortArray()";
     }
 
     @Override

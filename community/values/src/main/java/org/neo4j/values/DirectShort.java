@@ -65,7 +65,13 @@ final class DirectShort extends DirectIntegralNumber
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public short asShort()
     {
         return value;
     }

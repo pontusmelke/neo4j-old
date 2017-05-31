@@ -89,9 +89,21 @@ final class LazyIntArray extends LazyIntegralArray<int[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public int[] asIntArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "IntArray()";
     }
 
     @Override

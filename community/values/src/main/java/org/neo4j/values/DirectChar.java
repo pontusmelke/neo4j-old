@@ -73,7 +73,13 @@ final class DirectChar extends DirectScalar implements ValueGroup.VText
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public char asChar()
     {
         return value;
     }

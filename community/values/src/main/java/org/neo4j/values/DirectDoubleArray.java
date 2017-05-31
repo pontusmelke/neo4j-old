@@ -88,7 +88,13 @@ final class DirectDoubleArray extends DirectFloatingPointArray
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value.clone();
+    }
+
+    @Override
+    public double[] asDoubleArray()
     {
         return value.clone();
     }

@@ -95,7 +95,13 @@ final class DirectCharArray extends DirectTextArray
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value.clone();
+    }
+
+    @Override
+    public char[] asCharArray()
     {
         return value.clone();
     }

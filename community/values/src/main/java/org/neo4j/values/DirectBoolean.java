@@ -89,7 +89,13 @@ final class DirectBoolean extends DirectScalar implements ValueGroup.VBoolean
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return bool;
+    }
+
+    @Override
+    public boolean asBoolean()
     {
         return bool;
     }

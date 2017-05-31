@@ -266,6 +266,11 @@ public class Values
                group <= ValueGroup.Id.BOOLEAN_ARRAY.comparabilityGroup();
     }
 
+    public static boolean isText( Value value )
+    {
+        return value.valueGroupId() == ValueGroup.Id.TEXT
+    }
+
     // BOXED FACTORY METHODS
 
     public static Value of( Object value )

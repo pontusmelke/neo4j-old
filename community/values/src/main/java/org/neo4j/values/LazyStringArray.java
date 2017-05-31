@@ -71,9 +71,21 @@ final class LazyStringArray extends LazyTextArray<String[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public String[] asStringArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "StringArray()";
     }
 
     @Override

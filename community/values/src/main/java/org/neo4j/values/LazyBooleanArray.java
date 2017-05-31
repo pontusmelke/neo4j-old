@@ -107,9 +107,21 @@ final class LazyBooleanArray extends LazyArray<boolean[]> implements ValueGroup.
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public boolean[] asBooleanArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "BooleanArray()";
     }
 
     @Override

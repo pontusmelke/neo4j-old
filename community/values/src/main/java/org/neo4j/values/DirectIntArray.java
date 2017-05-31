@@ -88,7 +88,13 @@ final class DirectIntArray extends DirectIntegralArray
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value.clone();
+    }
+
+    @Override
+    public int[] asIntArray()
     {
         return value.clone();
     }

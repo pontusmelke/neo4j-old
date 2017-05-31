@@ -65,7 +65,13 @@ final class DirectByte extends DirectIntegralNumber
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public byte asByte()
     {
         return value;
     }

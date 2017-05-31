@@ -82,7 +82,13 @@ final class DirectStringArray extends DirectTextArray
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value.clone();
+    }
+
+    @Override
+    public String[] asStringArray()
     {
         return value.clone();
     }

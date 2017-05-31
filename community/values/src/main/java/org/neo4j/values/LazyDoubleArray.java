@@ -89,9 +89,21 @@ final class LazyDoubleArray extends LazyFloatingPointArray<double[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public double[] asDoubleArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "DoubleArray()";
     }
 
     @Override

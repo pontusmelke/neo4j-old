@@ -120,7 +120,7 @@ final class LazyString extends LazyValue<String> implements ValueGroup.VText
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad();
     }

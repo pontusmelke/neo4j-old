@@ -89,9 +89,21 @@ final class LazyLongArray extends LazyIntegralArray<long[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public long[] asLongArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "LongArray()";
     }
 
     @Override

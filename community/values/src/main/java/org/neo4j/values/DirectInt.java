@@ -61,7 +61,13 @@ final class DirectInt extends DirectIntegralNumber
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public int asInt()
     {
         return value;
     }

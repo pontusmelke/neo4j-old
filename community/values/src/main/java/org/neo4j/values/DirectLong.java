@@ -61,7 +61,13 @@ final class DirectLong extends DirectIntegralNumber
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public long asLong()
     {
         return value;
     }

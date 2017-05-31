@@ -61,7 +61,13 @@ final class DirectDouble extends DirectFloatingPointNumber
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value;
+    }
+
+    @Override
+    public double asDouble()
     {
         return value;
     }

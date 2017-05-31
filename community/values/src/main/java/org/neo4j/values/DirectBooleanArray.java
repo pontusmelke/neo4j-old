@@ -124,7 +124,13 @@ final class DirectBooleanArray extends DirectArray implements ValueGroup.VBoolea
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value.clone();
+    }
+
+    @Override
+    public boolean[] asBooleanArray()
     {
         return value.clone();
     }

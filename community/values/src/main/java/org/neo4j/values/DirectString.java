@@ -74,7 +74,13 @@ final class DirectString extends DirectScalar implements ValueGroup.VText
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return string;
+    }
+
+    @Override
+    public String asString()
     {
         return string;
     }

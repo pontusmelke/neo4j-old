@@ -55,5 +55,99 @@ public abstract class Value implements ValueGroup.WithId
 
     public abstract void writeTo( ValueWriter writer );
 
-    public abstract Object asPublic();
+    public abstract Object asObject();
+
+    public long asLong()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type long" );
+    }
+
+    public int asInt()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type int" );
+    }
+
+    public short asShort()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type short" );
+    }
+
+    public char asChar()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type char" );
+    }
+
+    public byte asByte()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type byte" );
+    }
+
+    public double asDouble()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type double" );
+    }
+
+    public float asFloat()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type float" );
+    }
+
+    public String asString()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type String" );
+    }
+
+    public boolean asBoolean()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type boolean" );
+    }
+
+    public long[] asLongArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type long[]" );
+    }
+
+    public int[] asIntArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type int[]" );
+    }
+
+    public char[] asCharArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type char[]" );
+    }
+
+    public short[] asShortArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type short[]" );
+    }
+
+    public byte[] asByteArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type byte[]" );
+    }
+
+    public double[] asDoubleArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type double[]" );
+    }
+
+    public boolean[] asBooleanArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type boolean[]" );
+    }
+
+    public String[] asStringArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type string[]" );
+    }
+
+    public float[] asFloatArray()
+    {
+        throw new UnsupportedOperationException( toString() + " is not of type float[]" );
+    }
+
+    @Override
+    public abstract String toString();
+
 }

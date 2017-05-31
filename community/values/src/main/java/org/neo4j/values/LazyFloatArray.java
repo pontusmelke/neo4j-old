@@ -89,9 +89,21 @@ final class LazyFloatArray extends LazyFloatingPointArray<float[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public float[] asFloatArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "FloatArray()";
     }
 
     @Override

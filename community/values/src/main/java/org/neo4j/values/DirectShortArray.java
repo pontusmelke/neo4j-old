@@ -88,7 +88,13 @@ final class DirectShortArray extends DirectIntegralArray
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
+    {
+        return value.clone();
+    }
+
+    @Override
+    public short[] asShortArray()
     {
         return value.clone();
     }

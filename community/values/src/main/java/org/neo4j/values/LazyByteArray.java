@@ -89,9 +89,21 @@ final class LazyByteArray extends LazyIntegralArray<byte[]>
     }
 
     @Override
-    public Object asPublic()
+    public Object asObject()
     {
         return getOrLoad().clone();
+    }
+
+    @Override
+    public byte[] asByteArray()
+    {
+        return getOrLoad().clone();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "ByteArray()";
     }
 
     @Override
