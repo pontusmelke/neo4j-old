@@ -21,10 +21,21 @@ package org.neo4j.values;
 
 import java.lang.reflect.Array;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings( "WeakerAccess" )
 public class Values
 {
+    public static final Value EMPTY_BOOLEAN_ARRAY_VALUE = Values.booleanArray(new boolean[0]);
+    public static final Value EMPTY_BYTE_ARRAY_VALUE = Values.byteArray( new byte[0] );
+    public static final Value EMPTY_SHORT_ARRAY_VALUE = Values.shortArray( new short[0] );
+    public static final Value EMPTY_CHAR_ARRAY_VALUE = Values.charArray( new char[0] );
+    public static final Value EMPTY_INT_ARRAY_VALUE = Values.intArray( new int[0] );
+    public static final Value EMPTY_LONG_ARRAY_VALUE = Values.longArray( new long[0] );
+    public static final Value EMPTY_FLOAT_ARRAY_VALUE = Values.floatArray( new float[0] );
+    public static final Value EMPTY_DOUBLE_ARRAY_VALUE = Values.doubleArray(  new double[0]);
+
     public static final Value MIN_NUMBER = Values.doubleValue( Double.NEGATIVE_INFINITY );
     public static final Value MAX_NUMBER = Values.doubleValue( Double.NaN );
     public static final Value MIN_STRING = Values.stringValue( "" );
@@ -32,6 +43,24 @@ public class Values
 
     private Values()
     {
+    }
+
+    private static final Map<Class<?>, Value> EMPTY_ARRAYS = new HashMap<>(  );
+
+    static
+    {
+        EMPTY_ARRAYS.put( boolean.class, EMPTY_BOOLEAN_ARRAY_VALUE );
+        EMPTY_ARRAYS.put( byte.class, EMPTY_BYTE_ARRAY_VALUE );
+        EMPTY_ARRAYS.put( short.class, EMPTY_SHORT_ARRAY_VALUE );
+        EMPTY_ARRAYS.put( char.class, EMPTY_CHAR_ARRAY_VALUE );
+        EMPTY_ARRAYS.put( int.class, EMPTY_INT_ARRAY_VALUE );
+        EMPTY_ARRAYS.put( float.class, EMPTY_FLOAT_ARRAY_VALUE );
+        EMPTY_ARRAYS.put( double.class, EMPTY_DOUBLE_ARRAY_VALUE );
+    }
+
+    public static Value emptyArray( Class<?> primitiveClass )
+    {
+        return EMPTY_ARRAYS.getOrDefault( primitiveClass, Values.of( Array.newInstance( primitiveClass, 0 ) ) );
     }
 
     public interface ValueLoader<T>

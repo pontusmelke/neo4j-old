@@ -201,7 +201,7 @@ public enum PropertyType
         @Override
         public Value getValueNow( PropertyBlock block, PropertyStore store )
         {
-            return Values.of( store.getArrayFor( block ) );
+            return store.getArrayFor( block );
         }
 
         @Override

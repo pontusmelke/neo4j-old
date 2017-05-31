@@ -154,7 +154,7 @@ public class TestDynamicStore
                 long blockId = idsTaken.remove(
                         random.nextInt( currentCount ) );
                 store.getRecords( blockId, NORMAL );
-                byte[] bytes = (byte[]) store.getArrayFor( store.getRecords( blockId, NORMAL ) );
+                byte[] bytes = (byte[]) store.getArrayFor( store.getRecords( blockId, NORMAL ) ).asPublic();
                 validateData( bytes, byteData.remove( blockId ) );
                 Collection<DynamicRecord> records = store.getRecords( blockId, NORMAL );
                 for ( DynamicRecord record : records )
@@ -226,7 +226,7 @@ public class TestDynamicStore
         byte[] emptyToWrite = createBytes( 0 );
         long blockId = create( store, emptyToWrite );
         store.getRecords( blockId, NORMAL );
-        byte[] bytes = (byte[]) store.getArrayFor( store.getRecords( blockId, NORMAL ) );
+        byte[] bytes = (byte[]) store.getArrayFor( store.getRecords( blockId, NORMAL ) ).asPublic();
         assertEquals( 0, bytes.length );
 
         Collection<DynamicRecord> records = store.getRecords( blockId, NORMAL );
@@ -243,7 +243,7 @@ public class TestDynamicStore
         DynamicArrayStore store = createDynamicArrayStore();
         long blockId = create( store, new String[0] );
         store.getRecords( blockId, NORMAL );
-        String[] readBack = (String[]) store.getArrayFor( store.getRecords( blockId, NORMAL ) );
+        String[] readBack = (String[]) store.getArrayFor( store.getRecords( blockId, NORMAL ) ).asPublic();
         assertEquals( 0, readBack.length );
 
         Collection<DynamicRecord> records = store.getRecords( blockId, NORMAL );

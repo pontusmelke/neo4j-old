@@ -26,6 +26,17 @@ import java.util.Map;
 
 import org.neo4j.kernel.impl.store.record.PropertyBlock;
 import org.neo4j.kernel.impl.util.Bits;
+import org.neo4j.values.Value;
+import org.neo4j.values.Values;
+
+import static org.neo4j.values.Values.EMPTY_BOOLEAN_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_BYTE_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_CHAR_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_DOUBLE_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_FLOAT_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_INT_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_LONG_ARRAY_VALUE;
+import static org.neo4j.values.Values.EMPTY_SHORT_ARRAY_VALUE;
 
 public enum ShortArray
 {
@@ -58,25 +69,24 @@ public enum ShortArray
         }
 
         @Override
-        public
-        Object createArray( int length, Bits bits, int requiredBits )
+        public Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_BOOLEAN_ARRAY;
+                return EMPTY_BOOLEAN_ARRAY_VALUE;
             }
             final boolean[] result = new boolean[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = bits.getByte( requiredBits ) != 0;
             }
-            return result;
+            return Values.booleanArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_BOOLEAN_ARRAY;
+            return EMPTY_BOOLEAN_ARRAY_VALUE;
         }
     },
     BYTE( PropertyType.BYTE, 8, Byte.class, byte.class )
@@ -137,24 +147,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_BYTE_ARRAY;
+                return EMPTY_BYTE_ARRAY_VALUE;
             }
             final byte[] result = new byte[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = bits.getByte( requiredBits );
             }
-            return result;
+            return Values.byteArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_BYTE_ARRAY;
+            return EMPTY_BYTE_ARRAY_VALUE;
         }
 
     },
@@ -216,24 +226,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_SHORT_ARRAY;
+                return EMPTY_SHORT_ARRAY_VALUE;
             }
             final short[] result = new short[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = bits.getShort( requiredBits );
             }
-            return result;
+            return Values.shortArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_SHORT_ARRAY;
+            return EMPTY_SHORT_ARRAY_VALUE;
         }
     },
     CHAR( PropertyType.CHAR, 16, Character.class, char.class )
@@ -294,24 +304,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_CHAR_ARRAY;
+                return EMPTY_CHAR_ARRAY_VALUE;
             }
             final char[] result = new char[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = (char) bits.getShort( requiredBits );
             }
-            return result;
+            return Values.charArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_CHAR_ARRAY;
+            return EMPTY_CHAR_ARRAY_VALUE;
         }
     },
     INT( PropertyType.INT, 32, Integer.class, int.class )
@@ -372,24 +382,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_INT_ARRAY;
+                return EMPTY_INT_ARRAY_VALUE;
             }
             final int[] result = new int[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = bits.getInt( requiredBits );
             }
-            return result;
+            return Values.intArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_INT_ARRAY;
+            return EMPTY_INT_ARRAY_VALUE;
         }
     },
     LONG( PropertyType.LONG, 64, Long.class, long.class )
@@ -451,24 +461,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_LONG_ARRAY;
+                return EMPTY_LONG_ARRAY_VALUE;
             }
             final long[] result = new long[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = bits.getLong( requiredBits );
             }
-            return result;
+            return Values.longArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_LONG_ARRAY;
+            return EMPTY_LONG_ARRAY_VALUE;
         }
     },
     FLOAT( PropertyType.FLOAT, 32, Float.class, float.class )
@@ -530,24 +540,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_FLOAT_ARRAY;
+                return EMPTY_FLOAT_ARRAY_VALUE;
             }
             final float[] result = new float[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = Float.intBitsToFloat( bits.getInt( requiredBits ) );
             }
-            return result;
+            return Values.floatArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_FLOAT_ARRAY;
+            return EMPTY_FLOAT_ARRAY_VALUE;
         }
     },
     DOUBLE( PropertyType.DOUBLE, 64, Double.class, double.class )
@@ -609,24 +619,24 @@ public enum ShortArray
 
         @Override
         public
-        Object createArray( int length, Bits bits, int requiredBits )
+        Value createArray( int length, Bits bits, int requiredBits )
         {
             if ( length == 0 )
             {
-                return EMPTY_DOUBLE_ARRAY;
+                return EMPTY_DOUBLE_ARRAY_VALUE;
             }
             final double[] result = new double[length];
             for ( int i = 0; i < length; i++ )
             {
                 result[i] = Double.longBitsToDouble( bits.getLong( requiredBits ) );
             }
-            return result;
+            return Values.doubleArray( result );
         }
 
         @Override
-        public Object createEmptyArray()
+        public Value createEmptyArray()
         {
-            return EMPTY_DOUBLE_ARRAY;
+            return EMPTY_DOUBLE_ARRAY_VALUE;
         }
     };
     public static final boolean[] EMPTY_BOOLEAN_ARRAY = new boolean[0];
@@ -674,7 +684,7 @@ public enum ShortArray
         return type.intValue();
     }
 
-    public abstract Object createArray( int length, Bits bits, int requiredBits );
+    public abstract Value createArray( int length, Bits bits, int requiredBits );
 
     public static boolean encode( int keyId, Object array,
                                   PropertyBlock target, int payloadSizeInBytes )
@@ -824,8 +834,8 @@ public enum ShortArray
 
     public abstract void writeAll( Object array, int length, int requiredBits, Bits result );
 
-    public Object createEmptyArray()
+    public Value createEmptyArray()
     {
-        return Array.newInstance( primitiveClass, 0 );
+        return Values.emptyArray( primitiveClass );
     }
 }
