@@ -70,6 +70,7 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.impl.proc.TerminationGuardProvider;
 import org.neo4j.kernel.impl.proc.TypeMappers.SimpleConverter;
 import org.neo4j.kernel.impl.query.QueryExecutionEngine;
+import org.neo4j.kernel.impl.runtime.NaiveRuntime;
 import org.neo4j.kernel.impl.store.StoreId;
 import org.neo4j.kernel.impl.transaction.log.PhysicalLogFile;
 import org.neo4j.kernel.impl.transaction.state.DataSourceManager;
@@ -172,6 +173,8 @@ public class DataSourceModule
                 logging.getInternalLog( DatabaseHealth.class ) ) );
 
         autoIndexing = new InternalAutoIndexing( platformModule.config, editionModule.propertyKeyTokenHolder );
+
+        deps.satisfyDependency( new NaiveRuntime( pageCache, platformModule.storeDir ) );
 
         Procedures procedures = setupProcedures( platformModule, editionModule );
 
