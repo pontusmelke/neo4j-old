@@ -19,13 +19,42 @@
  */
 package org.neo4j.internal.store.prototype.neole;
 
-import org.neo4j.internal.kernel.api.NodeCursorTestBase;
+import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.Runtime;
+import org.neo4j.internal.kernel.api.Write;
 
-public class NodeCursorTest extends NodeCursorTestBase<NeoLETestSupport>
+public class NeoLERuntime implements Runtime
 {
-    @Override
-    public NeoLETestSupport newTestSupport()
+    private final CursorFactory cursorFactory;
+    private final ReadStore readStore;
+
+    public NeoLERuntime( ReadStore readStore )
     {
-        return new NeoLETestSupport();
+        this.readStore = readStore;
+        this.cursorFactory = new CursorFactory( readStore );
+    }
+
+    @Override
+    public CursorFactory cursorFactory()
+    {
+        return cursorFactory;
+    }
+
+    @Override
+    public Read read()
+    {
+        return readStore;
+    }
+
+    @Override
+    public Write write()
+    {
+        throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    @Override
+    public void close() throws Exception
+    {
+        readStore.shutdown();
     }
 }
