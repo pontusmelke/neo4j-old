@@ -19,6 +19,7 @@
  */
 package org.neo4j.kernel.impl.runtime.cursors;
 
+@SuppressWarnings( "WeakerAccess" )
 class NaiveBitManipulation
 {
     private NaiveBitManipulation()
@@ -44,12 +45,22 @@ class NaiveBitManipulation
         return modifier == 0 && base == INTEGER_MINUS_ONE ? -1 : base | modifier;
     }
 
+    static long encodeDirectRelationshipReference( long reference )
+    {
+        return (~reference) - 1;
+    }
+
+    static long decodeDirectRelationshipReference( long reference )
+    {
+        return ~(reference + 1);
+    }
+
     static int lcm( int a, int b )
     {
         return (a / gcd( a, b )) * b;
     }
 
-    private static int gcd( int a, int b )
+    static int gcd( int a, int b )
     {
         return a == b ? a : a > b ? gcd( a - b, b ) : gcd( a, b - a );
     }

@@ -47,6 +47,7 @@ public class NaiveRuntime implements Runtime, Lifecycle
 
     public static final int NODE_STORE_PAGE_SIZE = 8190;
     public static final int RELATIONSHIP_STORE_PAGE_SIZE = 8160;
+    public static final int PROPERTY_STORE_PAGE_SIZE = 8159;
 
     public NaiveRuntime( PageCache pageCache, File storeDir )
     {
@@ -97,7 +98,6 @@ public class NaiveRuntime implements Runtime, Lifecycle
     @Override
     public void init() throws Throwable
     {
-        this.cursorFactory = new NaiveCursorFactory( read );
         this.pagedFiles = new ArrayList<>();
     }
 
@@ -108,8 +108,11 @@ public class NaiveRuntime implements Runtime, Lifecycle
         pagedFiles.add( nodeStore );
         PagedFile relationshipStore = pagedStore( StoreFile.RELATIONSHIP_STORE, RELATIONSHIP_STORE_PAGE_SIZE );
         pagedFiles.add( relationshipStore );
+        PagedFile propertyStore = pagedStore( StoreFile.PROPERTY_STORE, PROPERTY_STORE_PAGE_SIZE );
+        pagedFiles.add( propertyStore );
 
-        this.read = new NaiveRead( nodeStore, relationshipStore );
+        this.read = new NaiveRead( nodeStore, relationshipStore, propertyStore );
+        this.cursorFactory = new NaiveCursorFactory( read );
     }
 
     @Override
@@ -120,13 +123,13 @@ public class NaiveRuntime implements Runtime, Lifecycle
             pagedFile.close();
         }
         pagedFiles.clear();
+        this.cursorFactory = null;
         this.read = null;
     }
 
     @Override
     public void shutdown() throws Throwable
     {
-        this.cursorFactory = null;
         this.pagedFiles = null;
     }
 }

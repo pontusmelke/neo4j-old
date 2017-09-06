@@ -43,7 +43,7 @@ public class NaiveCursorFactory implements CursorFactory
     @Override
     public NodeCursor allocateNodeCursor()
     {
-        return new NaiveNodeCursor();
+        return new NaiveNodeCursor( read );
     }
 
     @Override
@@ -61,7 +61,7 @@ public class NaiveCursorFactory implements CursorFactory
     @Override
     public PropertyCursor allocatePropertyCursor()
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        return new NaivePropertyCursor();
     }
 
     @Override

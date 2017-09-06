@@ -27,6 +27,7 @@ import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.kernel.impl.runtime.NaiveRuntime;
 
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.combineReference;
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_PROPERTIES;
 
 public class NaiveRelationshipCursor extends PageCacheBackedCursor implements RelationshipDataAccessor
 {
@@ -62,7 +63,6 @@ public class NaiveRelationshipCursor extends PageCacheBackedCursor implements Re
      * </pre>
      */
     public static final int RECORD_SIZE = 34;
-    private static final long NO_PROPERTIES = -1;
 
     private final Read read;
 
@@ -85,7 +85,7 @@ public class NaiveRelationshipCursor extends PageCacheBackedCursor implements Re
 
     public void init( PageCursor pageCursor, long startAddress, long maxAddress )
     {
-        super.init( pageCursor, startAddress, maxAddress );
+        initCursor( pageCursor, startAddress, maxAddress );
     }
 
     // DATA ACCESS

@@ -19,44 +19,9 @@
  */
 package org.neo4j.kernel.impl.runtime.cursors;
 
-import org.neo4j.internal.kernel.api.Read;
-import org.neo4j.internal.kernel.api.RelationshipScanCursor;
-import org.neo4j.io.pagecache.PageCursor;
-
-public class NaiveRelationshipScanCursor extends NaiveRelationshipCursor implements RelationshipScanCursor
+public class NaiveConstants
 {
-    NaiveRelationshipScanCursor( Read read )
-    {
-        super( read );
-    }
-
-    public void init( PageCursor pageCursor, long startAddress, long maxAddress )
-    {
-        super.init( pageCursor, startAddress, maxAddress );
-    }
-
-    @Override
-    public boolean next()
-    {
-        while ( scanNextByAddress() )
-        {
-            if ( inUse() )
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean shouldRetry()
-    {
-        return false;
-    }
-
-    @Override
-    public void close()
-    {
-        tearDownCursor();
-    }
+    public static final long NO_PROPERTIES = -1;
+    public static final long NO_RELATIONSHIP = -1;
+    public static final long NO_NODE = -1;
 }

@@ -22,10 +22,16 @@ package org.neo4j.kernel.impl.runtime.cursors;
 import org.neo4j.internal.kernel.api.LabelSet;
 import org.neo4j.internal.kernel.api.NodeCursor;
 import org.neo4j.internal.kernel.api.PropertyCursor;
+import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.kernel.impl.runtime.NaiveRuntime;
+
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.combineReference;
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.encodeDirectRelationshipReference;
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_PROPERTIES;
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_RELATIONSHIP;
 
 public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
 {
@@ -58,6 +64,12 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
      */
 
     public static final int RECORD_SIZE = 15;
+    private final Read read;
+
+    NaiveNodeCursor( Read read )
+    {
+        this.read = read;
+    }
 
     @Override
     final int recordSize()
@@ -73,7 +85,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
 
     public void init( PageCursor pageCursor, long startAddress, long maxAddress )
     {
-        super.init( pageCursor, startAddress, maxAddress );
+        initCursor( pageCursor, startAddress, maxAddress );
     }
 
     @Override
@@ -104,7 +116,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     @Override
     public void close()
     {
-
+        tearDownCursor();
     }
 
     // DATA ACCESSOR METHODS
@@ -144,13 +156,13 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     @Override
     public boolean hasProperties()
     {
-        return false;
+        return propertiesReference() != NO_PROPERTIES;
     }
 
     @Override
     public void relationships( RelationshipGroupCursor cursor )
     {
-
+        read.relationshipGroups( nodeReference(), relationshipGroupReference(), cursor );
     }
 
     @Override
@@ -174,18 +186,30 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     @Override
     public void properties( PropertyCursor cursor )
     {
-
+        read.nodeProperties( propertiesReference(), cursor );
     }
 
     @Override
     public long relationshipGroupReference()
     {
-        return 0;
+        long relationships = combineReference( unsignedInt( 1 ), (unsignedByte( 0 ) & 0x0EL) << 31 );
+        if ( (readByte( 14 ) & 0x01) != 0 )
+        {
+            return relationships;
+        }
+        else if ( relationships == NO_RELATIONSHIP )
+        {
+            return NO_RELATIONSHIP;
+        }
+        else
+        {
+            return encodeDirectRelationshipReference( relationships );
+        }
     }
 
     @Override
     public long propertiesReference()
     {
-        return 0;
+        return combineReference( unsignedInt( 5 ), (unsignedByte( 0 ) & 0xF0L) << 28 );
     }
 }

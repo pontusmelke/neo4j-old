@@ -50,13 +50,34 @@ abstract class PageCacheBackedCursor
     abstract int recordSize();
     abstract int pageSize();
 
-    void init( PageCursor pageCursor, long startAddress, long maxAddress )
+    boolean initCursor( PageCursor pageCursor, long startAddress, long maxAddress )
     {
-        offsetInPage = pageSize();
-        address = startAddress - 1;
+        if ( startAddress >= 0 && startAddress < maxAddress )
+        {
+            offsetInPage = pageSize();
+            address = startAddress - 1;
 
-        this.pageCursor = pageCursor;
-        this.maxAddress = maxAddress;
+            this.pageCursor = pageCursor;
+            this.maxAddress = maxAddress;
+            return true;
+        }
+        else
+        {
+            tearDownCursor();
+            return false;
+        }
+    }
+
+    void tearDownCursor()
+    {
+        if ( pageCursor != null )
+        {
+            pageCursor.close();
+            pageCursor = null;
+        }
+        address = -1;
+        maxAddress = -1;
+        offsetInPage = -1;
     }
 
     long address()
@@ -101,7 +122,8 @@ abstract class PageCacheBackedCursor
             do
             {
                 result = pageCursor.next();
-            } while ( pageCursor.shouldRetry() );
+            }
+            while ( pageCursor.shouldRetry() );
         }
         catch ( IOException e )
         {
@@ -110,39 +132,65 @@ abstract class PageCacheBackedCursor
         return result;
     }
 
+    boolean moveToAddress( long address )
+    {
+        int pageSizeInRecords = pageSize() / recordSize();
+        long pageId = address / pageSizeInRecords;
+        boolean result;
+        try
+        {
+            do
+            {
+                result = pageCursor.next( pageId );
+            }
+            while ( pageCursor.shouldRetry() );
+        }
+        catch ( IOException e )
+        {
+            throw new PoorlyNamedException( "IOException during pageCursor.next( pageId )", e );
+        }
+        if ( result )
+        {
+            this.address = address;
+            this.maxAddress = address + 1;
+            this.offsetInPage = (int)((address % pageSizeInRecords) * recordSize());
+        }
+        return result;
+    }
+
     // DATA ACCESS
 
-    protected final byte readByte( int offset )
+    final byte readByte( int offset )
     {
         return pageCursor.getByte( offsetInPage( offset, 1 ) );
     }
 
-    protected final int unsignedByte( int offset )
+    final int unsignedByte( int offset )
     {
         return 0xFF & readByte( offset );
     }
 
-    protected final short readShort( int offset )
+    final short readShort( int offset )
     {
         return pageCursor.getShort( offsetInPage( offset, 2 ) );
     }
 
-    protected final int unsignedShort( int offset )
+    final int unsignedShort( int offset )
     {
         return 0xFFFF & readShort( offset );
     }
 
-    protected final int readInt( int offset )
+    final int readInt( int offset )
     {
         return pageCursor.getInt( offsetInPage( offset, 4 ) );
     }
 
-    protected final long unsignedInt( int offset )
+    final long unsignedInt( int offset )
     {
         return 0xFFFF_FFFFL & readInt( offset );
     }
 
-    protected final long readLong( int offset )
+    final long readLong( int offset )
     {
         return pageCursor.getLong( offsetInPage( offset, 8 ) );
     }

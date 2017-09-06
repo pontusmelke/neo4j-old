@@ -74,7 +74,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint < 10 )
             {
@@ -119,7 +119,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint < 0xA )
             {
@@ -160,7 +160,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint == 0 )
             {
@@ -197,7 +197,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint == 0 )
             {
@@ -249,7 +249,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint == 0 )
             {
@@ -310,7 +310,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint == 0 )
             {
@@ -345,7 +345,7 @@ public enum LongerShortString
     ALPHANUM( 7, 6 )
     {
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             return EUROPEAN.decTranslate( (byte) ( codePoint + 0x40 ) );
         }
@@ -390,7 +390,7 @@ public enum LongerShortString
     ALPHASYM( 8, 6 )
     {
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint == 0x0 )
             {
@@ -469,7 +469,7 @@ public enum LongerShortString
     EUROPEAN( 9, 7 )
     {
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             int code = codePoint & 0xFF;
             if ( code < 0x40 )
@@ -559,7 +559,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint < 10 )
             {
@@ -599,7 +599,7 @@ public enum LongerShortString
         }
 
         @Override
-        char decTranslate( byte codePoint )
+        public char decTranslate( byte codePoint )
         {
             if ( codePoint < 10 )
             {
@@ -614,11 +614,11 @@ public enum LongerShortString
     public static final int ALL_BIT_MASK = bitMask( LongerShortString.values() );
     public static final int ENCODING_UTF8 = 0;
     public static final int ENCODING_LATIN1 = 10;
-    private static final int HEADER_SIZE = 39; // bits
+    public static final int HEADER_SIZE = 39; // bits
 
     final int encodingHeader;
-    final long mask;
-    final int step;
+    public final long mask;
+    public final int step;
 
     LongerShortString( int encodingHeader, int step )
     {
@@ -671,7 +671,7 @@ public enum LongerShortString
 
     abstract int encPunctuation( byte b );
 
-    abstract char decTranslate( byte codePoint );
+    public abstract char decTranslate( byte codePoint );
 
     /**
      * Encodes a short string.
@@ -967,7 +967,7 @@ public enum LongerShortString
     /**
      * Get encoding table for the given encoding header, or {@code null} if the encoding header is invalid.
      */
-    private static LongerShortString getEncodingTable( int encodingHeader )
+    public static LongerShortString getEncodingTable( int encodingHeader )
     {
         if ( encodingHeader < 0 | ENCODINGS_BY_ENCODING.length <= encodingHeader )
         {
