@@ -35,14 +35,18 @@ import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.internal.kernel.api.Scan;
 import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveNodeCursor;
+import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipCursor;
+import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipScanCursor;
 
 public class NaiveRead implements Read
 {
     private final PagedFile nodeStore;
+    private final PagedFile relationshipStore;
 
-    NaiveRead( PagedFile nodeStore )
+    NaiveRead( PagedFile nodeStore, PagedFile relationshipStore )
     {
         this.nodeStore = nodeStore;
+        this.relationshipStore = relationshipStore;
     }
 
     @Override
@@ -80,7 +84,7 @@ public class NaiveRead implements Read
         }
         catch ( IOException e )
         {
-            throw new PoorlyNamedException( "IOException during allNodeScan!", e );
+            throw new PoorlyNamedException( "IOException during allNodesScan!", e );
         }
     }
 
@@ -97,8 +101,8 @@ public class NaiveRead implements Read
         long pageId = reference / pageSizeInRecords;
         try
         {
-            ((NaiveNodeCursor) cursor).init( nodeStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference,
-                    reference + 1 );
+            ((NaiveNodeCursor) cursor).init(
+                    nodeStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference, reference + 1 );
         }
         catch ( IOException e )
         {
@@ -109,13 +113,32 @@ public class NaiveRead implements Read
     @Override
     public void singleRelationship( long reference, RelationshipScanCursor cursor )
     {
-
+        int pageSizeInRecords = relationshipStore.pageSize() / NaiveRelationshipCursor.RECORD_SIZE;
+        long pageId = reference / pageSizeInRecords;
+        try
+        {
+            ((NaiveRelationshipScanCursor) cursor).init(
+                    relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference, reference + 1 );
+        }
+        catch ( IOException e )
+        {
+            throw new PoorlyNamedException( "IOException during singleRelationship!", e );
+        }
     }
 
     @Override
     public void allRelationshipsScan( RelationshipScanCursor cursor )
     {
-
+        int pageSizeInRecords = relationshipStore.pageSize() / NaiveRelationshipCursor.RECORD_SIZE;
+        try
+        {
+            long maxAddress = pageSizeInRecords * (relationshipStore.getLastPageId() + 1);
+            ((NaiveRelationshipScanCursor) cursor).init( relationshipStore.io( 0, PagedFile.PF_SHARED_READ_LOCK ), 0, maxAddress );
+        }
+        catch ( IOException e )
+        {
+            throw new PoorlyNamedException( "IOException during allRelationshipsScan!", e );
+        }
     }
 
     @Override
