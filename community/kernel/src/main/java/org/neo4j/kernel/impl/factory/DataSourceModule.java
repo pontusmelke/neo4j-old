@@ -174,7 +174,9 @@ public class DataSourceModule
 
         autoIndexing = new InternalAutoIndexing( platformModule.config, editionModule.propertyKeyTokenHolder );
 
-        deps.satisfyDependency( new NaiveRuntime( pageCache, platformModule.storeDir ) );
+        NaiveRuntime naiveRuntime = new NaiveRuntime( pageCache, platformModule.storeDir );
+        life.add( naiveRuntime );
+        deps.satisfyDependency( naiveRuntime );
 
         Procedures procedures = setupProcedures( platformModule, editionModule );
 

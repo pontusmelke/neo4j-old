@@ -22,6 +22,8 @@ package org.neo4j.kernel.impl.runtime;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.Read;
@@ -31,15 +33,17 @@ import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveCursorFactory;
 import org.neo4j.kernel.impl.store.StoreFile;
+import org.neo4j.kernel.lifecycle.Lifecycle;
 
 import static org.neo4j.io.pagecache.PageCacheOpenOptions.ANY_PAGE_SIZE;
 
-public class NaiveRuntime implements Runtime
+public class NaiveRuntime implements Runtime, Lifecycle
 {
     private final PageCache pageCache;
     private final File storeDir;
     private CursorFactory cursorFactory;
     private Read read;
+    private List<PagedFile> pagedFiles;
 
     public static final int NODE_STORE_PAGE_SIZE = 8190;
 
@@ -47,12 +51,9 @@ public class NaiveRuntime implements Runtime
     {
         this.pageCache = pageCache;
         this.storeDir = storeDir;
-        this.cursorFactory = new NaiveCursorFactory();
-        PagedFile nodeStore = mappedStore( pageCache, storeDir, NODE_STORE_PAGE_SIZE );
-        this.read = new NaiveRead( nodeStore );
     }
 
-    private PagedFile mappedStore( PageCache pageCache, File storeDir, int pageSize )
+    private PagedFile pagedStore( PageCache pageCache, File storeDir, int pageSize )
     {
         File storeFile = new File( storeDir, StoreFile.NODE_STORE.storeFileName() );
 
@@ -88,6 +89,41 @@ public class NaiveRuntime implements Runtime
     @Override
     public void close() throws Exception
     {
-        throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    // LIFE CYCLE
+
+    @Override
+    public void init() throws Throwable
+    {
+        this.cursorFactory = new NaiveCursorFactory();
+        this.pagedFiles = new ArrayList<>();
+    }
+
+    @Override
+    public void start() throws Throwable
+    {
+        PagedFile nodeStore = pagedStore( pageCache, storeDir, NODE_STORE_PAGE_SIZE );
+        pagedFiles.add( nodeStore );
+
+        this.read = new NaiveRead( nodeStore );
+    }
+
+    @Override
+    public void stop() throws Throwable
+    {
+        for ( PagedFile pagedFile : pagedFiles )
+        {
+            pagedFile.close();
+        }
+        pagedFiles.clear();
+        this.read = null;
+    }
+
+    @Override
+    public void shutdown() throws Throwable
+    {
+        this.cursorFactory = null;
+        this.pagedFiles = null;
     }
 }
