@@ -1,6 +1,23 @@
+/*
+ * Copyright (c) 2002-2017 "Neo Technology,"
+ * Network Engine for Objects in Lund AB [http://neotechnology.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Neo4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.neo4j.kernel.impl.runtime.cursors;
-
-import java.io.IOException;
 
 import org.neo4j.internal.kernel.api.LabelSet;
 import org.neo4j.internal.kernel.api.NodeCursor;
@@ -9,9 +26,8 @@ import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.kernel.impl.runtime.NaiveRuntime;
-import org.neo4j.kernel.impl.runtime.PoorlyNamedException;
 
-public class NaiveNodeCursor implements NodeCursor
+public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
 {
     /**
      * Node record byte layout
@@ -41,35 +57,35 @@ public class NaiveNodeCursor implements NodeCursor
      * </pre>
      */
 
-    private static final int RECORD_SIZE = 15;
-    private int addressInPage;
-    private long virtualAddress;
-    private long maxVirtualAddress;
-    private PageCursor pageCursor;
-    private int pageNumRecords;
+    public static final int RECORD_SIZE = 15;
 
-    public void init( PageCursor pageCursor, long maxPageId )
+    @Override
+    final int recordSize()
     {
-        pageNumRecords = NaiveRuntime.NODE_STORE_PAGE_SIZE / RECORD_SIZE;
+        return RECORD_SIZE;
+    }
 
-        // on init we stand on the last record before first page
-        addressInPage = pageNumRecords - 1;
-        virtualAddress = -1;
+    @Override
+    final int pageSize()
+    {
+        return NaiveRuntime.NODE_STORE_PAGE_SIZE;
+    }
 
-        this.pageCursor = pageCursor;
-        this.maxVirtualAddress = (maxPageId + 1) * pageNumRecords;
+    public void init( PageCursor pageCursor, long startAddress, long maxAddress )
+    {
+        super.init( pageCursor, startAddress, maxAddress );
     }
 
     @Override
     public long nodeReference()
     {
-        return pageCursor.getCurrentPageId() * pageNumRecords + addressInPage;
+        return address();
     }
 
     @Override
     public boolean next()
     {
-        while ( scanNextByVirtualAddress( pageCursor, virtualAddress, maxVirtualAddress ) )
+        while ( scanNextByAddress() )
         {
             if ( inUse() )
             {
@@ -77,51 +93,6 @@ public class NaiveNodeCursor implements NodeCursor
             }
         }
         return false;
-    }
-
-    private boolean scanNextByVirtualAddress( PageCursor pageCursor, long currentAddress, long maxAddress )
-    {
-        if ( currentAddress + 1 >= maxAddress )
-        {
-            return false;
-        }
-
-        if ( addressInPage + 1 < pageNumRecords )
-        {
-            this.addressInPage++;
-            this.virtualAddress++;
-            return true;
-        }
-        else
-        {
-            if ( advancePageCursor() )
-            {
-                this.addressInPage = 0;
-                this.virtualAddress++;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-    }
-
-    private boolean advancePageCursor()
-    {
-        boolean result;
-        try
-        {
-            do
-            {
-                result = pageCursor.next();
-            } while ( pageCursor.shouldRetry() );
-        }
-        catch ( IOException e )
-        {
-            throw new PoorlyNamedException( "IOException during pageCursor advance", e );
-        }
-        return result;
     }
 
     @Override
@@ -140,13 +111,34 @@ public class NaiveNodeCursor implements NodeCursor
 
     private boolean inUse()
     {
-        return (pageCursor.getByte( addressInPage * RECORD_SIZE ) & 0x01) != 0;
+        return (unsignedByte( 0 ) & 0x01) != 0;
     }
 
     @Override
     public LabelSet labels()
     {
-        return LabelSet.NONE;
+        long field = unsignedInt( 9 ) | (((long) unsignedByte( 13 )) << 32);
+        if ( (field & 0x80_0000_0000L) != 0 ) // reference to labels store
+        {
+            throw new UnsupportedOperationException( "not implemented" );
+        }
+        else // inlined labels
+        {
+            int numberOfLabels = (int) ((field & 0x70_0000_0000L) >>> 36); // 0 - 7
+            if ( numberOfLabels == 0 )
+            {
+                return LabelSet.NONE;
+            }
+            int bitsPerLabel = 36 / numberOfLabels; // 5 - 36
+            int[] labels = new int[numberOfLabels];
+            long mask = (1L << bitsPerLabel) - 1;
+            for ( int i = 0; i < numberOfLabels; i++ )
+            {
+                labels[i] = (int) (field & mask);
+                field >>= bitsPerLabel;
+            }
+            return new NaiveLabels( labels );
+        }
     }
 
     @Override

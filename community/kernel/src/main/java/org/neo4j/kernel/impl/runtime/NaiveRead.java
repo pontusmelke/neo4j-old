@@ -72,9 +72,11 @@ public class NaiveRead implements Read
     @Override
     public void allNodesScan( NodeCursor cursor )
     {
+        int pageSizeInRecords = nodeStore.pageSize() / NaiveNodeCursor.RECORD_SIZE;
         try
         {
-            ((NaiveNodeCursor) cursor).init( nodeStore.io( 0, PagedFile.PF_SHARED_READ_LOCK ), nodeStore.getLastPageId() );
+            long maxAddress = pageSizeInRecords * (nodeStore.getLastPageId() + 1);
+            ((NaiveNodeCursor) cursor).init( nodeStore.io( 0, PagedFile.PF_SHARED_READ_LOCK ), 0, maxAddress );
         }
         catch ( IOException e )
         {
@@ -91,7 +93,17 @@ public class NaiveRead implements Read
     @Override
     public void singleNode( long reference, NodeCursor cursor )
     {
-
+        int pageSizeInRecords = nodeStore.pageSize() / NaiveNodeCursor.RECORD_SIZE;
+        long pageId = reference / pageSizeInRecords;
+        try
+        {
+            ((NaiveNodeCursor) cursor).init( nodeStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference,
+                    reference + 1 );
+        }
+        catch ( IOException e )
+        {
+            throw new PoorlyNamedException( "IOException during singleNode!", e );
+        }
     }
 
     @Override
