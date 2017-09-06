@@ -79,14 +79,10 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
         try ( Transaction tx = graphDb.beginTx() )
         {
             deleted.delete();
-            long time = System.nanoTime();
             for ( Relationship relationship : graphDb.getAllRelationships() )
             {
                 RELATIONSHIP_IDS.add( relationship.getId() );
             }
-            time = System.nanoTime() - time;
-            System.out.printf( "neo4j scan time: %.3fms%n", time / 1_000_000.0 );
-
             tx.success();
         }
     }
@@ -99,14 +95,11 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
         try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
         {
             // when
-            long time = System.nanoTime();
             runtime.read().allRelationshipsScan( relationships );
             while ( relationships.next() )
             {
                 ids.add( relationships.relationshipReference() );
             }
-            time = System.nanoTime() - time;
-            System.out.printf( "cursor scan time: %.3fms%n", time / 1_000_000.0 );
         }
 
         assertEquals( RELATIONSHIP_IDS, ids );

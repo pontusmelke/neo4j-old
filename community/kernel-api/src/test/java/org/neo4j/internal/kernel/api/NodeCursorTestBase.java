@@ -64,13 +64,10 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
         try ( Transaction tx = graphDb.beginTx() )
         {
             NODE_IDS = new ArrayList<>();
-            long time = System.nanoTime();
             for ( Node node : graphDb.getAllNodes() )
             {
                 NODE_IDS.add( node.getId() );
             }
-            time = System.nanoTime() - time;
-            System.out.printf( "neo4j scan time: %.3fms%n", time / 1_000_000.0 );
             tx.success();
         }
     }
@@ -83,14 +80,11 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
         try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
         {
             // when
-            long time = System.nanoTime();
             runtime.read().allNodesScan( nodes );
             while ( nodes.next() )
             {
                 ids.add( nodes.nodeReference() );
             }
-            time = System.nanoTime() - time;
-            System.out.printf( "cursor scan time: %.3fms%n", time / 1_000_000.0 );
         }
 
         // then

@@ -38,31 +38,6 @@ public abstract class RuntimeITBase
     final int IRRELEVANT_LABEL = -1000;
 
     @Test
-    public void shouldDoNodeAllScan()
-    {
-        // given
-        Runtime r = runtime();
-        long n1 = createNode( r );
-        long n2 = createNode( r );
-        long n3 = createNode( r );
-
-        // when
-        NodeCursor cursor = r.cursorFactory().allocateNodeCursor();
-        r.read().allNodesScan( cursor );
-
-        List<Long> scannedSet = new ArrayList<>();
-        while ( cursor.next() )
-        {
-            scannedSet.add( cursor.nodeReference() );
-            assertFalse( cursor.hasProperties() );
-            assertThat( cursor.labels().numberOfLabels(), equalTo( 0 ) );
-        }
-
-        // then
-        assertThat( scannedSet, containsInAnyOrder( n1, n2, n3 ) );
-    }
-
-    @Test
     public void shouldDoNodeLabelScan()
     {
         // given
