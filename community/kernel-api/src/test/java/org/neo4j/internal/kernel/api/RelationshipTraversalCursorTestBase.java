@@ -26,12 +26,10 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
 public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITestSupport>
@@ -111,8 +109,6 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITes
     @Test
     public void shouldTraverseRelationshipsOfGivenType() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
-
         // given
         try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
               RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
@@ -173,8 +169,6 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITes
     @Test
     public void shouldFollowSpecificRelationship() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
-
         // given
         try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
               RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();

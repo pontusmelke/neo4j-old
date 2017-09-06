@@ -28,12 +28,10 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.Label.label;
 
 public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
@@ -135,8 +133,6 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
     @Test
     public void shouldReadLabels() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
-
         // given
         try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
         {

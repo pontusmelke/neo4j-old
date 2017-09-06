@@ -29,6 +29,8 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.internal.kernel.api.KernelAPITestSupport;
 import org.neo4j.internal.kernel.api.Runtime;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.factory.GraphDatabaseSettings.dense_node_threshold;
 
 public class NeoLETestSupport implements KernelAPITestSupport
@@ -54,6 +56,12 @@ public class NeoLETestSupport implements KernelAPITestSupport
             }
         }
         runtime = new NeoLERuntime( new ReadStore( storeDir ) );
+    }
+
+    @Override
+    public void beforeEachTest()
+    {
+        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
     }
 
     @Override

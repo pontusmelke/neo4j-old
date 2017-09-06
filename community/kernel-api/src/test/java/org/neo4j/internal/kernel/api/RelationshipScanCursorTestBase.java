@@ -32,12 +32,10 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
 public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
@@ -178,7 +176,6 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
     @Test
     public void shouldAccessNodes() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
         // given
         try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
         {

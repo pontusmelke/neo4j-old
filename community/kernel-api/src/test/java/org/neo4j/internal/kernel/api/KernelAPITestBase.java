@@ -57,6 +57,7 @@ public abstract class KernelAPITestBase<G extends KernelAPITestSupport>
             testSupport.setup( folder.getRoot(), this::createTestGraph );
             runtime = testSupport.runtimeToTest();
         }
+        testSupport.beforeEachTest();
     }
 
     @AfterClass

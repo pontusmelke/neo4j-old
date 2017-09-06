@@ -45,6 +45,12 @@ public class NaiveRuntimeTestSupport implements KernelAPITestSupport
     }
 
     @Override
+    public void beforeEachTest()
+    {
+        // nothing special to do
+    }
+
+    @Override
     public Runtime runtimeToTest()
     {
         return runtime;

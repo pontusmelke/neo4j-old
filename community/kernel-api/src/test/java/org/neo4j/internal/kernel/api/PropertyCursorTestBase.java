@@ -29,11 +29,9 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.values.storable.Values;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
 
 public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
 {
@@ -122,8 +120,6 @@ public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> ext
     @Test
     public void shouldAccessSingleProperty() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
-
         assertAccessSingleProperty( byteProp, Values.of( (byte)13 ) );
         assertAccessSingleProperty( shortProp, Values.of( (short)13 ) );
         assertAccessSingleProperty( intProp, Values.of( 13 ) );
@@ -141,8 +137,6 @@ public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> ext
     @Test
     public void shouldAccessAllNodeProperties() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
-
         // given
         try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
                 PropertyCursor props = runtime.cursorFactory().allocatePropertyCursor() )

@@ -28,11 +28,9 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
 public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAPITestSupport>
@@ -98,7 +96,6 @@ public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAP
     @Test
     public void shouldTraverseTreeOfDepthThree() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
         try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
               RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
               RelationshipTraversalCursor relationship1 = runtime.cursorFactory().allocateRelationshipTraversalCursor();

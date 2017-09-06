@@ -29,6 +29,8 @@ public interface KernelAPITestSupport
 {
     void setup( File storeDir, Consumer<GraphDatabaseService> create ) throws IOException;
 
+    void beforeEachTest();
+
     Runtime runtimeToTest();
 
     void tearDown();

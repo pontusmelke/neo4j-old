@@ -30,11 +30,9 @@ import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeThat;
 
 public abstract class RandomRelationshipTraversalCursorTestBase<G extends KernelAPITestSupport>
         extends KernelAPITestBase<G>
@@ -73,8 +71,6 @@ public abstract class RandomRelationshipTraversalCursorTestBase<G extends Kernel
     @Test
     public void shouldManageRandomTraversals() throws Exception
     {
-        assumeThat( "x86_64", equalTo( System.getProperty( "os.arch" ) ) );
-
         // given
         try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
               RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
