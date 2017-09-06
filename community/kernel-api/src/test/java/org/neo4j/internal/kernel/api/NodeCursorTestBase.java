@@ -19,15 +19,12 @@
  */
 package org.neo4j.internal.kernel.api;
 
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
 
@@ -39,75 +36,46 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.Label.label;
 
-public abstract class NodeCursorTestBase<G extends KernelAPITestSupport>
+public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
 {
     private static List<Long> NODE_IDS;
     private static long foo, bar, baz, barbaz, bare, gone;
 
-    private static final TemporaryFolder folder = new TemporaryFolder();
-    private static KernelAPITestSupport testSupport;
-    private static Runtime runtime;
-
-    @Before
-    public void setupGraph() throws IOException
+    void createTestGraph( GraphDatabaseService graphDb )
     {
-        if ( testSupport == null )
+        Node deleted;
+        try ( Transaction tx = graphDb.beginTx() )
         {
-            folder.create();
-            testSupport = newTestSupport();
-            testSupport.setup(
-                folder.getRoot(),
-                graphDb -> {
-                    Node deleted;
-                    try ( Transaction tx = graphDb.beginTx() )
-                    {
-                        foo = graphDb.createNode( label( "Foo" ) ).getId();
-                        bar = graphDb.createNode( label( "Bar" ) ).getId();
-                        baz = graphDb.createNode( label( "Baz" ) ).getId();
-                        barbaz = graphDb.createNode( label( "Bar" ), label( "Baz" ) ).getId();
-                        gone = (deleted = graphDb.createNode()).getId();
-                        bare = graphDb.createNode().getId();
+            foo = graphDb.createNode( label( "Foo" ) ).getId();
+            bar = graphDb.createNode( label( "Bar" ) ).getId();
+            baz = graphDb.createNode( label( "Baz" ) ).getId();
+            barbaz = graphDb.createNode( label( "Bar" ), label( "Baz" ) ).getId();
+            gone = (deleted = graphDb.createNode()).getId();
+            bare = graphDb.createNode().getId();
 
-                        tx.success();
-                    }
+            tx.success();
+        }
 
-                    try ( Transaction tx = graphDb.beginTx() )
-                    {
-                        deleted.delete();
+        try ( Transaction tx = graphDb.beginTx() )
+        {
+            deleted.delete();
 
-                        tx.success();
-                    }
+            tx.success();
+        }
 
-                    try ( Transaction tx = graphDb.beginTx() )
-                    {
-                        NODE_IDS = new ArrayList<>();
-                        long time = System.nanoTime();
-                        for ( Node node : graphDb.getAllNodes() )
-                        {
-                            NODE_IDS.add( node.getId() );
-                        }
-                        time = System.nanoTime() - time;
-                        System.out.printf( "neo4j scan time: %.3fms%n", time / 1_000_000.0 );
-                        tx.success();
-                    }
-                } );
-            runtime = testSupport.runtimeToTest();
+        try ( Transaction tx = graphDb.beginTx() )
+        {
+            NODE_IDS = new ArrayList<>();
+            long time = System.nanoTime();
+            for ( Node node : graphDb.getAllNodes() )
+            {
+                NODE_IDS.add( node.getId() );
+            }
+            time = System.nanoTime() - time;
+            System.out.printf( "neo4j scan time: %.3fms%n", time / 1_000_000.0 );
+            tx.success();
         }
     }
-
-    @AfterClass
-    public static void tearDown() throws Exception
-    {
-        if ( testSupport != null )
-        {
-            runtime.close();
-            testSupport.tearDown();
-            folder.delete();
-            testSupport = null;
-        }
-    }
-
-    public abstract G newTestSupport();
 
     @Test
     public void shouldScanNodes() throws Exception
