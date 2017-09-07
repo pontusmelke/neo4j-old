@@ -26,16 +26,16 @@ import java.util.function.Consumer;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.internal.kernel.api.KernelAPITestSupport;
-import org.neo4j.internal.kernel.api.Runtime;
+import org.neo4j.internal.kernel.api.KernelAPI;
+import org.neo4j.internal.kernel.api.KernelAPIReadTestSupport;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assume.assumeThat;
 import static org.neo4j.graphdb.factory.GraphDatabaseSettings.dense_node_threshold;
 
-public class NeoLETestSupport implements KernelAPITestSupport
+public class NeoLETestSupport implements KernelAPIReadTestSupport
 {
-    private NeoLERuntime runtime;
+    private NeoLEKernel runtime;
 
     @Override
     public void setup( File storeDir, Consumer<GraphDatabaseService> create ) throws IOException
@@ -55,7 +55,7 @@ public class NeoLETestSupport implements KernelAPITestSupport
                 graphDb.shutdown();
             }
         }
-        runtime = new NeoLERuntime( new ReadStore( storeDir ) );
+        runtime = new NeoLEKernel( new ReadStore( storeDir ) );
     }
 
     @Override
@@ -65,7 +65,7 @@ public class NeoLETestSupport implements KernelAPITestSupport
     }
 
     @Override
-    public Runtime runtimeToTest()
+    public KernelAPI kernelToTest()
     {
         return runtime;
     }

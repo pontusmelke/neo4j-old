@@ -34,7 +34,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.Label.label;
 
-public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
+public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
     private static List<Long> NODE_IDS;
     private static long foo, bar, baz, barbaz, bare, gone;
@@ -77,10 +77,10 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
     {
         // given
         List<Long> ids = new ArrayList<>();
-        try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
+        try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
             // when
-            runtime.read().allNodesScan( nodes );
+            read.allNodesScan( nodes );
             while ( nodes.next() )
             {
                 ids.add( nodes.nodeReference() );
@@ -95,12 +95,12 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
     public void shouldAccessNodesByReference() throws Exception
     {
         // given
-        try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
+        try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
             for ( long id : NODE_IDS )
             {
                 // when
-                runtime.read().singleNode( id, nodes );
+                read.singleNode( id, nodes );
 
                 // then
                 assertTrue( "should access defined node", nodes.next() );
@@ -114,10 +114,10 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
     public void shouldNotFindDeletedNode() throws Exception
     {
         // given
-        try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
+        try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
             // when
-            runtime.read().singleNode( gone, nodes );
+            read.singleNode( gone, nodes );
 
             // then
             assertFalse( "should not access deleted node", nodes.next() );
@@ -128,12 +128,12 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
     public void shouldReadLabels() throws Exception
     {
         // given
-        try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
+        try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
             LabelSet labels;
 
             // when
-            runtime.read().singleNode( foo, nodes );
+            read.singleNode( foo, nodes );
 
             // then
             assertTrue( "should access defined node", nodes.next() );
@@ -143,7 +143,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
             assertFalse( "should only access a single node", nodes.next() );
 
             // when
-            runtime.read().singleNode( bar, nodes );
+            read.singleNode( bar, nodes );
 
             // then
             assertTrue( "should access defined node", nodes.next() );
@@ -153,7 +153,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
             assertFalse( "should only access a single node", nodes.next() );
 
             // when
-            runtime.read().singleNode( baz, nodes );
+            read.singleNode( baz, nodes );
 
             // then
             assertTrue( "should access defined node", nodes.next() );
@@ -167,7 +167,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
             assertNotEquals( "distinct labels", _bar, _baz );
 
             // when
-            runtime.read().singleNode( barbaz, nodes );
+            read.singleNode( barbaz, nodes );
 
             // then
             assertTrue( "should access defined node", nodes.next() );
@@ -185,7 +185,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPITestSupport> extends
             assertFalse( "should only access a single node", nodes.next() );
 
             // when
-            runtime.read().singleNode( bare, nodes );
+            read.singleNode( bare, nodes );
 
             // then
             assertTrue( "should access defined node", nodes.next() );

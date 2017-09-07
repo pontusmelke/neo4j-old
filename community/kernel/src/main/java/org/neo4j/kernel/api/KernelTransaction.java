@@ -24,6 +24,7 @@ import java.util.Optional;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.api.exceptions.TransactionFailureException;
 import org.neo4j.kernel.api.security.SecurityContext;
+import org.neo4j.kernel.api.txstate.TxStateHolder;
 import org.neo4j.kernel.impl.api.Kernel;
 
 /**
@@ -76,7 +77,7 @@ import org.neo4j.kernel.impl.api.Kernel;
  * }
  * </pre>
  */
-public interface KernelTransaction extends AutoCloseable
+public interface KernelTransaction extends AutoCloseable, TxStateHolder
 {
     enum Type
     {

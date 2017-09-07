@@ -24,7 +24,7 @@ import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipDataAccessor;
 import org.neo4j.io.pagecache.PageCursor;
-import org.neo4j.kernel.impl.runtime.NaiveRuntime;
+import org.neo4j.kernel.impl.runtime.NaiveKernel;
 
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.combineReference;
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_PROPERTIES;
@@ -80,7 +80,7 @@ public class NaiveRelationshipCursor extends PageCacheBackedCursor implements Re
     @Override
     final int pageSize()
     {
-        return NaiveRuntime.RELATIONSHIP_STORE_PAGE_SIZE;
+        return NaiveKernel.RELATIONSHIP_STORE_PAGE_SIZE;
     }
 
     public void init( PageCursor pageCursor, long startAddress, long maxAddress )

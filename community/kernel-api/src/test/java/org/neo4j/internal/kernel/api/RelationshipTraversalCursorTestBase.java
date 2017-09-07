@@ -32,8 +32,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
-public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITestSupport>
-        extends KernelAPITestBase<G>
+public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIReadTestSupport>
+        extends KernelAPIReadTestBase<G>
 {
     private static long bare, start, end;
 
@@ -93,11 +93,11 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITes
     public void shouldNotAccessGroupsOfBareNode() throws Exception
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-              RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+              RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor() )
         {
             // when
-            runtime.read().singleNode( bare, node );
+            read.singleNode( bare, node );
             assertTrue( "access node", node.next() );
             node.relationships( group );
 
@@ -110,13 +110,13 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITes
     public void shouldTraverseRelationshipsOfGivenType() throws Exception
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-              RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
-              RelationshipTraversalCursor relationship = runtime.cursorFactory().allocateRelationshipTraversalCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+              RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();
+              RelationshipTraversalCursor relationship = cursors.allocateRelationshipTraversalCursor() )
         {
             int empty = 0;
             // when
-            runtime.read().allNodesScan( node );
+            read.allNodesScan( node );
             while ( node.next() )
             {
                 node.relationships( group );
@@ -170,12 +170,12 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITes
     public void shouldFollowSpecificRelationship() throws Exception
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-              RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
-              RelationshipTraversalCursor relationship = runtime.cursorFactory().allocateRelationshipTraversalCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+              RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();
+              RelationshipTraversalCursor relationship = cursors.allocateRelationshipTraversalCursor() )
         {
             // when - traversing from start to end
-            runtime.read().singleNode( start, node );
+            read.singleNode( start, node );
             assertTrue( "access start node", node.next() );
             node.relationships( group );
             assertTrue( "access relationship group", group.next() );
@@ -202,7 +202,7 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPITes
             assertFalse( "only a single group", group.next() );
 
             // when - traversing from end to start
-            runtime.read().singleNode( end, node );
+            read.singleNode( end, node );
             assertTrue( "access start node", node.next() );
             node.relationships( group );
             assertTrue( "access relationship group", group.next() );

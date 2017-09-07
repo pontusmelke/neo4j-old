@@ -17,15 +17,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.neo4j.kernel.impl.runtime;
+package org.neo4j.internal.kernel.api;
 
-import org.neo4j.internal.kernel.api.LargeNodeCursorTestBase;
+import java.io.File;
+import java.io.IOException;
 
-public class NaiveLargeNodeCursorTest extends LargeNodeCursorTestBase<NaiveRuntimeReadTestSupport>
+import org.neo4j.graphdb.GraphDatabaseService;
+
+public interface KernelAPIWriteTestSupport
 {
-    @Override
-    public NaiveRuntimeReadTestSupport newTestSupport()
-    {
-        return new NaiveRuntimeReadTestSupport();
-    }
+    void setup( File storeDir ) throws IOException;
+
+    void beforeEachTest();
+
+    KernelAPI kernelToTest();
+
+    /**
+     * Backdoor to allow asserting on write effects
+     */
+    GraphDatabaseService graphBackdoor();
+
+    void tearDown();
 }

@@ -27,6 +27,8 @@ import org.neo4j.kernel.api.Statement;
 import org.neo4j.kernel.api.exceptions.Status;
 import org.neo4j.kernel.api.exceptions.TransactionFailureException;
 import org.neo4j.kernel.api.security.SecurityContext;
+import org.neo4j.kernel.api.txstate.LegacyIndexTransactionState;
+import org.neo4j.kernel.api.txstate.TransactionState;
 
 public class StubKernelTransaction implements KernelTransaction
 {
@@ -141,6 +143,24 @@ public class StubKernelTransaction implements KernelTransaction
 
     @Override
     public Revertable overrideWith( SecurityContext context )
+    {
+        throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    @Override
+    public TransactionState txState()
+    {
+        throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    @Override
+    public LegacyIndexTransactionState legacyIndexTxState()
+    {
+        throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    @Override
+    public boolean hasTxStateWithChanges()
     {
         throw new UnsupportedOperationException( "not implemented" );
     }

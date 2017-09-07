@@ -31,11 +31,9 @@ import org.neo4j.graphdb.Transaction;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.neo4j.graphdb.Label.label;
 
-public abstract class LargeNodeCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
+public abstract class LargeNodeCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
     private static List<Long> NODE_IDS = new ArrayList<>();
     private static int N_NODES = 10000;
@@ -77,10 +75,10 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPITestSupport> ex
     {
         // given
         List<Long> ids = new ArrayList<>();
-        try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
+        try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
             // when
-            runtime.read().allNodesScan( nodes );
+            read.allNodesScan( nodes );
             while ( nodes.next() )
             {
                 ids.add( nodes.nodeReference() );
@@ -95,12 +93,12 @@ public abstract class LargeNodeCursorTestBase<G extends KernelAPITestSupport> ex
     public void shouldAccessNodesByReference() throws Exception
     {
         // given
-        try ( NodeCursor nodes = runtime.cursorFactory().allocateNodeCursor() )
+        try ( NodeCursor nodes = cursors.allocateNodeCursor() )
         {
             for ( long id : NODE_IDS )
             {
                 // when
-                runtime.read().singleNode( id, nodes );
+                read.singleNode( id, nodes );
 
                 // then
                 assertTrue( "should access defined node", nodes.next() );

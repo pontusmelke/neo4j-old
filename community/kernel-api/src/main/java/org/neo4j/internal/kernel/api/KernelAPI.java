@@ -20,24 +20,13 @@
 package org.neo4j.internal.kernel.api;
 
 /**
- * Entry point for the Cypher Kernel API
+ * Entry point for the Kernel API
  *
- * Usage is roughly
- *
- * try ( PlannerFrame plannerFrame = kernelAPI.beginPlannerFrame() )
- * {
- *     LogicalPlan logicalPlan = Planner.plan( queryText, plannerFrame );
- *     PhysicalPlan physicalPlan = PhysicalPlanner.specialize( logicalPlan, plannerFrame );
- *     ExecutableQuery executableQuery = ExecutableMapping.map( physicalPlan, token );
- *
- *     try ( Runtime runtime = logicalPlan.beginRuntime() )
- *     {
- *         executableQuery.execute( runtime );
- *     }
- * }
+ * Usage pattern is under development
  */
 public interface KernelAPI
 {
-    PlannerFrame beginPlannerFrame();
-    Token token();
+    Transaction beginTransaction();
+
+    CursorFactory cursors();
 }

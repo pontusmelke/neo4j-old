@@ -25,13 +25,13 @@ import java.util.function.Consumer;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 
-public interface KernelAPITestSupport
+public interface KernelAPIReadTestSupport
 {
     void setup( File storeDir, Consumer<GraphDatabaseService> create ) throws IOException;
 
     void beforeEachTest();
 
-    Runtime runtimeToTest();
+    KernelAPI kernelToTest();
 
     void tearDown();
 }

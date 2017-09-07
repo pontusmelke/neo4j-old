@@ -34,8 +34,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public abstract class RandomRelationshipTraversalCursorTestBase<G extends KernelAPITestSupport>
-        extends KernelAPITestBase<G>
+public abstract class RandomRelationshipTraversalCursorTestBase<G extends KernelAPIReadTestSupport>
+        extends KernelAPIReadTestBase<G>
 {
     private static final int N_TRAVERSALS = 10_000;
     private static int N_NODES = 100;
@@ -72,15 +72,15 @@ public abstract class RandomRelationshipTraversalCursorTestBase<G extends Kernel
     public void shouldManageRandomTraversals() throws Exception
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-              RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
-              RelationshipTraversalCursor relationship = runtime.cursorFactory().allocateRelationshipTraversalCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+              RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();
+              RelationshipTraversalCursor relationship = cursors.allocateRelationshipTraversalCursor() )
         {
             for ( int i = 0; i < N_TRAVERSALS; i++ )
             {
                 // when
                 long nodeId = nodeIds.get( random.nextInt( N_NODES ) );
-                runtime.read().singleNode( nodeId, node );
+                read.singleNode( nodeId, node );
                 assertTrue( "access root node", node.next() );
                 node.relationships( group );
                 assertFalse( "single root", node.next() );

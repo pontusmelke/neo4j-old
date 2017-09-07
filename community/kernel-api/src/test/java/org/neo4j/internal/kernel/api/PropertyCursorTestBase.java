@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
+public abstract class PropertyCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
     private static long bare, byteProp, shortProp, intProp, inlineLongProp, longProp,
             floatProp, doubleProp, trueProp, falseProp, charProp, shortStringProp, utf8Prop, allProps;
@@ -99,18 +99,18 @@ public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> ext
     public void shouldNotAccessNonExistentProperties() throws Exception
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-                PropertyCursor props = runtime.cursorFactory().allocatePropertyCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+                PropertyCursor props = cursors.allocatePropertyCursor() )
         {
             // when
-            runtime.read().singleNode( bare, node );
+            read.singleNode( bare, node );
             assertTrue( "node by reference", node.next() );
             assertFalse( "no properties", node.hasProperties() );
 
             node.properties( props );
             assertFalse( "no properties by direct method", props.next() );
 
-            runtime.read().nodeProperties( node.propertiesReference(), props );
+            read.nodeProperties( node.propertiesReference(), props );
             assertFalse( "no properties via property ref", props.next() );
 
             assertFalse( "only one node", node.next() );
@@ -138,11 +138,11 @@ public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> ext
     public void shouldAccessAllNodeProperties() throws Exception
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-                PropertyCursor props = runtime.cursorFactory().allocatePropertyCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+                PropertyCursor props = cursors.allocatePropertyCursor() )
         {
             // when
-            runtime.read().singleNode( allProps, node );
+            read.singleNode( allProps, node );
             assertTrue( "node by reference", node.next() );
             assertTrue( "has properties", node.hasProperties() );
 
@@ -173,11 +173,11 @@ public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> ext
     private void assertAccessSingleProperty( long nodeId, Object expectedValue )
     {
         // given
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-                PropertyCursor props = runtime.cursorFactory().allocatePropertyCursor() )
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+                PropertyCursor props = cursors.allocatePropertyCursor() )
         {
             // when
-            runtime.read().singleNode( nodeId, node );
+            read.singleNode( nodeId, node );
             assertTrue( "node by reference", node.next() );
             assertTrue( "has properties", node.hasProperties() );
 
@@ -186,7 +186,7 @@ public abstract class PropertyCursorTestBase<G extends KernelAPITestSupport> ext
             assertEquals( "correct value", expectedValue, props.propertyValue() );
             assertFalse( "single property", props.next() );
 
-            runtime.read().nodeProperties( node.propertiesReference(), props );
+            read.nodeProperties( node.propertiesReference(), props );
             assertTrue( "has properties via property ref", props.next() );
             assertEquals( "correct value", expectedValue, props.propertyValue() );
             assertFalse( "single property", props.next() );

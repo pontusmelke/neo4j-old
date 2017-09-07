@@ -38,7 +38,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
-public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupport> extends KernelAPITestBase<G>
+public abstract class RelationshipScanCursorTestBase<G extends KernelAPIReadTestSupport> extends KernelAPIReadTestBase<G>
 {
     private static List<Long> RELATIONSHIP_IDS;
     private static long none, loop, one, c, d;
@@ -92,10 +92,10 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
     {
         // given
         List<Long> ids = new ArrayList<>();
-        try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
+        try ( RelationshipScanCursor relationships = cursors.allocateRelationshipScanCursor() )
         {
             // when
-            runtime.read().allRelationshipsScan( relationships );
+            read.allRelationshipsScan( relationships );
             while ( relationships.next() )
             {
                 ids.add( relationships.relationshipReference() );
@@ -109,12 +109,12 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
     public void shouldAccessRelationshipByReference() throws Exception
     {
         // given
-        try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
+        try ( RelationshipScanCursor relationships = cursors.allocateRelationshipScanCursor() )
         {
             for ( long id : RELATIONSHIP_IDS )
             {
                 // when
-                runtime.read().singleRelationship( id, relationships );
+                read.singleRelationship( id, relationships );
 
                 // then
                 assertTrue( "should access defined relationship", relationships.next() );
@@ -128,10 +128,10 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
     public void shouldNotAccessDeletedRelationship() throws Exception
     {
         // given
-        try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
+        try ( RelationshipScanCursor relationships = cursors.allocateRelationshipScanCursor() )
         {
             // when
-            runtime.read().singleRelationship( none, relationships );
+            read.singleRelationship( none, relationships );
 
             // then
             assertFalse( "should not access deleted relationship", relationships.next() );
@@ -144,10 +144,10 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
         // given
         Map<Integer,Integer> counts = new HashMap<>();
 
-        try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
+        try ( RelationshipScanCursor relationships = cursors.allocateRelationshipScanCursor() )
         {
             // when
-            runtime.read().allRelationshipsScan( relationships );
+            read.allRelationshipsScan( relationships );
             while ( relationships.next() )
             {
                 counts.compute( relationships.label(), ( k, v ) -> v == null ? 1 : v + 1 );
@@ -170,10 +170,10 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
     public void shouldAccessNodes() throws Exception
     {
         // given
-        try ( RelationshipScanCursor relationships = runtime.cursorFactory().allocateRelationshipScanCursor() )
+        try ( RelationshipScanCursor relationships = cursors.allocateRelationshipScanCursor() )
         {
             // when
-            runtime.read().singleRelationship( one, relationships );
+            read.singleRelationship( one, relationships );
 
             // then
             assertTrue( relationships.next() );
@@ -182,7 +182,7 @@ public abstract class RelationshipScanCursorTestBase<G extends KernelAPITestSupp
             assertFalse( relationships.next() );
 
             // when
-            runtime.read().singleRelationship( loop, relationships );
+            read.singleRelationship( loop, relationships );
 
             // then
             assertTrue( relationships.next() );

@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.io.pagecache.PageCursor;
-import org.neo4j.kernel.impl.runtime.NaiveRuntime;
+import org.neo4j.kernel.impl.runtime.NaiveKernel;
 import org.neo4j.kernel.impl.store.LongerShortString;
 import org.neo4j.string.UTF8;
 import org.neo4j.values.storable.Value;
@@ -116,7 +116,7 @@ public class NaivePropertyCursor extends PageCacheBackedCursor implements Proper
     @Override
     final int pageSize()
     {
-        return NaiveRuntime.PROPERTY_STORE_PAGE_SIZE;
+        return NaiveKernel.PROPERTY_STORE_PAGE_SIZE;
     }
 
     public void init( PageCursor pageCursor, long startAddress, long maxAddress )

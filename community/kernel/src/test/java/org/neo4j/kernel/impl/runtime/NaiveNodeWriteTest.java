@@ -19,13 +19,13 @@
  */
 package org.neo4j.kernel.impl.runtime;
 
-import org.neo4j.internal.kernel.api.LargeNodeCursorTestBase;
+import org.neo4j.internal.kernel.api.NodeWriteTestBase;
 
-public class NaiveLargeNodeCursorTest extends LargeNodeCursorTestBase<NaiveRuntimeReadTestSupport>
+public class NaiveNodeWriteTest extends NodeWriteTestBase<NaiveRuntimeWriteTestSupport>
 {
     @Override
-    public NaiveRuntimeReadTestSupport newTestSupport()
+    public NaiveRuntimeWriteTestSupport newTestSupport()
     {
-        return new NaiveRuntimeReadTestSupport();
+        return new NaiveRuntimeWriteTestSupport();
     }
 }

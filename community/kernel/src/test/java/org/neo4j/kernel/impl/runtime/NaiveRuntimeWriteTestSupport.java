@@ -20,28 +20,27 @@
 package org.neo4j.kernel.impl.runtime;
 
 import java.io.File;
-import java.util.function.Consumer;
+import java.io.IOException;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.internal.kernel.api.KernelAPITestSupport;
-import org.neo4j.internal.kernel.api.Runtime;
+import org.neo4j.internal.kernel.api.KernelAPI;
+import org.neo4j.internal.kernel.api.KernelAPIWriteTestSupport;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
-public class NaiveRuntimeTestSupport implements KernelAPITestSupport
+public class NaiveRuntimeWriteTestSupport implements KernelAPIWriteTestSupport
 {
     private GraphDatabaseAPI graphDb;
-    private NaiveRuntime runtime;
+    private NaiveKernel kernel;
 
     @Override
-    public void setup( File storeDir, Consumer<GraphDatabaseService> create )
+    public void setup( File storeDir ) throws IOException
     {
         graphDb = (GraphDatabaseAPI) new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder( storeDir )
                 .newGraphDatabase();
 
-        create.accept( graphDb );
-        runtime = graphDb.getDependencyResolver().resolveDependency( NaiveRuntime.class );
+        kernel = graphDb.getDependencyResolver().resolveDependency( NaiveKernel.class );
     }
 
     @Override
@@ -51,9 +50,15 @@ public class NaiveRuntimeTestSupport implements KernelAPITestSupport
     }
 
     @Override
-    public Runtime runtimeToTest()
+    public KernelAPI kernelToTest()
     {
-        return runtime;
+        return kernel;
+    }
+
+    @Override
+    public GraphDatabaseService graphBackdoor()
+    {
+        return graphDb;
     }
 
     @Override

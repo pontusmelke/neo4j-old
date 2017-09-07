@@ -19,15 +19,25 @@
  */
 package org.neo4j.internal.kernel.api;
 
-/**
- * A PlannerFrame exists from the start of Cypher query planning, until the last Graph interaction.
- * The PlannerFrame asserts that key assumptions made during planning still hold during execution, for example
- * that no indexes are deleted.
- *
- * When the query is planned and ready for execution, the beginRuntime() escalated the graph consistency guarantees
- * and essentially starts the real transaction.
- */
-public interface PlannerFrame extends AutoCloseable
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+
+public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
 {
-    Runtime beginRuntime();
+    @Test
+    public void shouldCreateNode() throws Exception
+    {
+        long node;
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            node = tx.nodeCreate();
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertEquals( node, graphDb.getNodeById( node ).getId() );
+        }
+    }
 }

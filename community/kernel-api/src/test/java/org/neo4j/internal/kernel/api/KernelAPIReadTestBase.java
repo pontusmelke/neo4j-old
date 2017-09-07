@@ -19,6 +19,7 @@
  */
 package org.neo4j.internal.kernel.api;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.rules.TemporaryFolder;
@@ -28,11 +29,13 @@ import java.io.IOException;
 import org.neo4j.graphdb.GraphDatabaseService;
 
 @SuppressWarnings( "WeakerAccess" )
-public abstract class KernelAPITestBase<G extends KernelAPITestSupport>
+public abstract class KernelAPIReadTestBase<G extends KernelAPIReadTestSupport>
 {
     protected static final TemporaryFolder folder = new TemporaryFolder();
-    protected static KernelAPITestSupport testSupport;
-    protected static Runtime runtime;
+    protected static KernelAPIReadTestSupport testSupport;
+    protected static KernelAPI kernel;
+    protected CursorFactory cursors;
+    protected Transaction read;
 
     /**
      * Creates a new instance of KernelAPITestSupport, which will be used to execute the concrete test
@@ -55,9 +58,18 @@ public abstract class KernelAPITestBase<G extends KernelAPITestSupport>
             folder.create();
             testSupport = newTestSupport();
             testSupport.setup( folder.getRoot(), this::createTestGraph );
-            runtime = testSupport.runtimeToTest();
+            kernel = testSupport.kernelToTest();
         }
         testSupport.beforeEachTest();
+        cursors = kernel.cursors();
+        read = kernel.beginTransaction();
+    }
+
+    @After
+    public void closeTransaction() throws Exception
+    {
+        read.success();
+        read.close();
     }
 
     @AfterClass
@@ -65,11 +77,10 @@ public abstract class KernelAPITestBase<G extends KernelAPITestSupport>
     {
         if ( testSupport != null )
         {
-            runtime.close();
             testSupport.tearDown();
             folder.delete();
             testSupport = null;
-            runtime = null;
+            kernel = null;
         }
     }
 }

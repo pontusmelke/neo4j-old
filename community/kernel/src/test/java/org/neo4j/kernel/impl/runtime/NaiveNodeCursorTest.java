@@ -21,11 +21,11 @@ package org.neo4j.kernel.impl.runtime;
 
 import org.neo4j.internal.kernel.api.NodeCursorTestBase;
 
-public class NaiveNodeCursorTest extends NodeCursorTestBase<NaiveRuntimeTestSupport>
+public class NaiveNodeCursorTest extends NodeCursorTestBase<NaiveRuntimeReadTestSupport>
 {
     @Override
-    public NaiveRuntimeTestSupport newTestSupport()
+    public NaiveRuntimeReadTestSupport newTestSupport()
     {
-        return new NaiveRuntimeTestSupport();
+        return new NaiveRuntimeReadTestSupport();
     }
 }

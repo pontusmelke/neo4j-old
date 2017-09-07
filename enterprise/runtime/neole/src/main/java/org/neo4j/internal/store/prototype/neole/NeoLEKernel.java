@@ -19,42 +19,37 @@
  */
 package org.neo4j.internal.store.prototype.neole;
 
-import org.neo4j.internal.kernel.api.Read;
-import org.neo4j.internal.kernel.api.Runtime;
-import org.neo4j.internal.kernel.api.Write;
+import java.io.IOException;
 
-public class NeoLERuntime implements Runtime
+import org.neo4j.internal.kernel.api.KernelAPI;
+
+public class NeoLEKernel implements KernelAPI
 {
     private final CursorFactory cursorFactory;
     private final ReadStore readStore;
 
-    public NeoLERuntime( ReadStore readStore )
+    public NeoLEKernel( ReadStore readStore )
     {
         this.readStore = readStore;
         this.cursorFactory = new CursorFactory( readStore );
     }
 
     @Override
-    public CursorFactory cursorFactory()
+    public org.neo4j.internal.kernel.api.Transaction beginTransaction()
+    {
+        try
+        {
+            return new Transaction( readStore );
+        }
+        catch ( IOException e )
+        {
+            throw new RuntimeException( e );
+        }
+    }
+
+    @Override
+    public CursorFactory cursors()
     {
         return cursorFactory;
-    }
-
-    @Override
-    public Read read()
-    {
-        return readStore;
-    }
-
-    @Override
-    public Write write()
-    {
-        throw new UnsupportedOperationException( "not implemented" );
-    }
-
-    @Override
-    public void close() throws Exception
-    {
-        readStore.shutdown();
     }
 }

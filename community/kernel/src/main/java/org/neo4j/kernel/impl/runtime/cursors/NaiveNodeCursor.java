@@ -26,7 +26,7 @@ import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.io.pagecache.PageCursor;
-import org.neo4j.kernel.impl.runtime.NaiveRuntime;
+import org.neo4j.kernel.impl.runtime.NaiveKernel;
 
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.combineReference;
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.encodeDirectRelationshipReference;
@@ -80,7 +80,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     @Override
     final int pageSize()
     {
-        return NaiveRuntime.NODE_STORE_PAGE_SIZE;
+        return NaiveKernel.NODE_STORE_PAGE_SIZE;
     }
 
     public void init( PageCursor pageCursor, long startAddress, long maxAddress )

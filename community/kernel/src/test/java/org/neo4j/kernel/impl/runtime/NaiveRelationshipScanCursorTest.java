@@ -21,11 +21,11 @@ package org.neo4j.kernel.impl.runtime;
 
 import org.neo4j.internal.kernel.api.RelationshipScanCursorTestBase;
 
-public class NaiveRelationshipScanCursorTest extends RelationshipScanCursorTestBase<NaiveRuntimeTestSupport>
+public class NaiveRelationshipScanCursorTest extends RelationshipScanCursorTestBase<NaiveRuntimeReadTestSupport>
 {
     @Override
-    public NaiveRuntimeTestSupport newTestSupport()
+    public NaiveRuntimeReadTestSupport newTestSupport()
     {
-        return new NaiveRuntimeTestSupport();
+        return new NaiveRuntimeReadTestSupport();
     }
 }

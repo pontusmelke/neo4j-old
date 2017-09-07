@@ -70,7 +70,7 @@ import org.neo4j.kernel.impl.proc.Procedures;
 import org.neo4j.kernel.impl.proc.TerminationGuardProvider;
 import org.neo4j.kernel.impl.proc.TypeMappers.SimpleConverter;
 import org.neo4j.kernel.impl.query.QueryExecutionEngine;
-import org.neo4j.kernel.impl.runtime.NaiveRuntime;
+import org.neo4j.kernel.impl.runtime.NaiveKernel;
 import org.neo4j.kernel.impl.store.StoreId;
 import org.neo4j.kernel.impl.transaction.log.PhysicalLogFile;
 import org.neo4j.kernel.impl.transaction.state.DataSourceManager;
@@ -174,10 +174,6 @@ public class DataSourceModule
 
         autoIndexing = new InternalAutoIndexing( platformModule.config, editionModule.propertyKeyTokenHolder );
 
-        NaiveRuntime naiveRuntime = new NaiveRuntime( pageCache, platformModule.storeDir );
-        life.add( naiveRuntime );
-        deps.satisfyDependency( naiveRuntime );
-
         Procedures procedures = setupProcedures( platformModule, editionModule );
 
         deps.satisfyDependency( new NonTransactionalDbmsOperations( procedures ) );
@@ -227,6 +223,15 @@ public class DataSourceModule
                 platformModule.databaseInfo.operationalMode ) );
 
         dataSourceManager.register( neoStoreDataSource );
+
+        NaiveKernel naiveKernel =
+                new NaiveKernel(
+                            pageCache,
+                            platformModule.storeDir,
+                            neoStoreDataSource::getStoreLayer,
+                            neoStoreDataSource::getKernel );
+        life.add( naiveKernel );
+        deps.satisfyDependency( naiveKernel );
 
         life.add( new MonitorGc( config, logging.getInternalLog( MonitorGc.class ) ) );
 

@@ -33,8 +33,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.neo4j.graphdb.RelationshipType.withName;
 
-public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAPITestSupport>
-        extends KernelAPITestBase<G>
+public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAPIReadTestSupport>
+        extends KernelAPIReadTestBase<G>
 {
     private static long three_root;
     private static int expected_total, expected_unique;
@@ -96,16 +96,16 @@ public abstract class DeepRelationshipTraversalCursorTestBase<G extends KernelAP
     @Test
     public void shouldTraverseTreeOfDepthThree() throws Exception
     {
-        try ( NodeCursor node = runtime.cursorFactory().allocateNodeCursor();
-              RelationshipGroupCursor group = runtime.cursorFactory().allocateRelationshipGroupCursor();
-              RelationshipTraversalCursor relationship1 = runtime.cursorFactory().allocateRelationshipTraversalCursor();
-              RelationshipTraversalCursor relationship2 = runtime.cursorFactory().allocateRelationshipTraversalCursor();
+        try ( NodeCursor node = cursors.allocateNodeCursor();
+              RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();
+              RelationshipTraversalCursor relationship1 = cursors.allocateRelationshipTraversalCursor();
+              RelationshipTraversalCursor relationship2 = cursors.allocateRelationshipTraversalCursor();
               PrimitiveLongSet leafs = Primitive.longSet() )
         {
             long total = 0;
 
             // when
-            runtime.read().singleNode( three_root, node );
+            read.singleNode( three_root, node );
             assertTrue( "access root node", node.next() );
             node.relationships( group );
             assertFalse( "single root", node.next() );
