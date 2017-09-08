@@ -64,12 +64,7 @@ public class NaiveRelationshipCursor extends PageCacheBackedCursor implements Re
      */
     public static final int RECORD_SIZE = 34;
 
-    private final Read read;
-
-    NaiveRelationshipCursor( Read read )
-    {
-        this.read = read;
-    }
+    private Read read;
 
     @Override
     final int recordSize()
@@ -83,9 +78,14 @@ public class NaiveRelationshipCursor extends PageCacheBackedCursor implements Re
         return NaiveKernel.RELATIONSHIP_STORE_PAGE_SIZE;
     }
 
-    public void init( PageCursor pageCursor, long startAddress, long maxAddress )
+    public void init(
+            PageCursor pageCursor,
+            long startAddress,
+            long maxAddress,
+            Read read )
     {
         initCursor( pageCursor, startAddress, maxAddress );
+        this.read = read;
     }
 
     // DATA ACCESS

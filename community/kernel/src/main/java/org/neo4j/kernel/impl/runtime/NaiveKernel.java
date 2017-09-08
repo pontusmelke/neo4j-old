@@ -131,8 +131,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
         propertyStore = pagedStore( StoreFile.PROPERTY_STORE, PROPERTY_STORE_PAGE_SIZE );
         pagedFiles.add( propertyStore );
 
-        this.read = new NaiveRead( nodeStore, relationshipStore, propertyStore );
-        this.cursorFactory = new NaiveCursorFactory( read );
+        this.cursorFactory = new NaiveCursorFactory();
         this.kernel = kernelSupplier.get();
     }
 

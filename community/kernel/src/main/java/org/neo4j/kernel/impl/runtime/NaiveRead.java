@@ -33,23 +33,29 @@ import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.internal.kernel.api.RelationshipScanCursor;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.internal.kernel.api.Scan;
+import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.io.pagecache.PagedFile;
+import org.neo4j.kernel.api.txstate.TxStateHolder;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveNodeCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaivePropertyCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipScanCursor;
+import org.neo4j.kernel.impl.runtime.cursors.StateAwareNodeCursor;
 
 public class NaiveRead implements Read
 {
     private final PagedFile nodeStore;
     private final PagedFile relationshipStore;
     private final PagedFile propertyStore;
+    private final TxStateHolder stateHolder;
 
-    NaiveRead( PagedFile nodeStore, PagedFile relationshipStore, PagedFile propertyStore )
+    NaiveRead( PagedFile nodeStore, PagedFile relationshipStore, PagedFile propertyStore,
+            TxStateHolder stateHolder )
     {
         this.nodeStore = nodeStore;
         this.relationshipStore = relationshipStore;
         this.propertyStore = propertyStore;
+        this.stateHolder = stateHolder;
     }
 
     @Override
@@ -83,7 +89,8 @@ public class NaiveRead implements Read
         try
         {
             long maxAddress = pageSizeInRecords * (nodeStore.getLastPageId() + 1);
-            ((NaiveNodeCursor) cursor).init( nodeStore.io( 0, PagedFile.PF_SHARED_READ_LOCK ), 0, maxAddress );
+            ((StateAwareNodeCursor) cursor).init(
+                    nodeStore.io( 0, PagedFile.PF_SHARED_READ_LOCK ), 0, maxAddress, this, stateHolder );
         }
         catch ( IOException e )
         {
@@ -104,8 +111,8 @@ public class NaiveRead implements Read
         long pageId = reference / pageSizeInRecords;
         try
         {
-            ((NaiveNodeCursor) cursor).init(
-                    nodeStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference, reference + 1 );
+            PageCursor pageCursor = nodeStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
+            ((StateAwareNodeCursor) cursor).init( pageCursor, reference, reference + 1, this, stateHolder );
         }
         catch ( IOException e )
         {
@@ -120,8 +127,8 @@ public class NaiveRead implements Read
         long pageId = reference / pageSizeInRecords;
         try
         {
-            ((NaiveRelationshipScanCursor) cursor).init(
-                    relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference, reference + 1 );
+            PageCursor pageCursor = relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
+            ((NaiveRelationshipScanCursor) cursor).init( pageCursor, reference, reference + 1, this);
         }
         catch ( IOException e )
         {
@@ -136,7 +143,8 @@ public class NaiveRead implements Read
         try
         {
             long maxAddress = pageSizeInRecords * (relationshipStore.getLastPageId() + 1);
-            ((NaiveRelationshipScanCursor) cursor).init( relationshipStore.io( 0, PagedFile.PF_SHARED_READ_LOCK ), 0, maxAddress );
+            PageCursor pageCursor = relationshipStore.io( 0, PagedFile.PF_SHARED_READ_LOCK );
+            ((NaiveRelationshipScanCursor) cursor).init( pageCursor, 0, maxAddress, this );
         }
         catch ( IOException e )
         {
@@ -181,8 +189,8 @@ public class NaiveRead implements Read
         long pageId = reference / pageSizeInRecords;
         try
         {
-            ((NaivePropertyCursor) cursor).init(
-                    propertyStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK ), reference, reference + 1 );
+            PageCursor pageCursor = propertyStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
+            ((NaivePropertyCursor) cursor).init( pageCursor, reference, reference + 1 );
         }
         catch ( IOException e )
         {

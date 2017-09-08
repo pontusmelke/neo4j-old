@@ -25,14 +25,9 @@ import org.neo4j.io.pagecache.PageCursor;
 
 public class NaiveRelationshipScanCursor extends NaiveRelationshipCursor implements RelationshipScanCursor
 {
-    NaiveRelationshipScanCursor( Read read )
+    public void init( PageCursor pageCursor, long startAddress, long maxAddress, Read read )
     {
-        super( read );
-    }
-
-    public void init( PageCursor pageCursor, long startAddress, long maxAddress )
-    {
-        super.init( pageCursor, startAddress, maxAddress );
+        super.init( pageCursor, startAddress, maxAddress, read );
     }
 
     @Override

@@ -90,22 +90,23 @@ abstract class PageCacheBackedCursor
     boolean scanNextByAddress()
     {
 //        System.out.println( String.format( "%6d %6d | %6d %6d",
-//                currentAddress, maxAddress, offsetInPage, pageSizeInRecords ) );
-        if ( address + 1 >= maxAddress )
+//                address, maxAddress, offsetInPage, pageSize()) );
+        assert this.address < Long.MAX_VALUE : "Cursor address is about to overflow!";
+        this.address++;
+        this.offsetInPage += recordSize();
+
+        if ( address >= maxAddress )
         {
             return false;
         }
 
-        if ( offsetInPage + recordSize() < pageSize() )
+        if ( offsetInPage < pageSize() )
         {
-            this.offsetInPage += recordSize();
-            this.address++;
             return true;
         }
 
         if ( advancePageCursor() )
         {
-            this.address++;
             int pageSizeInRecords = pageSize() / recordSize();
             this.offsetInPage = (int)(address % pageSizeInRecords) * recordSize();
             return true;
@@ -119,11 +120,7 @@ abstract class PageCacheBackedCursor
         boolean result;
         try
         {
-            do
-            {
-                result = pageCursor.next();
-            }
-            while ( pageCursor.shouldRetry() );
+            result = pageCursor.next();
         }
         catch ( IOException e )
         {

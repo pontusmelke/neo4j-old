@@ -25,7 +25,6 @@ import org.neo4j.internal.kernel.api.NodeLabelIndexCursor;
 import org.neo4j.internal.kernel.api.NodeManualIndexCursor;
 import org.neo4j.internal.kernel.api.NodeValueIndexCursor;
 import org.neo4j.internal.kernel.api.PropertyCursor;
-import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.internal.kernel.api.RelationshipManualIndexCursor;
 import org.neo4j.internal.kernel.api.RelationshipScanCursor;
@@ -33,23 +32,16 @@ import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 
 public class NaiveCursorFactory implements CursorFactory
 {
-    private final Read read;
-
-    public NaiveCursorFactory( Read read )
-    {
-        this.read = read;
-    }
-
     @Override
     public NodeCursor allocateNodeCursor()
     {
-        return new NaiveNodeCursor( read );
+        return new StateAwareNodeCursor();
     }
 
     @Override
     public RelationshipScanCursor allocateRelationshipScanCursor()
     {
-        return new NaiveRelationshipScanCursor( read );
+        return new NaiveRelationshipScanCursor();
     }
 
     @Override

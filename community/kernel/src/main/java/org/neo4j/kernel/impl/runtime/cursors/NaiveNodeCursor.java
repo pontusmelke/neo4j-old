@@ -64,12 +64,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
      */
 
     public static final int RECORD_SIZE = 15;
-    private final Read read;
-
-    NaiveNodeCursor( Read read )
-    {
-        this.read = read;
-    }
+    private Read read;
 
     @Override
     final int recordSize()
@@ -83,9 +78,14 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
         return NaiveKernel.NODE_STORE_PAGE_SIZE;
     }
 
-    public void init( PageCursor pageCursor, long startAddress, long maxAddress )
+    void init(
+            PageCursor pageCursor,
+            long startAddress,
+            long maxAddress,
+            Read read )
     {
         initCursor( pageCursor, startAddress, maxAddress );
+        this.read = read;
     }
 
     @Override
@@ -121,7 +121,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
 
     // DATA ACCESSOR METHODS
 
-    private boolean inUse()
+    protected boolean inUse()
     {
         return (unsignedByte( 0 ) & 0x01) != 0;
     }

@@ -21,47 +21,32 @@ package org.neo4j.internal.kernel.api;
 
 import org.junit.Test;
 
-import org.neo4j.graphdb.NotFoundException;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
+public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
 {
     @Test
-    public void shouldCreateNode() throws Exception
+    public void shouldSeeNodeInTransaction() throws Exception
     {
-        long node;
+        long nodeId;
         try ( Transaction tx = kernel.beginTransaction() )
         {
-            node = tx.nodeCreate();
+            nodeId = tx.nodeCreate();
+            try ( NodeCursor node = kernel.cursors().allocateNodeCursor() )
+            {
+                tx.singleNode( nodeId, node );
+                assertTrue( "should access node", node.next() );
+                assertEquals( nodeId, node.nodeReference() );
+                assertFalse( "should only find one node", node.next() );
+            }
             tx.success();
         }
 
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
-            assertEquals( node, graphDb.getNodeById( node ).getId() );
-        }
-    }
-
-    @Test
-    public void shouldRollbackOnFailure() throws Exception
-    {
-        long node;
-        try ( Transaction tx = kernel.beginTransaction() )
-        {
-            node = tx.nodeCreate();
-            tx.failure();
-        }
-
-        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
-        {
-            graphDb.getNodeById( node );
-            fail( "There should be no node" );
-        }
-        catch ( NotFoundException e )
-        {
-            // expected
+            assertEquals( nodeId, graphDb.getNodeById( nodeId ).getId() );
         }
     }
 }
