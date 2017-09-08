@@ -21,8 +21,13 @@ package org.neo4j.internal.kernel.api;
 
 import org.junit.Test;
 
+import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.NotFoundException;
+import org.neo4j.helpers.collection.Iterables;
+import org.neo4j.helpers.collection.Iterators;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -62,6 +67,28 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         catch ( NotFoundException e )
         {
             // expected
+        }
+    }
+
+    @Test
+    public void shouldAddLabelNode() throws Exception
+    {
+        long node;
+        int labelId;
+        final String labelName = "Town";
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            node = tx.nodeCreate();
+            labelId = kernel.token().labelGetOrCreateForName( labelName );
+            tx.nodeAddLabel( node, labelId );
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertThat(
+                    graphDb.getNodeById( node ).getLabels(),
+                    equalTo( Iterables.iterable( Label.label( labelName ) ) ) );
         }
     }
 }

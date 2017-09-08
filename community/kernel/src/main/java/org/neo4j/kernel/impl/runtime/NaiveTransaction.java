@@ -89,7 +89,7 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     @Override
     public void nodeAddLabel( long node, int nodeLabel )
     {
-
+        kernelTransaction.txState().nodeDoAddLabel( nodeLabel, node );
     }
 
     @Override

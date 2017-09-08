@@ -29,4 +29,6 @@ public interface KernelAPI
     Transaction beginTransaction();
 
     CursorFactory cursors();
+
+    Token token();
 }

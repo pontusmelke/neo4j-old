@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.KernelAPI;
-import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.Token;
 import org.neo4j.internal.kernel.api.Transaction;
 import org.neo4j.io.pagecache.PageCache;
 import org.neo4j.io.pagecache.PagedFile;
@@ -54,7 +54,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
     private final Supplier<org.neo4j.kernel.api.KernelAPI> kernelSupplier;
 
     private CursorFactory cursorFactory;
-    private Read read;
+    private Token token;
     private List<PagedFile> pagedFiles;
     private PagedFile nodeStore;
     private PagedFile relationshipStore;
@@ -113,6 +113,12 @@ public class NaiveKernel implements KernelAPI, Lifecycle
         return cursorFactory;
     }
 
+    @Override
+    public Token token()
+    {
+        return token;
+    }
+
     // LIFE CYCLE
 
     @Override
@@ -133,6 +139,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
 
         this.cursorFactory = new NaiveCursorFactory();
         this.kernel = kernelSupplier.get();
+        this.token = new NaiveToken( storeReadLayerSupplier.get() );
     }
 
     @Override
@@ -144,7 +151,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
         }
         pagedFiles.clear();
         this.cursorFactory = null;
-        this.read = null;
+        this.token = null;
     }
 
     @Override
