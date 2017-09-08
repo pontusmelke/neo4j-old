@@ -21,15 +21,14 @@ package org.neo4j.internal.kernel.api;
 
 import org.junit.Test;
 
-import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.helpers.collection.Iterables;
-import org.neo4j.helpers.collection.Iterators;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.neo4j.graphdb.Label.label;
 
 public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
 {
@@ -88,7 +87,35 @@ public abstract class NodeWriteTestBase<G extends KernelAPIWriteTestSupport> ext
         {
             assertThat(
                     graphDb.getNodeById( node ).getLabels(),
-                    equalTo( Iterables.iterable( Label.label( labelName ) ) ) );
+                    equalTo( Iterables.iterable( label( labelName ) ) ) );
+        }
+    }
+
+    @Test
+    public void shouldRemoveLabel() throws Exception
+    {
+        long nodeId;
+        int labelId;
+        final String labelName = "Town";
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            nodeId = graphDb.createNode( label( labelName ) ).getId();
+            tx.success();
+        }
+
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            labelId = kernel.token().labelGetOrCreateForName( labelName );
+            tx.nodeRemoveLabel( nodeId, labelId );
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertThat(
+                    graphDb.getNodeById( nodeId ).getLabels(),
+                    equalTo( Iterables.empty() ) );
         }
     }
 }

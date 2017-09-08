@@ -95,7 +95,7 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     @Override
     public void nodeRemoveLabel( long node, int nodeLabel )
     {
-
+        kernelTransaction.txState().nodeDoRemoveLabel( nodeLabel, node );
     }
 
     @Override
