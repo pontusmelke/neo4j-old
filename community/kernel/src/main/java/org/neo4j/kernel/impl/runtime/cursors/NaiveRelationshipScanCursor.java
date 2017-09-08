@@ -27,7 +27,7 @@ public class NaiveRelationshipScanCursor extends NaiveRelationshipCursor impleme
 {
     public void init( PageCursor pageCursor, long startAddress, long maxAddress, Read read )
     {
-        super.init( pageCursor, startAddress, maxAddress, read );
+        initScanningCursor( pageCursor, startAddress, maxAddress, read );
     }
 
     @Override
@@ -47,11 +47,5 @@ public class NaiveRelationshipScanCursor extends NaiveRelationshipCursor impleme
     public boolean shouldRetry()
     {
         return false;
-    }
-
-    @Override
-    public void close()
-    {
-        tearDownCursor();
     }
 }

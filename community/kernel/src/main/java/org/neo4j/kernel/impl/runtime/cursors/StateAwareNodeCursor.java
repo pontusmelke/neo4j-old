@@ -52,12 +52,9 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public boolean next()
     {
-        while ( scanNextByAddress() )
+        if ( super.next() )
         {
-            if ( inUse() )
-            {
-                return true;
-            }
+            return true;
         }
         if ( stateHolder.hasTxStateWithChanges() && stateHolder.txState().addedAndRemovedNodes().isAdded( address() ) )
         {
@@ -70,12 +67,6 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     public boolean shouldRetry()
     {
         return false;
-    }
-
-    @Override
-    public void close()
-    {
-        super.close();
     }
 
     // DATA ACCESSOR METHODS
@@ -122,7 +113,7 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public boolean hasProperties()
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        return super.hasProperties();
     }
 
     @Override
@@ -155,7 +146,7 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public void properties( PropertyCursor cursor )
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        super.properties( cursor );
     }
 
     @Override
@@ -167,6 +158,6 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public long propertiesReference()
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        return super.propertiesReference();
     }
 }

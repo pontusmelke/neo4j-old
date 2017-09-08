@@ -102,11 +102,6 @@ public class NaivePropertyCursor extends PageCacheBackedCursor implements Proper
 
     private int block;
 
-    NaivePropertyCursor()
-    {
-        block = Integer.MIN_VALUE;
-    }
-
     @Override
     final int recordSize()
     {
@@ -119,25 +114,22 @@ public class NaivePropertyCursor extends PageCacheBackedCursor implements Proper
         return NaiveKernel.PROPERTY_STORE_PAGE_SIZE;
     }
 
-    public void init( PageCursor pageCursor, long startAddress, long maxAddress )
+    public void init( PageCursor pageCursor, long initialAddress )
     {
-        if ( initCursor( pageCursor, startAddress, maxAddress ) )
-        {
-            block = -1;
-        }
+        initJumpingCursor( pageCursor, initialAddress );
     }
 
     @Override
     public boolean next()
     {
-        if ( block == Integer.MIN_VALUE )
+        if ( isUnbound() )
         {
             return false;
         }
-        if ( block == -1 )
+        if ( firstJump() )
         {
             block = 0;
-            return scanNextByAddress();
+            return true;
         }
 
         int nextBlock = block + blocksUsedByCurrent();
@@ -150,26 +142,15 @@ public class NaivePropertyCursor extends PageCacheBackedCursor implements Proper
             }
             nextBlock = block + blocksUsedByCurrent();
         }
-        long next = prevPropertyRecordReference();
+
         block = 0;
-        if ( next == NO_PROPERTIES )
-        {
-            close();
-            return false;
-        }
-        return moveToAddress( next );
+        return jumpToAddress( prevPropertyRecordReference() );
     }
 
-    @Override
-    public boolean shouldRetry()
+    protected void onClose()
     {
-        return false;
-    }
-
-    @Override
-    public void close()
-    {
-        tearDownCursor();
+        // This is done for debugging sanity, but is probably not needed.
+        block = -1;
     }
 
     // DATA ACCESSOR METHODS

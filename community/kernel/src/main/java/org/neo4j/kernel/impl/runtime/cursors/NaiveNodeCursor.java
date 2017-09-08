@@ -84,8 +84,8 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
             long maxAddress,
             Read read )
     {
-        initCursor( pageCursor, startAddress, maxAddress );
         this.read = read;
+        initScanningCursor( pageCursor, startAddress, maxAddress );
     }
 
     @Override
@@ -107,16 +107,9 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
         return false;
     }
 
-    @Override
-    public boolean shouldRetry()
+    protected void onClose()
     {
-        return false;
-    }
-
-    @Override
-    public void close()
-    {
-        tearDownCursor();
+        this.read = null;
     }
 
     // DATA ACCESSOR METHODS

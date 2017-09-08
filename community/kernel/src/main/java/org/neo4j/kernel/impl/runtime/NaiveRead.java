@@ -190,7 +190,7 @@ public class NaiveRead implements Read
         try
         {
             PageCursor pageCursor = propertyStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
-            ((NaivePropertyCursor) cursor).init( pageCursor, reference, reference + 1 );
+            ((NaivePropertyCursor) cursor).init( pageCursor, reference );
         }
         catch ( IOException e )
         {

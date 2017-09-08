@@ -39,9 +39,21 @@ import static java.lang.String.format;
  *
  * In a page, each record has an offset. This is the byte offset of that record in the page, computed as logical
  * position in page * record size. The page size is the byte size of the page.
+ *
+ * ----------
+ *
+ * The PageCacheBackedCursor has two modes of operation: Scanning and Jumping.
+ *
+ * The cursor starts in the Unbound state. From there it can be initialized as either a scanning cursor or a jumping
+ * one. Once in a certain mode, only the traversal operations particular to that mode can be called. It is the
+ * responsibility of extending classed to ensure this. On `close()` the cursor will revert to the unbound state, and
+ * can be reused in either of the two modes.
  */
-abstract class PageCacheBackedCursor
+abstract class PageCacheBackedCursor implements AutoCloseable
 {
+    private static final int FIRST_JUMP = -1;
+    private static final int JUMPING_CURSOR = -2;
+
     private int offsetInPage;
     private long address;
     private long maxAddress;
@@ -50,48 +62,31 @@ abstract class PageCacheBackedCursor
     abstract int recordSize();
     abstract int pageSize();
 
-    boolean initCursor( PageCursor pageCursor, long startAddress, long maxAddress )
+    // SCANNING CURSORS
+
+    void initScanningCursor( PageCursor pageCursor, long startAddress, long maxAddress )
     {
-        if ( startAddress >= 0 && startAddress < maxAddress )
+        assert isUnbound() : "Can only initialize unbound cursor";
+
+        if ( startAddress >= 0 && startAddress < maxAddress && maxAddress > 0 )
         {
             offsetInPage = pageSize();
             address = startAddress - 1;
 
             this.pageCursor = pageCursor;
             this.maxAddress = maxAddress;
-            return true;
         }
         else
         {
-            tearDownCursor();
-            return false;
+            close();
         }
     }
-
-    void tearDownCursor()
-    {
-        if ( pageCursor != null )
-        {
-            pageCursor.close();
-            pageCursor = null;
-        }
-        address = -1;
-        maxAddress = -1;
-        offsetInPage = -1;
-    }
-
-    long address()
-    {
-        return address;
-    }
-
-    // CURSOR MOVEMENT
 
     boolean scanNextByAddress()
     {
-//        System.out.println( String.format( "%6d %6d | %6d %6d",
-//                address, maxAddress, offsetInPage, pageSize()) );
-        assert this.address < Long.MAX_VALUE : "Cursor address is about to overflow!";
+        assert isBound() : "Cannot use unbound cursor!";
+        assert isScanningCursor() : "Cannot scan using jumping cursor";
+
         this.address++;
         this.offsetInPage += recordSize();
 
@@ -115,32 +110,53 @@ abstract class PageCacheBackedCursor
         return false;
     }
 
-    private boolean advancePageCursor()
+    private boolean isScanningCursor()
     {
-        boolean result;
-        try
-        {
-            result = pageCursor.next();
-        }
-        catch ( IOException e )
-        {
-            throw new PoorlyNamedException( "IOException during pageCursor.next()", e );
-        }
-        return result;
+        return maxAddress != JUMPING_CURSOR;
     }
 
-    boolean moveToAddress( long address )
+    // JUMPING CURSOR
+
+    void initJumpingCursor( PageCursor pageCursor, long initialAddress )
     {
+        assert isUnbound() : "Can only initialize unbound cursor";
+
+        if ( initialAddress >= 0 )
+        {
+            this.pageCursor = pageCursor;
+            this.address = initialAddress;
+            this.offsetInPage = FIRST_JUMP;
+            this.maxAddress = JUMPING_CURSOR;
+        }
+        else
+        {
+            close();
+        }
+    }
+
+    boolean firstJump()
+    {
+        assert isJumpingCursor() : "Cannot jump using scanning cursor";
+        return offsetInPage == FIRST_JUMP && jumpToAddress( address );
+    }
+
+    boolean jumpToAddress( long address )
+    {
+        assert isBound() : "Cannot use unbound cursor!";
+        assert isJumpingCursor() : "Cannot jump using scanning cursor";
+
+        if ( address < 0 )
+        {
+            close();
+            return false;
+        }
+
         int pageSizeInRecords = pageSize() / recordSize();
         long pageId = address / pageSizeInRecords;
         boolean result;
         try
         {
-            do
-            {
-                result = pageCursor.next( pageId );
-            }
-            while ( pageCursor.shouldRetry() );
+            result = pageCursor.next( pageId );
         }
         catch ( IOException e )
         {
@@ -149,10 +165,70 @@ abstract class PageCacheBackedCursor
         if ( result )
         {
             this.address = address;
-            this.maxAddress = address + 1;
             this.offsetInPage = (int)((address % pageSizeInRecords) * recordSize());
         }
         return result;
+    }
+
+    private boolean isJumpingCursor()
+    {
+        return maxAddress == JUMPING_CURSOR;
+    }
+
+    // CLOSING CURSOR
+
+    @Override
+    public final void close()
+    {
+        onClose();
+        if ( pageCursor != null )
+        {
+            if ( pageCursor.checkAndClearBoundsFlag() )
+            {
+                throw new PoorlyNamedException( "OutOfBounds flag raised!", null );
+            }
+            pageCursor.close();
+            pageCursor = null;
+        }
+        address = -1;
+        maxAddress = -1;
+        offsetInPage = -1;
+    }
+
+    protected void onClose()
+    {
+        // Extending classes can hook in logic here
+    }
+
+    // CURSOR HELPERS
+
+    boolean isUnbound()
+    {
+        return pageCursor == null;
+    }
+
+    boolean isBound()
+    {
+        return pageCursor != null;
+    }
+
+    long address()
+    {
+        return address;
+    }
+
+    public boolean shouldRetry()
+    {
+        assert isBound() : "Cannot use unbound cursor!";
+
+        try
+        {
+            return pageCursor.shouldRetry();
+        }
+        catch ( IOException e )
+        {
+            throw new PoorlyNamedException( "IOException during pageCursor.shouldRetry()!", e );
+        }
     }
 
     // DATA ACCESS
@@ -214,5 +290,18 @@ abstract class PageCacheBackedCursor
                     bound, size, offsetInRecord ) );
         }
         return true;
+    }
+
+    private boolean advancePageCursor()
+    {
+        assert isBound() : "Cannot use unbound cursor!";
+        try
+        {
+            return pageCursor.next();
+        }
+        catch ( IOException e )
+        {
+            throw new PoorlyNamedException( "IOException during pageCursor.next()", e );
+        }
     }
 }
