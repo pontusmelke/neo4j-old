@@ -19,7 +19,10 @@
  */
 package org.neo4j.kernel.impl.runtime.cursors;
 
+import java.util.Set;
+
 import org.neo4j.internal.kernel.api.LabelSet;
+import org.neo4j.storageengine.api.txstate.ReadableDiffSets;
 
 public class NaiveLabels implements LabelSet
 {
@@ -40,5 +43,38 @@ public class NaiveLabels implements LabelSet
     public int label( int offset )
     {
         return labels[offset];
+    }
+
+    static NaiveLabels of( Set<Integer> labelSet )
+    {
+        int i = 0;
+        int[] array = new int[labelSet.size()];
+        for ( Integer labelId : labelSet )
+        {
+            array[i++] = labelId;
+        }
+        return new NaiveLabels( array );
+    }
+
+    public static NaiveLabels augment( LabelSet labels, ReadableDiffSets<Integer> labelDiff )
+    {
+        int i = 0;
+        int[] array = new int[labels.numberOfLabels() + labelDiff.delta()];
+
+        for ( int j = 0; j < labels.numberOfLabels(); j++ )
+        {
+            int committedLabel = labels.label( j );
+            if ( !labelDiff.isRemoved( committedLabel ) )
+            {
+                array[i++] = committedLabel;
+            }
+        }
+
+        for ( Integer addedLabel : labelDiff.getAdded() )
+        {
+            array[i++] = addedLabel;
+        }
+
+        return new NaiveLabels( array );
     }
 }

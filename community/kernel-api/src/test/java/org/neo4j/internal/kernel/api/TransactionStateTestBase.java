@@ -21,9 +21,16 @@ package org.neo4j.internal.kernel.api;
 
 import org.junit.Test;
 
+import java.util.Arrays;
+
+import org.neo4j.helpers.collection.Iterables;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.neo4j.graphdb.Label.label;
 
 public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSupport> extends KernelAPIWriteTestBase<G>
 {
@@ -48,5 +55,103 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
         {
             assertEquals( nodeId, graphDb.getNodeById( nodeId ).getId() );
         }
+    }
+
+    @Test
+    public void shouldSeeNewLabelledNodeInTransaction() throws Exception
+    {
+        long nodeId;
+        int labelId;
+        final String labelName = "Town";
+
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            nodeId = tx.nodeCreate();
+            labelId = kernel.token().labelGetOrCreateForName( labelName );
+            tx.nodeAddLabel( nodeId, labelId );
+
+            try ( NodeCursor node = kernel.cursors().allocateNodeCursor() )
+            {
+                tx.singleNode( nodeId, node );
+                assertTrue( "should access node", node.next() );
+
+                LabelSet labels = node.labels();
+                assertEquals( 1, labels.numberOfLabels() );
+                assertEquals( labelId, labels.label( 0 ) );
+                assertFalse( "should only find one node", node.next() );
+            }
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertThat(
+                    graphDb.getNodeById( nodeId ).getLabels(),
+                    equalTo( Iterables.iterable( label( labelName ) ) ) );
+        }
+    }
+
+    @Test
+    public void shouldSeeLabelChangesInTransaction() throws Exception
+    {
+        long nodeId;
+        int toRetain, toDelete, toAdd;
+        final String toRetainName = "ToRetain";
+        final String toDeleteName = "ToDelete";
+        final String toAddName = "ToAdd";
+
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            nodeId = tx.nodeCreate();
+            toRetain = kernel.token().labelGetOrCreateForName( toRetainName );
+            toDelete = kernel.token().labelGetOrCreateForName( toDeleteName );
+            tx.nodeAddLabel( nodeId, toRetain );
+            tx.nodeAddLabel( nodeId, toDelete );
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertThat(
+                    graphDb.getNodeById( nodeId ).getLabels(),
+                    equalTo( Iterables.iterable( label( toRetainName ), label( toDeleteName ) ) ) );
+        }
+
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            toAdd = kernel.token().labelGetOrCreateForName( toAddName );
+            tx.nodeAddLabel( nodeId, toAdd );
+            tx.nodeRemoveLabel( nodeId, toDelete );
+
+            try ( NodeCursor node = kernel.cursors().allocateNodeCursor() )
+            {
+                tx.singleNode( nodeId, node );
+                assertTrue( "should access node", node.next() );
+
+                assertLabels( node.labels(), toRetain, toAdd );
+                assertFalse( "should only find one node", node.next() );
+            }
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertThat(
+                    graphDb.getNodeById( nodeId ).getLabels(),
+                    equalTo( Iterables.iterable( label( toRetainName ), label( toAddName ) ) ) );
+        }
+    }
+
+    private void assertLabels( LabelSet labels, int... expected )
+    {
+        assertEquals( expected.length, labels.numberOfLabels() );
+        Arrays.sort(expected);
+        int[] labelArray = new int[labels.numberOfLabels()];
+        for ( int i = 0; i < labels.numberOfLabels(); i++ )
+        {
+            labelArray[i] = labels.label( i );
+        }
+        Arrays.sort( labelArray );
+        assertTrue( "labels match expected", Arrays.equals( expected, labelArray ) );
     }
 }

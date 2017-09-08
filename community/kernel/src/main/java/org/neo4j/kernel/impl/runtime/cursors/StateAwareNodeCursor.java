@@ -101,7 +101,22 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public LabelSet labels()
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        if ( stateHolder.hasTxStateWithChanges() )
+        {
+            ReadableDiffSets<Long> nodes = stateHolder.txState().addedAndRemovedNodes();
+            ReadableDiffSets<Integer> labelDiff = stateHolder.txState().nodeStateLabelDiffSets( address() );
+
+            if ( nodes.isAdded( address() ) )
+            {
+                return NaiveLabels.of( labelDiff.getAdded() );
+            }
+            if ( nodes.isRemoved( address() ) )
+            {
+                return LabelSet.NONE;
+            }
+            return NaiveLabels.augment( super.labels(), labelDiff );
+        }
+        return super.labels();
     }
 
     @Override
