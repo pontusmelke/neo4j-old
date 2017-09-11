@@ -164,7 +164,7 @@ public class NaiveRelationshipCursor extends PageCacheBackedCursor implements Re
     }
 
     @Override
-    public void source( org.neo4j.internal.kernel.api.NodeCursor cursor )
+    public void source( NodeCursor cursor )
     {
         read.singleNode( sourceNodeReference(), cursor );
     }

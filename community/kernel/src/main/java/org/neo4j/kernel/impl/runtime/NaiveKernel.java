@@ -46,6 +46,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
 {
     public static final int NODE_STORE_PAGE_SIZE = 8190;
     public static final int RELATIONSHIP_STORE_PAGE_SIZE = 8160;
+    public static final int RELATIONSHIP_GROUP_STORE_PAGE_SIZE = 8175;
     public static final int PROPERTY_STORE_PAGE_SIZE = 8159;
 
     private final PageCache pageCache;

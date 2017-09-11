@@ -47,7 +47,7 @@ public class NaiveCursorFactory implements CursorFactory
     @Override
     public RelationshipTraversalCursor allocateRelationshipTraversalCursor()
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        return new NaiveRelationshipTraversalCursor();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class NaiveCursorFactory implements CursorFactory
     @Override
     public RelationshipGroupCursor allocateRelationshipGroupCursor()
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        return new NaiveRelationshipGroupCursor( new NaiveRelationshipTraversalCursor() );
     }
 
     @Override
