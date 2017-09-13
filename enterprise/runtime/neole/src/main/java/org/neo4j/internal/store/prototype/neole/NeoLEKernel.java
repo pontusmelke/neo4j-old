@@ -22,6 +22,7 @@ package org.neo4j.internal.store.prototype.neole;
 import java.io.IOException;
 
 import org.neo4j.internal.kernel.api.KernelAPI;
+import org.neo4j.internal.kernel.api.Token;
 
 public class NeoLEKernel implements KernelAPI
 {
@@ -51,5 +52,11 @@ public class NeoLEKernel implements KernelAPI
     public CursorFactory cursors()
     {
         return cursorFactory;
+    }
+
+    @Override
+    public Token token()
+    {
+        throw new UnsupportedOperationException();
     }
 }

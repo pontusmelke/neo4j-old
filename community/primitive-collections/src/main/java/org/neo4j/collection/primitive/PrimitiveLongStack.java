@@ -119,4 +119,14 @@ public class PrimitiveLongStack implements PrimitiveLongCollection
     {
         return cursor == -1 ? -1 : array[cursor--];
     }
+
+    /**
+     * Peek at an item without modifying the stack
+     *
+     * @return the item at index
+     */
+    public long peekAt( int index )
+    {
+        return array[ index ];
+    }
 }

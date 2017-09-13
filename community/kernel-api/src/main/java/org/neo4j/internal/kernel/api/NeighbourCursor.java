@@ -27,6 +27,7 @@ import java.util.Objects;
 /**
  * This is an example of an abstraction on top of {@link RelationshipScanCursor} and {@link RelationshipGroupCursor}.
  */
+/*
 public abstract class NeighbourCursor implements NodeCursor
 {
     public static Builder outgoing( CursorFactory cursors, int label )
@@ -261,16 +262,17 @@ public abstract class NeighbourCursor implements NodeCursor
         this.group = cursors.allocateRelationshipGroupCursor();
         this.relationships = cursors.allocateRelationshipTraversalCursor();
     }
-
+*/
     /**
      * Initialize this cursor to traverse the neighbours of the node currently under the specified cursor.
      *
      * @param node
      *         a cursor pointing at the node to get the neighbours for.
      */
+    /*
     public final void of( NodeCursor node )
     {
-        node.relationships( group );
+        node.relationshipsByType( group );
         // make sure these don't have state from previous use
         group.close();
         relationships.close();
@@ -329,27 +331,27 @@ public abstract class NeighbourCursor implements NodeCursor
     }
 
     @Override
-    public final void relationships( RelationshipGroupCursor cursor )
+    public final void relationshipsByType( RelationshipGroupCursor cursor )
     {
-        neighbours.relationships( cursor );
+        neighbours.relationshipsByType( cursor );
     }
 
     @Override
-    public void outgoingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
+    public void outgoingRelationshipsByType( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
     {
-        neighbours.outgoingRelationships( groups, relationships );
+        neighbours.outgoingRelationshipsByType( groups, relationships );
     }
 
     @Override
-    public void incomingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
+    public void incomingRelationshipsByType( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
     {
-        neighbours.incomingRelationships( groups, relationships );
+        neighbours.incomingRelationshipsByType( groups, relationships );
     }
 
     @Override
-    public void allRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
+    public void allRelationshipsByType( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
     {
-        neighbours.allRelationships( groups, relationships );
+        neighbours.allRelationshipsByType( groups, relationships );
     }
 
     @Override
@@ -359,9 +361,9 @@ public abstract class NeighbourCursor implements NodeCursor
     }
 
     @Override
-    public final long relationshipGroupReference()
+    public final long relationshipReference()
     {
-        return neighbours.relationshipGroupReference();
+        return neighbours.relationshipReference();
     }
 
     @Override
@@ -443,3 +445,4 @@ public abstract class NeighbourCursor implements NodeCursor
         }
     }
 }
+*/

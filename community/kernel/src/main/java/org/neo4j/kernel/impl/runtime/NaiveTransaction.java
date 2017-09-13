@@ -30,10 +30,10 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     private final StoreReadLayer storeReadLayer;
     private final KernelTransaction kernelTransaction;
 
-    NaiveTransaction( PagedFile nodeStore, PagedFile relationshipStore, PagedFile propertyStore,
-            StoreReadLayer storeReadLayer, KernelTransaction kernelTransaction )
+    NaiveTransaction( PagedFile nodeStore, PagedFile relationshipStore, PagedFile relationshipGroupStore,
+            PagedFile propertyStore, StoreReadLayer storeReadLayer, KernelTransaction kernelTransaction )
     {
-        super( nodeStore, relationshipStore, propertyStore, kernelTransaction );
+        super( nodeStore, relationshipStore, relationshipGroupStore, propertyStore, kernelTransaction );
         this.storeReadLayer = storeReadLayer;
         this.kernelTransaction = kernelTransaction;
     }

@@ -20,7 +20,7 @@
 package org.neo4j.kernel.impl.runtime.cursors;
 
 @SuppressWarnings( "WeakerAccess" )
-class NaiveBitManipulation
+public class NaiveBitManipulation
 {
     private NaiveBitManipulation()
     {
@@ -28,31 +28,29 @@ class NaiveBitManipulation
 
     private static final long INTEGER_MINUS_ONE = 0xFFFF_FFFFL;
 
-    static int nextPowerOfTwo( int v )
-    {
-        v--;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        v++;
-        return v;
-    }
-
     static long combineReference( long base, long modifier )
     {
         return modifier == 0 && base == INTEGER_MINUS_ONE ? -1 : base | modifier;
     }
 
-    static long encodeDirectRelationshipReference( long reference )
+    public static long encodeDirectRelationshipReference( long reference )
     {
         return (~reference) - 1;
     }
 
-    static long decodeDirectRelationshipReference( long reference )
+    public static long decodeDirectRelationshipReference( long reference )
     {
         return ~(reference + 1);
+    }
+
+    public static boolean isDirectRelationshipReference( long reference )
+    {
+        return reference < -1;
+    }
+
+    public static boolean isGroupRelationshipReference( long reference )
+    {
+        return reference >= -1;
     }
 
     static int lcm( int a, int b )

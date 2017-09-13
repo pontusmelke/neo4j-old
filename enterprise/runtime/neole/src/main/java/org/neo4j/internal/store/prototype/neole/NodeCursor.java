@@ -130,7 +130,7 @@ class NodeCursor extends ReadCursor implements org.neo4j.internal.kernel.api.Nod
     public long relationshipGroupReference()
     {
         long relationships = combineReference( unsignedInt( 1 ), (unsignedByte( 0 ) & 0x0EL) << 31 );
-        if ( (readByte( 14 ) & 0x01) != 0 )
+        if ( isDense() )
         {
             return relationships;
         }
@@ -192,5 +192,11 @@ class NodeCursor extends ReadCursor implements org.neo4j.internal.kernel.api.Nod
     public void properties( PropertyCursor cursor )
     {
         store.nodeProperties( propertiesReference(), cursor );
+    }
+
+    @Override
+    public boolean isDense()
+    {
+        return (readByte( 14 ) & 0x01) != 0;
     }
 }

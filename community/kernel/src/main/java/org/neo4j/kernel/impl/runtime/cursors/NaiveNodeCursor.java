@@ -161,19 +161,19 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     @Override
     public void outgoingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
     {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void incomingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
     {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void allRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
     {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -186,7 +186,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     public long relationshipGroupReference()
     {
         long relationships = combineReference( unsignedInt( 1 ), (unsignedByte( 0 ) & 0x0EL) << 31 );
-        if ( (readByte( 14 ) & 0x01) != 0 )
+        if ( isDense() )
         {
             return relationships;
         }
@@ -204,5 +204,11 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     public long propertiesReference()
     {
         return combineReference( unsignedInt( 5 ), (unsignedByte( 0 ) & 0xF0L) << 28 );
+    }
+
+    @Override
+    public boolean isDense()
+    {
+        return (readByte( 14 ) & 0x01) != 0;
     }
 }

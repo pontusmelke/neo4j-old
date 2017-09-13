@@ -39,21 +39,28 @@ import org.neo4j.kernel.api.txstate.TxStateHolder;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveNodeCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaivePropertyCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipCursor;
+import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipGroupCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipScanCursor;
+import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipTraversalCursor;
 import org.neo4j.kernel.impl.runtime.cursors.StateAwareNodeCursor;
+
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.decodeDirectRelationshipReference;
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.isDirectRelationshipReference;
 
 public class NaiveRead implements Read
 {
     private final PagedFile nodeStore;
     private final PagedFile relationshipStore;
+    private final PagedFile relationshipGroupStore;
     private final PagedFile propertyStore;
     private final TxStateHolder stateHolder;
 
-    NaiveRead( PagedFile nodeStore, PagedFile relationshipStore, PagedFile propertyStore,
+    NaiveRead( PagedFile nodeStore, PagedFile relationshipStore, PagedFile relationshipGroupStore, PagedFile propertyStore,
             TxStateHolder stateHolder )
     {
         this.nodeStore = nodeStore;
         this.relationshipStore = relationshipStore;
+        this.relationshipGroupStore = relationshipGroupStore;
         this.propertyStore = propertyStore;
         this.stateHolder = stateHolder;
     }
@@ -173,13 +180,50 @@ public class NaiveRead implements Read
     @Override
     public void relationshipGroups( long nodeReference, long reference, RelationshipGroupCursor cursor )
     {
-
+        if ( isDirectRelationshipReference( reference ) )
+        {
+            ((NaiveRelationshipGroupCursor) cursor).initDirect( nodeReference, reference,this );
+        }
+        else
+        {
+            int pageSizeInRecords = relationshipGroupStore.pageSize() / NaiveRelationshipGroupCursor.RECORD_SIZE;
+            long pageId = reference / pageSizeInRecords;
+            try
+            {
+                PageCursor pageCursor = relationshipGroupStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
+                ((NaiveRelationshipGroupCursor) cursor).init(
+                        pageCursor, nodeReference, reference, this );
+            }
+            catch ( IOException e )
+            {
+                throw new PoorlyNamedException( "IOException during nodeProperties!", e );
+            }
+        }
     }
 
     @Override
     public void relationships( long nodeReference, long reference, RelationshipTraversalCursor cursor )
     {
-
+        int pageSizeInRecords;
+        if ( isDirectRelationshipReference( reference ) )
+        {
+            pageSizeInRecords = relationshipStore.pageSize() / NaiveRelationshipTraversalCursor.RECORD_SIZE;
+            long directReference = decodeDirectRelationshipReference( reference );
+            long pageId = directReference / pageSizeInRecords;
+            try
+            {
+                PageCursor pageCursor = relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
+                ((NaiveRelationshipTraversalCursor) cursor).init( pageCursor, nodeReference, directReference, this );
+            }
+            catch ( IOException e )
+            {
+                throw new PoorlyNamedException( "IOException during relationships!", e );
+            }
+        }
+        else
+        {
+            throw new PoorlyNamedException( "Can only use direct relationship reference" );
+        }
     }
 
     @Override

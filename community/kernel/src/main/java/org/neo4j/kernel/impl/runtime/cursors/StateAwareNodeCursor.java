@@ -117,42 +117,9 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     }
 
     @Override
-    public void relationships( RelationshipGroupCursor cursor )
-    {
-        throw new UnsupportedOperationException( "not implemented" );
-    }
-
-    @Override
-    public void outgoingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
-    {
-        throw new UnsupportedOperationException( "not implemented" );
-
-    }
-
-    @Override
-    public void incomingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
-    {
-        throw new UnsupportedOperationException( "not implemented" );
-
-    }
-
-    @Override
-    public void allRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
-    {
-        throw new UnsupportedOperationException( "not implemented" );
-
-    }
-
-    @Override
     public void properties( PropertyCursor cursor )
     {
         super.properties( cursor );
-    }
-
-    @Override
-    public long relationshipGroupReference()
-    {
-        throw new UnsupportedOperationException( "not implemented" );
     }
 
     @Override

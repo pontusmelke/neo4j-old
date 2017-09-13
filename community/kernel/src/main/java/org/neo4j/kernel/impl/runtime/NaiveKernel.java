@@ -59,6 +59,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
     private List<PagedFile> pagedFiles;
     private PagedFile nodeStore;
     private PagedFile relationshipStore;
+    private PagedFile relationshipGroupStore;
     private PagedFile propertyStore;
 
     private org.neo4j.kernel.api.KernelAPI kernel;
@@ -98,6 +99,7 @@ public class NaiveKernel implements KernelAPI, Lifecycle
             return new NaiveTransaction(
                     nodeStore,
                     relationshipStore,
+                    relationshipGroupStore,
                     propertyStore,
                     storeReadLayerSupplier.get(),
                     kernel.newTransaction( KernelTransaction.Type.explicit, SecurityContext.AUTH_DISABLED ) );
@@ -135,6 +137,8 @@ public class NaiveKernel implements KernelAPI, Lifecycle
         pagedFiles.add( nodeStore );
         relationshipStore = pagedStore( StoreFile.RELATIONSHIP_STORE, RELATIONSHIP_STORE_PAGE_SIZE );
         pagedFiles.add( relationshipStore );
+        relationshipGroupStore = pagedStore( StoreFile.RELATIONSHIP_GROUP_STORE, RELATIONSHIP_GROUP_STORE_PAGE_SIZE );
+        pagedFiles.add( relationshipGroupStore );
         propertyStore = pagedStore( StoreFile.PROPERTY_STORE, PROPERTY_STORE_PAGE_SIZE );
         pagedFiles.add( propertyStore );
 

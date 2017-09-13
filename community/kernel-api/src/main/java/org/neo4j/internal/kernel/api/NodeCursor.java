@@ -43,4 +43,6 @@ public interface NodeCursor extends Cursor
     long relationshipGroupReference();
 
     long propertiesReference();
+
+    boolean isDense();
 }

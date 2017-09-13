@@ -100,7 +100,7 @@ public abstract class NodeCursorTestBase<G extends KernelAPIReadTestSupport> ext
             for ( long id : NODE_IDS )
             {
                 // when
-                read.singleNode( id, nodes );
+                read.singleNode( id, nodes  );
 
                 // then
                 assertTrue( "should access defined node", nodes.next() );

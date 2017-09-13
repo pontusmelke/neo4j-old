@@ -21,6 +21,11 @@ package org.neo4j.kernel.impl.runtime;
 
 public class PoorlyNamedException extends RuntimeException
 {
+    public PoorlyNamedException( String message )
+    {
+        super( message );
+    }
+
     public PoorlyNamedException( String message, Throwable cause )
     {
         super( message, cause );

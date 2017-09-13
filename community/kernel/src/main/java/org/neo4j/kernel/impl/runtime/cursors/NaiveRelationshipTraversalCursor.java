@@ -31,7 +31,7 @@ public class NaiveRelationshipTraversalCursor extends NaiveRelationshipCursor im
 {
     private long originNodeReference;
 
-    public void init( PageCursor pageCursor, long startAddress, long originNodeReference, Read read )
+    public void init( PageCursor pageCursor, long originNodeReference, long startAddress, Read read )
     {
         this.originNodeReference = originNodeReference;
         initJumpingCursor( pageCursor, startAddress, read );
@@ -51,7 +51,7 @@ public class NaiveRelationshipTraversalCursor extends NaiveRelationshipCursor im
         return jumpToAddress( nextRelationshipReference() );
     }
 
-    private long nextRelationshipReference()
+    protected long nextRelationshipReference()
     {
         final long source = sourceNodeReference(), target = targetNodeReference();
         if ( source == originNodeReference )
@@ -120,5 +120,20 @@ public class NaiveRelationshipTraversalCursor extends NaiveRelationshipCursor im
     public long originNodeReference()
     {
         return originNodeReference;
+    }
+
+    boolean isOutgoing()
+    {
+        return originNodeReference == sourceNodeReference();
+    }
+
+    boolean isIncoming()
+    {
+        return originNodeReference == targetNodeReference();
+    }
+
+    boolean isLoop()
+    {
+        return sourceNodeReference() == targetNodeReference();
     }
 }
