@@ -128,31 +128,34 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIRea
                     group.outgoing( relationship );
                     while ( relationship.next() )
                     {
-                        assertEquals( "relationship should have same label as group", group.relationshipLabel(),
+                        assertEquals( "node #" + node.nodeReference() +
+                                      " relationship should have same label as group", group.relationshipLabel(),
                                 relationship.label() );
                         degree.outgoing++;
                     }
                     group.incoming( relationship );
                     while ( relationship.next() )
                     {
-                        assertEquals( "relationship should have same label as group", group.relationshipLabel(),
+                        assertEquals( "node #" + node.nodeReference() +
+                                      "relationship should have same label as group", group.relationshipLabel(),
                                 relationship.label() );
                         degree.incoming++;
                     }
                     group.loops( relationship );
                     while ( relationship.next() )
                     {
-                        assertEquals( "relationship should have same label as group", group.relationshipLabel(),
+                        assertEquals( "node #" + node.nodeReference() +
+                                      "relationship should have same label as group", group.relationshipLabel(),
                                 relationship.label() );
                         degree.loop++;
                     }
 
                     // then
                     assertNotEquals( "all", 0, degree.incoming + degree.outgoing + degree.loop );
-                    assertEquals( "outgoing", group.outgoingCount(), degree.outgoing );
-                    assertEquals( "incoming", group.incomingCount(), degree.incoming );
-                    assertEquals( "loop", group.loopCount(), degree.loop );
-                    assertEquals( "all = incoming + outgoing - loop",
+                    assertEquals( "node #" + node.nodeReference() + " outgoing", group.outgoingCount(), degree.outgoing );
+                    assertEquals( "node #" + node.nodeReference() + " incoming", group.incomingCount(), degree.incoming );
+                    assertEquals( "node #" + node.nodeReference() + " loop", group.loopCount(), degree.loop );
+                    assertEquals( "node #" + node.nodeReference() + " all = incoming + outgoing - loop",
                             group.totalCount(), degree.incoming + degree.outgoing - degree.loop );
                 }
                 if ( none )

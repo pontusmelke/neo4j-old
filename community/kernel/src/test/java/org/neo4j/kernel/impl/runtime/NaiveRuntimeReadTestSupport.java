@@ -28,6 +28,8 @@ import org.neo4j.internal.kernel.api.KernelAPI;
 import org.neo4j.internal.kernel.api.KernelAPIReadTestSupport;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
 
+import static org.neo4j.graphdb.factory.GraphDatabaseSettings.dense_node_threshold;
+
 public class NaiveRuntimeReadTestSupport implements KernelAPIReadTestSupport
 {
     private GraphDatabaseAPI graphDb;
@@ -38,6 +40,7 @@ public class NaiveRuntimeReadTestSupport implements KernelAPIReadTestSupport
     {
         graphDb = (GraphDatabaseAPI) new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder( storeDir )
+                .setConfig( dense_node_threshold, "2" )
                 .newGraphDatabase();
 
         create.accept( graphDb );

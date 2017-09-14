@@ -182,7 +182,7 @@ public class NaiveRead implements Read
     {
         if ( isDirectRelationshipReference( reference ) )
         {
-            ((NaiveRelationshipGroupCursor) cursor).initDirect( nodeReference, reference,this );
+            ((NaiveRelationshipGroupCursor) cursor).initVirtual( nodeReference, reference,this );
         }
         else
         {
@@ -205,24 +205,18 @@ public class NaiveRead implements Read
     public void relationships( long nodeReference, long reference, RelationshipTraversalCursor cursor )
     {
         int pageSizeInRecords;
-        if ( isDirectRelationshipReference( reference ) )
+        assert ( !isDirectRelationshipReference( reference ) ); // We must not get any encoded references here
+
+        pageSizeInRecords = relationshipStore.pageSize() / NaiveRelationshipTraversalCursor.RECORD_SIZE;
+        long pageId = reference / pageSizeInRecords;
+        try
         {
-            pageSizeInRecords = relationshipStore.pageSize() / NaiveRelationshipTraversalCursor.RECORD_SIZE;
-            long directReference = decodeDirectRelationshipReference( reference );
-            long pageId = directReference / pageSizeInRecords;
-            try
-            {
-                PageCursor pageCursor = relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
-                ((NaiveRelationshipTraversalCursor) cursor).init( pageCursor, nodeReference, directReference, this );
-            }
-            catch ( IOException e )
-            {
-                throw new PoorlyNamedException( "IOException during relationships!", e );
-            }
+            PageCursor pageCursor = relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
+            ((NaiveRelationshipTraversalCursor) cursor).init( pageCursor, nodeReference, reference, this );
         }
-        else
+        catch ( IOException e )
         {
-            throw new PoorlyNamedException( "Can only use direct relationship reference" );
+            throw new PoorlyNamedException( "IOException during relationships!", e );
         }
     }
 

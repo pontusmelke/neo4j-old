@@ -23,7 +23,6 @@ import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveIntObjectMap;
 import org.neo4j.collection.primitive.PrimitiveLongStack;
-import org.neo4j.graphdb.Relationship;
 import org.neo4j.internal.kernel.api.Read;
 import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
@@ -89,19 +88,21 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         this.read = read;
         this.originNodeReference = originNodeReference;
         initJumpingCursor( pageCursor, initialAddress );
+        virtualGroupCursor = null;
     }
 
     /**
      * Use this init when there is no group record
      */
-    public void initDirect( long originNodeReference, long initialAddress, Read read )
+    public void initVirtual( long originNodeReference, long initialAddress, Read read )
     {
         this.read = read;
         this.originNodeReference = originNodeReference;
         assert isDirectRelationshipReference( initialAddress );
 
         // Initialize inner cursor to relationship store and use it to build a virtual relationship group
-        read.relationships( originNodeReference, initialAddress, innerHelper );
+        long reference = NaiveBitManipulation.decodeDirectRelationshipReference( initialAddress );
+        read.relationships( originNodeReference, reference, innerHelper );
         virtualGroupCursor = new VirtualRelationshipGroupCursor();
         virtualGroupCursor.init( innerHelper );
     }
@@ -223,7 +224,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     {
         if ( isVirtualGroup() )
         {
-            return NaiveBitManipulation.encodeDirectRelationshipReference( virtualGroupCursor.outgoingReference() );
+            return virtualGroupCursor.outgoingReference();
         }
         return combineReference( unsignedInt( 8 ), ((long) (unsignedByte( 0 ) & 0x70)) << 28 );
     }
@@ -233,7 +234,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     {
         if ( isVirtualGroup() )
         {
-            return NaiveBitManipulation.encodeDirectRelationshipReference( virtualGroupCursor.incomingReference() );
+            return virtualGroupCursor.incomingReference();
         }
         return combineReference( unsignedInt( 12 ), ((long) (unsignedByte( 1 ) & 0x0E)) << 31 );
     }
@@ -243,7 +244,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     {
         if ( isVirtualGroup() )
         {
-            return NaiveBitManipulation.encodeDirectRelationshipReference( virtualGroupCursor.loopsReference() );
+            return virtualGroupCursor.loopsReference();
         }
         return combineReference( unsignedInt( 16 ), ((long) (unsignedByte( 1 ) & 0x70)) << 28 );
     }
@@ -267,6 +268,10 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
             // We still rely on the read call below to setup the page cursor
             virtualGroupCursor.outgoing( cursor );
         }
+        else
+        {
+            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).setVirtualCursor( null );
+        }
         long outgoingReference = outgoingReference();
         if ( outgoingReference != NO_RELATIONSHIP )
         {
@@ -281,6 +286,10 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         {
             virtualGroupCursor.incoming( cursor );
         }
+        else
+        {
+            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).setVirtualCursor( null );
+        }
         long incomingReference = incomingReference();
         if ( incomingReference != NO_RELATIONSHIP )
         {
@@ -294,6 +303,10 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         if ( isVirtualGroup() )
         {
             virtualGroupCursor.loops( cursor );
+        }
+        else
+        {
+            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).setVirtualCursor( null );
         }
         long loopsReference = loopsReference();
         if ( loopsReference != NO_RELATIONSHIP )
@@ -405,7 +418,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
                     new VirtualGroupAwareRelationshipTraversalCursor.VirtualRelationshipTraversalCursor();
             virtualCursor.setOutgoing();
             virtualCursor.setRelationships( currentVirtualGroup.outgoing );
-            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).initVirtual( virtualCursor );
+            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).setVirtualCursor( virtualCursor );
         }
 
         @Override
@@ -415,7 +428,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
                     new VirtualGroupAwareRelationshipTraversalCursor.VirtualRelationshipTraversalCursor();
             virtualCursor.setIncoming();
             virtualCursor.setRelationships( currentVirtualGroup.incoming );
-            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).initVirtual( virtualCursor );
+            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).setVirtualCursor( virtualCursor );
         }
 
         @Override
@@ -425,7 +438,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
                     new VirtualGroupAwareRelationshipTraversalCursor.VirtualRelationshipTraversalCursor();
             virtualCursor.setLoops();
             virtualCursor.setRelationships( currentVirtualGroup.loops );
-            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).initVirtual( virtualCursor );
+            ((VirtualGroupAwareRelationshipTraversalCursor) cursor).setVirtualCursor( virtualCursor );
         }
 
         @Override

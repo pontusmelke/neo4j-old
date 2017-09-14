@@ -39,7 +39,7 @@ public class VirtualGroupAwareRelationshipTraversalCursor extends NaiveRelations
         super.init( pageCursor, originNodeReference, startAddress, read );
     }
 
-    public void initVirtual( VirtualRelationshipTraversalCursor virtualCursor )
+    public void setVirtualCursor( VirtualRelationshipTraversalCursor virtualCursor )
     {
         this.virtualCursor = virtualCursor;
     }
@@ -103,12 +103,8 @@ public class VirtualGroupAwareRelationshipTraversalCursor extends NaiveRelations
         private boolean next()
         {
             assert relationshipChain != RelationshipChain.NOT_INITIALIZED;
-            if ( index == NOT_INITIALIZED )
-            {
-                index = 0;
-                return true;
-            }
-            else if ( index < relationships.size() - 1 )
+            // NOTE: This assumes NOT_INITIALIZED is -1
+            if ( index < relationships.size() - 1 )
             {
                 index++;
                 return true;
