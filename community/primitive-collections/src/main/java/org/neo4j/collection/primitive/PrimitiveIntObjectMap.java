@@ -19,6 +19,8 @@
  */
 package org.neo4j.collection.primitive;
 
+import java.util.Iterator;
+
 public interface PrimitiveIntObjectMap<VALUE> extends PrimitiveIntCollection
 {
     VALUE put( int key, VALUE value );
@@ -28,6 +30,8 @@ public interface PrimitiveIntObjectMap<VALUE> extends PrimitiveIntCollection
     VALUE get( int key );
 
     VALUE remove( int key );
+
+    Iterator<VALUE> valueIterator();
 
     /**
      * Visit the entries of this map, until all have been visited or the visitor returns 'true'.

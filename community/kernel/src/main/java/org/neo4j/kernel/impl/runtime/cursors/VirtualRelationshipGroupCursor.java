@@ -1,5 +1,7 @@
 package org.neo4j.kernel.impl.runtime.cursors;
 
+import java.util.Iterator;
+
 import org.neo4j.collection.primitive.Primitive;
 import org.neo4j.collection.primitive.PrimitiveIntIterator;
 import org.neo4j.collection.primitive.PrimitiveIntObjectMap;
@@ -11,21 +13,19 @@ import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_RELATIONSH
 class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
 {
     private PrimitiveIntObjectMap<VirtualRelationshipGroup> virtualGroups;
-    private PrimitiveIntIterator virtualGroupIterator;
-    private int currentVirtualGroupLabel;
+    private Iterator<VirtualRelationshipGroup> virtualGroupIterator;
     private VirtualRelationshipGroup currentVirtualGroup;
-
-    private static int NOT_INITIALIZED = -1;
 
     public VirtualRelationshipGroupCursor()
     {
         virtualGroups = Primitive.intObjectMap();
-        currentVirtualGroupLabel = NOT_INITIALIZED;
     }
 
     public void init( NaiveRelationshipTraversalCursor cursor )
     {
         readDirectRelationshipsIntoVirtualGroups( cursor );
+        virtualGroupIterator = null;
+        currentVirtualGroup = null;
     }
 
     private void readDirectRelationshipsIntoVirtualGroups( NaiveRelationshipTraversalCursor cursor )
@@ -40,6 +40,7 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
             {
                 // Create a new virtual group if it does not exist
                 group = new VirtualRelationshipGroup();
+                group.label = label;
                 virtualGroups.put( label, group );
             }
             long reference = cursor.relationshipReference();
@@ -66,8 +67,8 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
     @Override
     public int relationshipLabel()
     {
-        assert currentVirtualGroupLabel != NOT_INITIALIZED;
-        return currentVirtualGroupLabel;
+        assert currentVirtualGroup != null;
+        return currentVirtualGroup.label;
     }
 
     @Override
@@ -159,13 +160,11 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
     {
         if ( virtualGroupIterator == null )
         {
-            virtualGroupIterator = virtualGroups.iterator();
+            virtualGroupIterator = virtualGroups.valueIterator();
         }
         if ( virtualGroupIterator.hasNext() )
         {
-            // TODO: We would like to iterate over values directly, but the collection does not allow us to do that
-            currentVirtualGroupLabel = virtualGroupIterator.next();
-            currentVirtualGroup = virtualGroups.get( currentVirtualGroupLabel );
+            currentVirtualGroup = virtualGroupIterator.next();
             return true;
         }
         return false;

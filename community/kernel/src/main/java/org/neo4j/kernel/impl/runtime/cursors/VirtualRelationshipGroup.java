@@ -4,6 +4,7 @@ import org.neo4j.collection.primitive.PrimitiveLongStack;
 
 class VirtualRelationshipGroup
 {
+    int label;
     PrimitiveLongStack outgoing;
     PrimitiveLongStack incoming;
     PrimitiveLongStack loops;

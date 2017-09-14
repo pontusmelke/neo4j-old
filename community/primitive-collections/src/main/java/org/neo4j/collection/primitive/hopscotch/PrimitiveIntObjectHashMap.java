@@ -19,6 +19,9 @@
  */
 package org.neo4j.collection.primitive.hopscotch;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 import org.neo4j.collection.primitive.PrimitiveIntObjectMap;
 import org.neo4j.collection.primitive.PrimitiveIntObjectVisitor;
 import org.neo4j.collection.primitive.hopscotch.HopScotchHashingAlgorithm.Monitor;
@@ -85,6 +88,41 @@ public class PrimitiveIntObjectHashMap<VALUE> extends AbstractIntHopScotchCollec
                 return;
             }
         }
+    }
+
+    @Override
+    public Iterator<VALUE> valueIterator()
+    {
+        return new Iterator<VALUE>()
+        {
+            int idx = 0;
+            long nullKey = table.nullKey();
+
+            @Override
+            public boolean hasNext()
+            {
+                while ( idx < table.capacity()  )
+                {
+                    long key = table.key( idx );
+                    if ( key != nullKey )
+                    {
+                        return true;
+                    }
+                    idx++;
+                }
+                return false;
+            }
+
+            @Override
+            public VALUE next()
+            {
+                if ( !hasNext() )
+                {
+                    throw new NoSuchElementException();
+                }
+                return table.value( idx++ );
+            }
+        };
     }
 
     @SuppressWarnings( "EqualsWhichDoesntCheckParameterClass" ) // yes it does
