@@ -70,9 +70,12 @@ abstract class PageCacheBackedCursor implements AutoCloseable
 
         if ( startAddress >= 0 && startAddress < maxAddress && maxAddress > 0 )
         {
-            offsetInPage = pageSize();
+            if ( this.pageCursor != null )
+            {
+                this.pageCursor.close();
+            }
             address = startAddress - 1;
-
+            offsetInPage = pageSize();
             this.pageCursor = pageCursor;
             this.maxAddress = maxAddress;
         }
@@ -123,6 +126,10 @@ abstract class PageCacheBackedCursor implements AutoCloseable
 
         if ( initialAddress >= 0 )
         {
+            if ( this.pageCursor != null )
+            {
+                this.pageCursor.close();
+            }
             this.pageCursor = pageCursor;
             this.address = initialAddress;
             this.offsetInPage = FIRST_JUMP;
