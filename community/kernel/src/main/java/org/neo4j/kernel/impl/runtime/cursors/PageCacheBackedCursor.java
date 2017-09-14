@@ -66,7 +66,7 @@ abstract class PageCacheBackedCursor implements AutoCloseable
 
     void initScanningCursor( PageCursor pageCursor, long startAddress, long maxAddress )
     {
-        assert isUnbound() : "Can only initialize unbound cursor";
+        assert isUnbound() || isScanningCursor() : "Can only initialize unbound or scanning cursor";
 
         if ( startAddress >= 0 && startAddress < maxAddress && maxAddress > 0 )
         {
@@ -119,7 +119,7 @@ abstract class PageCacheBackedCursor implements AutoCloseable
 
     void initJumpingCursor( PageCursor pageCursor, long initialAddress )
     {
-        assert isUnbound() : "Can only initialize unbound cursor";
+        assert isUnbound() || isJumpingCursor() : "Can only initialize unbound or jumping cursor";
 
         if ( initialAddress >= 0 )
         {
