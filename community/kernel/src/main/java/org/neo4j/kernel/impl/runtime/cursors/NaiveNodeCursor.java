@@ -155,6 +155,7 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     @Override
     public void relationships( RelationshipGroupCursor cursor )
     {
+        assert address() < maxAddress();
         read.relationshipGroups( nodeReference(), relationshipGroupReference(), cursor );
     }
 

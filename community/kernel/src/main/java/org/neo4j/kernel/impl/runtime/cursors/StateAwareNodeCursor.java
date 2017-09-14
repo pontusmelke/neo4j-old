@@ -22,11 +22,10 @@ package org.neo4j.kernel.impl.runtime.cursors;
 import org.neo4j.internal.kernel.api.LabelSet;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
-import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
-import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.kernel.api.txstate.TxStateHolder;
 import org.neo4j.storageengine.api.txstate.ReadableDiffSets;
+import org.neo4j.storageengine.api.txstate.ReadableRelationshipDiffSets;
 
 public class StateAwareNodeCursor extends NaiveNodeCursor
 {
@@ -56,7 +55,9 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
         {
             return true;
         }
-        if ( stateHolder.hasTxStateWithChanges() && stateHolder.txState().addedAndRemovedNodes().isAdded( address() ) )
+        long address = address();
+        if ( (address < maxAddress() || isJumpingCursor() ) &&
+             stateHolder.hasTxStateWithChanges() && stateHolder.txState().addedAndRemovedNodes().isAdded( address ) )
         {
             return true;
         }
@@ -120,6 +121,16 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     public void properties( PropertyCursor cursor )
     {
         super.properties( cursor );
+    }
+
+    @Override
+    public long relationshipGroupReference()
+    {
+        if ( stateHolder.hasTxStateWithChanges() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
+        return super.relationshipGroupReference();
     }
 
     @Override

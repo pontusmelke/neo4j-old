@@ -177,7 +177,7 @@ abstract class PageCacheBackedCursor implements AutoCloseable
         return result;
     }
 
-    private boolean isJumpingCursor()
+    protected boolean isJumpingCursor()
     {
         return maxAddress == JUMPING_CURSOR;
     }
@@ -222,6 +222,11 @@ abstract class PageCacheBackedCursor implements AutoCloseable
     long address()
     {
         return address;
+    }
+
+    long maxAddress()
+    {
+        return maxAddress;
     }
 
     public boolean shouldRetry()

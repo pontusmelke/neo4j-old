@@ -33,6 +33,7 @@ public abstract class KernelAPIWriteTestBase<G extends KernelAPIWriteTestSupport
     protected static final TemporaryFolder folder = new TemporaryFolder();
     protected static KernelAPIWriteTestSupport testSupport;
     protected static KernelAPI kernel;
+    protected CursorFactory cursors;
     protected static GraphDatabaseService graphDb;
 
     /**
@@ -52,6 +53,7 @@ public abstract class KernelAPIWriteTestBase<G extends KernelAPIWriteTestSupport
             graphDb = testSupport.graphBackdoor();
         }
         testSupport.beforeEachTest();
+        cursors = kernel.cursors();
     }
 
     @AfterClass
