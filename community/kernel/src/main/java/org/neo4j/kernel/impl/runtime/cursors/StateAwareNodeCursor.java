@@ -51,7 +51,13 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public boolean next()
     {
-        if ( super.next() )
+        // TODO: Needs to handle removed nodes. Write a test for this
+        boolean hasNext = super.next();
+        while ( hasNext && stateHolder.txState().nodeIsDeletedInThisTx( nodeReference() ) )
+        {
+            hasNext = super.next();
+        }
+        if ( hasNext )
         {
             return true;
         }
@@ -121,16 +127,6 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     public void properties( PropertyCursor cursor )
     {
         super.properties( cursor );
-    }
-
-    @Override
-    public long relationshipGroupReference()
-    {
-        if ( stateHolder.hasTxStateWithChanges() )
-        {
-            throw new UnsupportedOperationException( "Please implement" );
-        }
-        return super.relationshipGroupReference();
     }
 
     @Override

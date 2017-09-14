@@ -43,6 +43,8 @@ import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipGroupCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipScanCursor;
 import org.neo4j.kernel.impl.runtime.cursors.NaiveRelationshipTraversalCursor;
 import org.neo4j.kernel.impl.runtime.cursors.StateAwareNodeCursor;
+import org.neo4j.kernel.impl.runtime.cursors.StateAwareRelationshipGroupCursor;
+import org.neo4j.kernel.impl.runtime.cursors.StateAwareRelationshipTraversalCursor;
 
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.decodeDirectRelationshipReference;
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.isDirectRelationshipReference;
@@ -191,8 +193,8 @@ public class NaiveRead implements Read
             try
             {
                 PageCursor pageCursor = relationshipGroupStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
-                ((NaiveRelationshipGroupCursor) cursor).init(
-                        pageCursor, nodeReference, reference, this );
+                ((StateAwareRelationshipGroupCursor) cursor).init(
+                        pageCursor, nodeReference, reference, this, stateHolder );
             }
             catch ( IOException e )
             {
@@ -212,7 +214,8 @@ public class NaiveRead implements Read
         try
         {
             PageCursor pageCursor = relationshipStore.io( pageId, PagedFile.PF_SHARED_READ_LOCK );
-            ((NaiveRelationshipTraversalCursor) cursor).init( pageCursor, nodeReference, reference, this );
+            ((StateAwareRelationshipTraversalCursor) cursor).init(
+                    pageCursor, nodeReference, reference, this, stateHolder );
         }
         catch ( IOException e )
         {

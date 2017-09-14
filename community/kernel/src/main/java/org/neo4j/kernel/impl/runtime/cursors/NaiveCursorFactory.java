@@ -47,7 +47,7 @@ public class NaiveCursorFactory implements CursorFactory
     @Override
     public RelationshipTraversalCursor allocateRelationshipTraversalCursor()
     {
-        return new VirtualGroupAwareRelationshipTraversalCursor();
+        return new StateAwareRelationshipTraversalCursor();
     }
 
     @Override
@@ -59,7 +59,7 @@ public class NaiveCursorFactory implements CursorFactory
     @Override
     public RelationshipGroupCursor allocateRelationshipGroupCursor()
     {
-        return new NaiveRelationshipGroupCursor( new NaiveRelationshipTraversalCursor() );
+        return new StateAwareRelationshipGroupCursor( new StateAwareRelationshipTraversalCursor() );
     }
 
     @Override
