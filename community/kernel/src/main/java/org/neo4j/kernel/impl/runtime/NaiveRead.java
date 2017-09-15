@@ -20,7 +20,6 @@
 package org.neo4j.kernel.impl.runtime;
 
 import java.io.IOException;
-import java.lang.*;
 
 import org.neo4j.internal.kernel.api.IndexPredicate;
 import org.neo4j.internal.kernel.api.IndexReference;
@@ -46,7 +45,6 @@ import org.neo4j.kernel.impl.runtime.cursors.StateAwareNodeCursor;
 import org.neo4j.kernel.impl.runtime.cursors.StateAwareRelationshipGroupCursor;
 import org.neo4j.kernel.impl.runtime.cursors.StateAwareRelationshipTraversalCursor;
 
-import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.decodeDirectRelationshipReference;
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.isDirectRelationshipReference;
 
 public class NaiveRead implements Read
@@ -184,7 +182,7 @@ public class NaiveRead implements Read
     {
         if ( isDirectRelationshipReference( reference ) )
         {
-            ((NaiveRelationshipGroupCursor) cursor).initVirtual( nodeReference, reference,this );
+            ((StateAwareRelationshipGroupCursor) cursor).initVirtual( nodeReference, reference,this, stateHolder );
         }
         else
         {

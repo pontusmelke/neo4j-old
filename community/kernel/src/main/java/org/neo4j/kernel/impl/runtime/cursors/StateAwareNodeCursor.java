@@ -53,7 +53,8 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     {
         // TODO: Needs to handle removed nodes. Write a test for this
         boolean hasNext = super.next();
-        while ( hasNext && stateHolder.txState().nodeIsDeletedInThisTx( nodeReference() ) )
+        while ( hasNext && stateHolder.hasTxStateWithChanges() &&
+                stateHolder.txState().nodeIsDeletedInThisTx( nodeReference() ) )
         {
             hasNext = super.next();
         }

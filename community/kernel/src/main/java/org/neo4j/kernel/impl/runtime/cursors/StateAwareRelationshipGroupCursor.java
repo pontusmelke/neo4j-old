@@ -37,6 +37,8 @@ public class StateAwareRelationshipGroupCursor extends NaiveRelationshipGroupCur
     {
         super.init( pageCursor, originNodeReference, initialAddress, read );
         this.stateHolder = stateHolder;
+        // TODO: In this case we need a way to
+        augmentWithTransactionState();
     }
 
     public void initVirtual( long originNodeReference, long initialAddress, Read read,
@@ -44,15 +46,27 @@ public class StateAwareRelationshipGroupCursor extends NaiveRelationshipGroupCur
     {
         super.initVirtual( originNodeReference, initialAddress, read );
         this.stateHolder = stateHolder;
+        augmentWithTransactionState();
+    }
+
+    private void augmentWithTransactionState()
+    {
+        if ( stateHolder.hasTxStateWithChanges() )
+        {
+            // When we access the groups from the page cache, we need to augment with the
+            // virtual data from the transaction state.
+            // We need to support both the case where we have a mixed cursor with both
+            // physical (page cache backed) data and virtual data,
+            // as well as the case where we have a pure virtual cursor.
+            VirtualRelationshipGroupCursor virtualGroupCursor = getOrCreateVirtualGroupCursor();
+            virtualGroupCursor.augmentWithTransactionState( stateHolder.txState(), originNodeReference() );
+        }
     }
 
     @Override
     public boolean next()
     {
-        if ( stateHolder.hasTxStateWithChanges() )
-        {
-
-        }
+        // TODO: Check deleted relationships in transaction state.
         return super.next();
     }
 }

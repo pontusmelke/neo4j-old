@@ -103,9 +103,23 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         virtualGroupCursor.init( innerHelper );
     }
 
-    private boolean isVirtualGroup()
+    protected boolean isVirtualGroup()
     {
         return virtualGroupCursor != null;
+    }
+
+    protected boolean isPhysicalGroup()
+    {
+        return isBound();
+    }
+
+    protected VirtualRelationshipGroupCursor getOrCreateVirtualGroupCursor()
+    {
+        if ( virtualGroupCursor == null )
+        {
+            virtualGroupCursor = new VirtualRelationshipGroupCursor();
+        }
+        return virtualGroupCursor;
     }
 
     @Override
@@ -131,65 +145,101 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     @Override
     public boolean next()
     {
+        if ( isPhysicalGroup() )
+        {
+            if ( isUnbound() )
+            {
+                return false;
+            }
+            if ( firstJump() )
+            {
+                if ( isVirtualGroup() )
+                {
+                    virtualGroupCursor.shadowPhysicalGroupAt( relationshipLabel() );
+                }
+                return true;
+            }
+            boolean hasNext = jumpToAddress( nextReference() );
+            if ( hasNext )
+            {
+                if ( isVirtualGroup() )
+                {
+                    virtualGroupCursor.shadowPhysicalGroupAt( relationshipLabel() );
+                }
+                return true;
+            }
+        }
         if ( isVirtualGroup() )
         {
+            assert isVirtualGroup();
             return virtualGroupCursor.next();
         }
-
-        if ( isUnbound() )
-        {
-            return false;
-        }
-        if ( firstJump() )
-        {
-            return true;
-        }
-        return jumpToAddress( nextReference() );
-    }
-
-    private boolean nextDirect()
-    {
-        return innerHelper.next();
+        return false;
     }
 
     @Override
     public int relationshipLabel()
     {
-        if ( isVirtualGroup() )
+        if ( isPhysicalGroup() )
         {
+            return unsignedShort( 2 );
+        }
+        else // if ( isVirtualGroup() )
+        {
+            assert isVirtualGroup();
             return virtualGroupCursor.relationshipLabel();
         }
-        return unsignedShort( 2 );
     }
 
     @Override
     public int outgoingCount()
     {
+        int virtualCount = 0;
+        int physicalCount = 0;
+
         if ( isVirtualGroup() )
         {
-            return virtualGroupCursor.outgoingCount();
+            virtualCount = virtualGroupCursor.outgoingCount();
         }
-        return count( outgoingReference(), true );
+        if ( isPhysicalGroup() )
+        {
+            physicalCount = count( outgoingReference(), true );
+        }
+        return virtualCount + physicalCount;
     }
 
     @Override
     public int incomingCount()
     {
+        int virtualCount = 0;
+        int physicalCount = 0;
+
         if ( isVirtualGroup() )
         {
-            return virtualGroupCursor.incomingCount();
+            virtualCount = virtualGroupCursor.incomingCount();
         }
-        return count( incomingReference(), false );
+        if ( isPhysicalGroup() )
+        {
+            physicalCount = count( incomingReference(), true );
+        }
+        return virtualCount + physicalCount;
     }
 
     @Override
     public int loopCount()
     {
+        int virtualCount = 0;
+        int physicalCount = 0;
+
         if ( isVirtualGroup() )
         {
-            return virtualGroupCursor.loopCount();
+            virtualCount = virtualGroupCursor.loopCount();
         }
-        return count( loopsReference(), true );
+        if ( isPhysicalGroup() )
+        {
+            physicalCount = count( loopsReference(), true );
+        }
+        return virtualCount + physicalCount;
     }
 
     private int count( long relationshipReference, boolean source )
@@ -212,45 +262,65 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
 
     private long nextReference()
     {
+        assert isPhysicalGroup();
         return combineReference( unsignedInt( 4 ), ((long) (unsignedByte( 0 ) & 0x0E)) << 31 );
     }
 
     @Override
     public long outgoingReference()
     {
+        long reference = NO_RELATIONSHIP;
+
         if ( isVirtualGroup() )
         {
-            return virtualGroupCursor.outgoingReference();
+            reference = virtualGroupCursor.outgoingReference();
         }
-        return combineReference( unsignedInt( 8 ), ((long) (unsignedByte( 0 ) & 0x70)) << 28 );
+        else if ( isPhysicalGroup() )
+        {
+            reference = combineReference( unsignedInt( 8 ), ((long) (unsignedByte( 0 ) & 0x70)) << 28 );
+        }
+        return reference;
     }
 
     @Override
     public long incomingReference()
     {
+        long reference = NO_RELATIONSHIP;
+
         if ( isVirtualGroup() )
         {
-            return virtualGroupCursor.incomingReference();
+            reference = virtualGroupCursor.incomingReference();
         }
-        return combineReference( unsignedInt( 12 ), ((long) (unsignedByte( 1 ) & 0x0E)) << 31 );
+        else if ( isPhysicalGroup() )
+        {
+            reference = combineReference( unsignedInt( 12 ), ((long) (unsignedByte( 1 ) & 0x0E)) << 31 );
+        }
+        return reference;
     }
 
     @Override
     public long loopsReference()
     {
+        long reference = NO_RELATIONSHIP;
+
         if ( isVirtualGroup() )
         {
-            return virtualGroupCursor.loopsReference();
+            reference = virtualGroupCursor.loopsReference();
         }
-        return combineReference( unsignedInt( 16 ), ((long) (unsignedByte( 1 ) & 0x70)) << 28 );
+        else if ( isPhysicalGroup() )
+        {
+            reference = combineReference( unsignedInt( 16 ), ((long) (unsignedByte( 1 ) & 0x70)) << 28 );
+        }
+        return reference;
     }
 
     private long nodeReference()
     {
+        assert isPhysicalGroup();
         return combineReference( unsignedInt( 20 ), ((long) unsignedByte( 24 )) << 32 );
     }
 
-    private long originNodeReference()
+    protected long originNodeReference()
     {
         return originNodeReference;
     }
@@ -258,6 +328,9 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     @Override
     public void outgoing( RelationshipTraversalCursor cursor )
     {
+        // TODO: We need to handle mixed groups here
+        assert !(isVirtualGroup() && isPhysicalGroup()) : "Please implement support for mixed group";
+
         if ( isVirtualGroup() )
         {
             // This will only set the cursor to the virtual group
@@ -280,6 +353,9 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     @Override
     public void incoming( RelationshipTraversalCursor cursor )
     {
+        // TODO: We need to handle mixed groups here
+        assert !(isVirtualGroup() && isPhysicalGroup()) : "Please implement support for mixed group";
+
         if ( isVirtualGroup() )
         {
             virtualGroupCursor.incoming( cursor );
@@ -300,6 +376,9 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
     @Override
     public void loops( RelationshipTraversalCursor cursor )
     {
+        // TODO: We need to handle mixed groups here
+        assert !(isVirtualGroup() && isPhysicalGroup()) : "Please implement support for mixed group";
+
         if ( isVirtualGroup() )
         {
             virtualGroupCursor.loops( cursor );
