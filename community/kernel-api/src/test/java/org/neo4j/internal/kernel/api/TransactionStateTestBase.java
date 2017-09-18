@@ -235,6 +235,8 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
 
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
+            create10nodesAndRelationships();
+
             Node startNode = graphDb.createNode();
             startNodeId = startNode.getId();
             Node endNode = graphDb.createNode();
@@ -327,6 +329,8 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
 
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
+            create10nodesAndRelationships();
+
             Node startNode = graphDb.createNode();
             startNodeId = startNode.getId();
             Node endNode = graphDb.createNode();
@@ -400,6 +404,20 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
         try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
         {
             assertEquals( startNodeId, graphDb.getNodeById( startNodeId ).getId() );
+        }
+    }
+
+    private void create10nodesAndRelationships()
+    {
+        Node node0 = graphDb.createNode();
+        Node node1 = graphDb.createNode();
+        for ( int i = 0; i < 8; i++ )
+        {
+            graphDb.createNode();
+        }
+        for ( int i = 0; i < 10; i++ )
+        {
+            node0.createRelationshipTo( node1, RelationshipType.withName( "DUMMY" ) );
         }
     }
 

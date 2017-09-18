@@ -194,6 +194,13 @@ public class StateAwareRelationshipTraversalCursor extends VirtualGroupAwareRela
         // Prevent setting originNodeReference to NO_NODE
     }
 
+    public void initWithAddedRelationshipsIterator( PrimitiveLongIterator addedRelationshipsIterator,
+            long originNodeReference, Read read, TxStateHolder stateHolder )
+    {
+        initVirtual( originNodeReference, read, stateHolder );
+        setAddedRelationshipsIterator( addedRelationshipsIterator );
+    }
+
     public void setAddedRelationshipsIterator( PrimitiveLongIterator addedRelationshipsIterator )
     {
         this.addedRelationshipsIterator = addedRelationshipsIterator;

@@ -89,11 +89,15 @@ public class StateAwareRelationshipGroupCursor extends NaiveRelationshipGroupCur
             int[] relTypes = new int[]{ relationshipLabel() };
             PrimitiveLongIterator addedRelIterator =
                     originNodeState.getAddedRelationships( Direction.OUTGOING, relTypes );
-            ((StateAwareRelationshipTraversalCursor) cursor).setAddedRelationshipsIterator( addedRelIterator );
+            ((StateAwareRelationshipTraversalCursor) cursor).initWithAddedRelationshipsIterator(
+                    addedRelIterator,
+                    originNodeReference(), read, stateHolder );
         }
         else
         {
-            ((StateAwareRelationshipTraversalCursor) cursor).setAddedRelationshipsIterator( null );
+            ((StateAwareRelationshipTraversalCursor) cursor).initWithAddedRelationshipsIterator(
+                    null,
+                    originNodeReference(), read, stateHolder );
         }
         super.outgoing( cursor );
 
