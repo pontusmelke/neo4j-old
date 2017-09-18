@@ -47,6 +47,14 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
         currentVirtualGroup = null;
     }
 
+//    public void reset()
+//    {
+//        virtualGroups = null;
+//        virtualGroupIterator = null;
+//        currentVirtualGroup = null;
+//        alreadyShadowedPhysicalGroups = null;
+//    }
+
     private void readDirectRelationshipsIntoVirtualGroups( NaiveRelationshipTraversalCursor cursor )
     {
         VirtualRelationshipGroup group;
@@ -100,32 +108,25 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
             {
                 long rel = addedRelationships.next();
                 RelationshipState relState = txState.getRelationshipState( rel );
-                try
-                {
-                    relState.accept( (RelationshipVisitor<Exception>)
-                            ( relationshipId, typeId, startNodeId, endNodeId ) -> {
-                                VirtualRelationshipGroup group = getOrCreateVirtualRelationshipGroup( typeId );
-                                if ( startNodeId == endNodeId )
-                                {
-                                    assert startNodeId == relationshipId;
-                                    group.loops.push( relationshipId );
-                                }
-                                else if ( startNodeId == relationshipId )
-                                {
-                                    group.outgoing.push( relationshipId );
-                                }
-                                else // if ( endNodeId == relationshipId )
-                                {
-                                    assert endNodeId == relationshipId;
-                                    group.incoming.push( relationshipId );
-                                }
-                            } );
-                }
-                catch ( Exception e )
-                {
-                }
+                relState.accept( (RelationshipVisitor<RuntimeException>)
+                        ( relationshipId, typeId, startNodeId, endNodeId ) -> {
+                            VirtualRelationshipGroup group = getOrCreateVirtualRelationshipGroup( typeId );
+                            if ( startNodeId == endNodeId )
+                            {
+                                assert startNodeId == relationshipId;
+                                group.loopsAdded.push( relationshipId );
+                            }
+                            else if ( startNodeId == originNodeReference )
+                            {
+                                group.outgoingAdded.push( relationshipId );
+                            }
+                            else // if ( endNodeId == originNodeReference )
+                            {
+                                assert endNodeId == originNodeReference;
+                                group.incomingAdded.push( relationshipId );
+                            }
+                        } );
             }
-
         }
     }
 

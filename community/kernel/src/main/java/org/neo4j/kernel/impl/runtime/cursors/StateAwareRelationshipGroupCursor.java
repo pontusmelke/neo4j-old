@@ -19,9 +19,13 @@
  */
 package org.neo4j.kernel.impl.runtime.cursors;
 
+import org.neo4j.collection.primitive.PrimitiveLongIterator;
 import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.RelationshipTraversalCursor;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.kernel.api.txstate.TxStateHolder;
+import org.neo4j.storageengine.api.Direction;
+import org.neo4j.storageengine.api.txstate.NodeState;
 
 public class StateAwareRelationshipGroupCursor extends NaiveRelationshipGroupCursor
 {
@@ -37,14 +41,20 @@ public class StateAwareRelationshipGroupCursor extends NaiveRelationshipGroupCur
     {
         super.init( pageCursor, originNodeReference, initialAddress, read );
         this.stateHolder = stateHolder;
-        // TODO: In this case we need a way to
         augmentWithTransactionState();
     }
 
-    public void initVirtual( long originNodeReference, long initialAddress, Read read,
+    public void initFromDirectRelationship( long originNodeReference, long initialAddress, Read read,
             TxStateHolder stateHolder )
     {
-        super.initVirtual( originNodeReference, initialAddress, read );
+        super.initFromDirectRelationship( originNodeReference, initialAddress, read );
+        this.stateHolder = stateHolder;
+        augmentWithTransactionState();
+    }
+
+    public void initFromTransactionState( long originNodeReference, TxStateHolder stateHolder )
+    {
+        super.initVirtual( originNodeReference, read );
         this.stateHolder = stateHolder;
         augmentWithTransactionState();
     }
@@ -69,4 +79,51 @@ public class StateAwareRelationshipGroupCursor extends NaiveRelationshipGroupCur
         // TODO: Check deleted relationships in transaction state.
         return super.next();
     }
+
+    @Override
+    public void outgoing( RelationshipTraversalCursor cursor )
+    {
+        if ( stateHolder.hasTxStateWithChanges() )
+        {
+            NodeState originNodeState = stateHolder.txState().getNodeState( originNodeReference() );
+            int[] relTypes = new int[]{ relationshipLabel() };
+            PrimitiveLongIterator addedRelIterator =
+                    originNodeState.getAddedRelationships( Direction.OUTGOING, relTypes );
+            ((StateAwareRelationshipTraversalCursor) cursor).setAddedRelationshipsIterator( addedRelIterator );
+        }
+        else
+        {
+            ((StateAwareRelationshipTraversalCursor) cursor).setAddedRelationshipsIterator( null );
+        }
+        super.outgoing( cursor );
+
+        if ( isPureVirtualGroup() )
+        {
+            ((StateAwareRelationshipTraversalCursor) cursor).initVirtual( originNodeReference(), read, stateHolder );
+        }
+    }
+
+    @Override
+    public void incoming( RelationshipTraversalCursor cursor )
+    {
+        if ( stateHolder.hasTxStateWithChanges() )
+        {
+            NodeState originNodeState = stateHolder.txState().getNodeState( originNodeReference() );
+            int[] relTypes = new int[]{ relationshipLabel() };
+            PrimitiveLongIterator addedRelIterator =
+                    originNodeState.getAddedRelationships( Direction.INCOMING, relTypes );
+            ((StateAwareRelationshipTraversalCursor) cursor).setAddedRelationshipsIterator( addedRelIterator );
+        }
+        else
+        {
+            ((StateAwareRelationshipTraversalCursor) cursor).setAddedRelationshipsIterator( null );
+        }
+        super.incoming( cursor );
+
+        if ( isPureVirtualGroup() )
+        {
+            ((StateAwareRelationshipTraversalCursor) cursor).initVirtual( originNodeReference(), read, stateHolder );
+        }
+    }
+
 }

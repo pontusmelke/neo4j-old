@@ -23,6 +23,9 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.helpers.collection.Iterables;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -162,6 +165,186 @@ public abstract class TransactionStateTestBase<G extends KernelAPIWriteTestSuppo
             newNodeId = tx.nodeCreate();
             newRelTypeId = kernel.token().relationshipTypeGetOrCreateForName( newRelTypeName );
             newRelationshipId = tx.relationshipCreate( startNodeId, newRelTypeId, newNodeId );
+
+            try ( NodeCursor node = cursors.allocateNodeCursor();
+                  RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();
+                  RelationshipTraversalCursor relationship = cursors.allocateRelationshipTraversalCursor() )
+            {
+                tx.singleNode( startNodeId, node );
+                assertTrue( "should access node", node.next() );
+                assertEquals( startNodeId, node.nodeReference() );
+
+                node.relationships( group );
+                assertFalse( "should only find one node", node.next() );
+
+                assertTrue( group.next() );
+                assertEquals( group.relationshipLabel(), newRelTypeId );
+                group.outgoing( relationship );
+                assertFalse( group.next() );
+
+                assertTrue( relationship.next() );
+                assertEquals( relationship.relationshipReference(), newRelationshipId );
+                assertEquals( relationship.originNodeReference(), startNodeId );
+                assertEquals( relationship.neighbourNodeReference(), newNodeId );
+
+                // Move node cursor to new node
+                relationship.neighbour( node );
+                assertTrue( node.next() );
+                assertEquals( node.nodeReference(), newNodeId );
+
+                assertFalse( relationship.next() );
+
+                // Traverse the incoming relationship back to start node
+                node.relationships( group );
+                assertTrue( group.next() );
+                assertEquals( group.relationshipLabel(), newRelTypeId );
+                group.incoming( relationship );
+                assertFalse( group.next() );
+
+                assertFalse( node.next() );
+
+                assertTrue( relationship.next() );
+                assertEquals( relationship.relationshipReference(), newRelationshipId );
+                assertEquals( relationship.originNodeReference(), newNodeId );
+                assertEquals( relationship.neighbourNodeReference(), startNodeId );
+
+                // Move node cursor to start node
+                relationship.neighbour( node );
+                assertTrue( node.next() );
+                assertEquals( node.nodeReference(), startNodeId );
+                assertFalse( node.next() );
+            }
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertEquals( startNodeId, graphDb.getNodeById( startNodeId ).getId() );
+        }
+    }
+
+    @Test
+    public void shouldSeeNewAndExistingRelationshipInTransaction() throws Exception
+    {
+        long startNodeId, endNodeId;
+        long existingRelationshipId;
+        long newNodeId;
+        long newRelationshipId;
+        int newRelTypeId;
+        String newRelTypeName = "REL";
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            Node startNode = graphDb.createNode();
+            startNodeId = startNode.getId();
+            Node endNode = graphDb.createNode();
+            endNodeId = endNode.getId();
+
+            Relationship existingRelationship =
+                    startNode.createRelationshipTo( endNode, RelationshipType.withName( newRelTypeName ) );
+            existingRelationshipId = existingRelationship.getId();
+
+            tx.success();
+        }
+
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            newNodeId = tx.nodeCreate();
+            newRelTypeId = kernel.token().relationshipTypeGetOrCreateForName( newRelTypeName );
+            newRelationshipId = tx.relationshipCreate( startNodeId, newRelTypeId, newNodeId );
+
+            try ( NodeCursor node = cursors.allocateNodeCursor();
+                  RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();
+                  RelationshipTraversalCursor relationship = cursors.allocateRelationshipTraversalCursor() )
+            {
+                tx.singleNode( startNodeId, node );
+                assertTrue( "should access node", node.next() );
+                assertEquals( startNodeId, node.nodeReference() );
+
+                node.relationships( group );
+                assertFalse( "should only find one node", node.next() );
+
+                assertTrue( group.next() );
+                assertEquals( group.relationshipLabel(), newRelTypeId );
+                group.outgoing( relationship );
+                assertFalse( group.next() );
+
+                assertTrue( relationship.next() );
+                assertEquals( relationship.relationshipReference(), existingRelationshipId );
+                assertEquals( relationship.originNodeReference(), startNodeId );
+                assertEquals( relationship.neighbourNodeReference(), endNodeId );
+
+                assertTrue( relationship.next() );
+                assertEquals( relationship.relationshipReference(), newRelationshipId );
+                assertEquals( relationship.originNodeReference(), startNodeId );
+                assertEquals( relationship.neighbourNodeReference(), newNodeId );
+
+                // Move node cursor to new node
+                relationship.neighbour( node );
+                assertTrue( node.next() );
+                assertEquals( node.nodeReference(), newNodeId );
+
+                assertFalse( relationship.next() );
+
+                // Traverse the incoming relationship back to start node
+                node.relationships( group );
+                assertTrue( group.next() );
+                assertEquals( group.relationshipLabel(), newRelTypeId );
+                group.incoming( relationship );
+                assertFalse( group.next() );
+
+                assertFalse( node.next() );
+
+                assertTrue( relationship.next() );
+                assertEquals( relationship.relationshipReference(), newRelationshipId );
+                assertEquals( relationship.originNodeReference(), newNodeId );
+                assertEquals( relationship.neighbourNodeReference(), startNodeId );
+
+                // Move node cursor to start node
+                relationship.neighbour( node );
+                assertTrue( node.next() );
+                assertEquals( node.nodeReference(), startNodeId );
+                assertFalse( node.next() );
+            }
+            tx.success();
+        }
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            assertEquals( startNodeId, graphDb.getNodeById( startNodeId ).getId() );
+        }
+    }
+
+    @Test
+    public void shouldSeeNewAndDeletedRelationshipInTransaction() throws Exception
+    {
+        long startNodeId, endNodeId;
+        long existingRelationshipId;
+        long newNodeId;
+        long newRelationshipId;
+        int newRelTypeId;
+        String newRelTypeName = "REL";
+
+        try ( org.neo4j.graphdb.Transaction tx = graphDb.beginTx() )
+        {
+            Node startNode = graphDb.createNode();
+            startNodeId = startNode.getId();
+            Node endNode = graphDb.createNode();
+            endNodeId = endNode.getId();
+
+            Relationship existingRelationship =
+                    startNode.createRelationshipTo( endNode, RelationshipType.withName( newRelTypeName ) );
+            existingRelationshipId = existingRelationship.getId();
+
+            tx.success();
+        }
+
+        try ( Transaction tx = kernel.beginTransaction() )
+        {
+            newNodeId = tx.nodeCreate();
+            newRelTypeId = kernel.token().relationshipTypeGetOrCreateForName( newRelTypeName );
+            newRelationshipId = tx.relationshipCreate( startNodeId, newRelTypeId, newNodeId );
+            tx.relationshipDelete( existingRelationshipId, newRelTypeId, startNodeId, endNodeId );
 
             try ( NodeCursor node = cursors.allocateNodeCursor();
                   RelationshipGroupCursor group = cursors.allocateRelationshipGroupCursor();

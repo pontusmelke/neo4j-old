@@ -34,6 +34,9 @@ public interface Write
 
     void relationshipDelete( long relationship );
 
+    // TODO: With a proper implementation of void relationshipDelete( long relationship ) we will not need this
+    void relationshipDelete( long relationship, int relationshipLabel, long sourceNode, long targetNode );
+
     void nodeAddLabel( long node, int nodeLabel );
 
     void nodeRemoveLabel( long node, int nodeLabel );

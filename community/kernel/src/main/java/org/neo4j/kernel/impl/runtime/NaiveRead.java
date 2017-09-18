@@ -46,6 +46,7 @@ import org.neo4j.kernel.impl.runtime.cursors.StateAwareRelationshipGroupCursor;
 import org.neo4j.kernel.impl.runtime.cursors.StateAwareRelationshipTraversalCursor;
 
 import static org.neo4j.kernel.impl.runtime.cursors.NaiveBitManipulation.isDirectRelationshipReference;
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_RELATIONSHIP;
 
 public class NaiveRead implements Read
 {
@@ -180,9 +181,9 @@ public class NaiveRead implements Read
     @Override
     public void relationshipGroups( long nodeReference, long reference, RelationshipGroupCursor cursor )
     {
-        if ( isDirectRelationshipReference( reference ) )
+        if ( isDirectRelationshipReference( reference ) || reference == NO_RELATIONSHIP )
         {
-            ((StateAwareRelationshipGroupCursor) cursor).initVirtual( nodeReference, reference,this, stateHolder );
+            ((StateAwareRelationshipGroupCursor) cursor).initFromDirectRelationship( nodeReference, reference,this, stateHolder );
         }
         else
         {

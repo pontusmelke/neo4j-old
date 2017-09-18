@@ -54,6 +54,8 @@ public class NaiveRelationshipTraversalCursor extends NaiveRelationshipCursor im
     protected long nextRelationshipReference()
     {
         final long source = sourceNodeReference(), target = targetNodeReference();
+        assert source != NO_NODE;
+        assert target != NO_NODE;
         if ( source == originNodeReference )
         {
             return sourceNextRelationshipReference();
@@ -135,5 +137,10 @@ public class NaiveRelationshipTraversalCursor extends NaiveRelationshipCursor im
     boolean isLoop()
     {
         return sourceNodeReference() == targetNodeReference();
+    }
+
+    protected void setOriginNodeReference( long originNodeReference )
+    {
+        this.originNodeReference = originNodeReference;
     }
 }

@@ -71,19 +71,27 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     @Override
     public void nodeDelete( long node )
     {
-
+        throw new UnsupportedOperationException( "Please implement" );
     }
 
     @Override
     public long relationshipCreate( long sourceNode, int relationshipLabel, long targetNode )
     {
-        return 0;
+        long relId = storeReadLayer.reserveRelationship();
+        kernelTransaction.txState().relationshipDoCreate( relId, relationshipLabel, sourceNode, targetNode );
+        return relId;
     }
 
     @Override
     public void relationshipDelete( long relationship )
     {
+        throw new UnsupportedOperationException( "Please implement" );
+    }
 
+    @Override
+    public void relationshipDelete( long relationship, int relationshipLabel, long sourceNode, long targetNode )
+    {
+        kernelTransaction.txState().relationshipDoDelete( relationship, relationshipLabel, sourceNode, targetNode );
     }
 
     @Override
@@ -101,24 +109,24 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     @Override
     public void nodeSetProperty( long node, int propertyKey, Object value )
     {
-
+        throw new UnsupportedOperationException( "Please implement" );
     }
 
     @Override
     public void nodeRemoveProperty( long node, int propertyKey )
     {
-
+        throw new UnsupportedOperationException( "Please implement" );
     }
 
     @Override
     public void relationshipSetProperty( long relationship, int propertyKey, Value value )
     {
-
+        throw new UnsupportedOperationException( "Please implement" );
     }
 
     @Override
     public void relationshipRemoveProperty( long node, int propertyKey )
     {
-
+        throw new UnsupportedOperationException( "Please implement" );
     }
 }

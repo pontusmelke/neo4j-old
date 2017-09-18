@@ -22,14 +22,18 @@ package org.neo4j.kernel.impl.runtime.cursors;
 import org.neo4j.internal.kernel.api.LabelSet;
 import org.neo4j.internal.kernel.api.PropertyCursor;
 import org.neo4j.internal.kernel.api.Read;
+import org.neo4j.internal.kernel.api.RelationshipGroupCursor;
 import org.neo4j.io.pagecache.PageCursor;
 import org.neo4j.kernel.api.txstate.TxStateHolder;
 import org.neo4j.storageengine.api.txstate.ReadableDiffSets;
-import org.neo4j.storageengine.api.txstate.ReadableRelationshipDiffSets;
+
+import static org.neo4j.kernel.impl.runtime.cursors.NaiveConstants.NO_NODE;
 
 public class StateAwareNodeCursor extends NaiveNodeCursor
 {
     private TxStateHolder stateHolder;
+    private long txStateNodeId = NO_NODE;
+    private boolean hasCalledNext;
 
     public void init(
             PageCursor pageCursor,
@@ -38,13 +42,40 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
             Read read,
             TxStateHolder stateHolder )
     {
+        resetTxStateNode();
         super.init( pageCursor, startAddress, maxAddress, read );
         this.stateHolder = stateHolder;
+    }
+
+    public void initFromTransactionState( long singleNodeReference, TxStateHolder stateHolder )
+    {
+        if ( isBound() )
+        {
+            close();
+        }
+        txStateNodeId = singleNodeReference;
+        hasCalledNext = false;
+        this.stateHolder = stateHolder;
+    }
+
+    private void resetTxStateNode()
+    {
+        txStateNodeId = NO_NODE;
+        hasCalledNext = false;
+    }
+
+    private boolean isSetOnTxStateNode()
+    {
+        return txStateNodeId != NO_NODE && hasCalledNext;
     }
 
     @Override
     public long nodeReference()
     {
+        if ( isSetOnTxStateNode() )
+        {
+            return txStateNodeId;
+        }
         return address();
     }
 
@@ -52,6 +83,19 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     public boolean next()
     {
         // TODO: Needs to handle removed nodes. Write a test for this
+        if ( txStateNodeId != NO_NODE )
+        {
+            if ( hasCalledNext )
+            {
+                return false;
+            }
+            else
+            {
+                hasCalledNext = true;
+                return true;
+            }
+        }
+
         boolean hasNext = super.next();
         while ( hasNext && stateHolder.hasTxStateWithChanges() &&
                 stateHolder.txState().nodeIsDeletedInThisTx( nodeReference() ) )
@@ -100,7 +144,11 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public LabelSet labels()
     {
-        if ( stateHolder.hasTxStateWithChanges() )
+        if ( isSetOnTxStateNode() )
+        {
+            return NaiveLabels.of( stateHolder.txState().getNodeState( txStateNodeId ).labelDiffSets().getAdded() );
+        }
+        else if ( stateHolder.hasTxStateWithChanges() )
         {
             ReadableDiffSets<Long> nodes = stateHolder.txState().addedAndRemovedNodes();
             ReadableDiffSets<Integer> labelDiff = stateHolder.txState().nodeStateLabelDiffSets( address() );
@@ -121,18 +169,87 @@ public class StateAwareNodeCursor extends NaiveNodeCursor
     @Override
     public boolean hasProperties()
     {
+        if ( isSetOnTxStateNode() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
+        else if ( stateHolder.hasTxStateWithChanges() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
         return super.hasProperties();
     }
 
     @Override
     public void properties( PropertyCursor cursor )
     {
+        if ( isSetOnTxStateNode() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
+        else if ( stateHolder.hasTxStateWithChanges() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
         super.properties( cursor );
     }
 
     @Override
     public long propertiesReference()
     {
+        if ( isSetOnTxStateNode() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
+        else if ( stateHolder.hasTxStateWithChanges() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
         return super.propertiesReference();
+    }
+
+    @Override
+    public void relationships( RelationshipGroupCursor cursor )
+    {
+        if ( isSetOnTxStateNode() )
+        {
+            ((StateAwareRelationshipGroupCursor) cursor).initFromTransactionState( txStateNodeId, stateHolder );
+            return;
+        }
+        else if ( stateHolder.hasTxStateWithChanges() )
+        {
+            if ( stateHolder.txState().nodeIsAddedInThisTx( nodeReference() ) )
+            {
+                throw new UnsupportedOperationException( "Please implement" );
+            }
+        }
+        super.relationships( cursor );
+    }
+
+    @Override
+    public long relationshipGroupReference()
+    {
+        if ( isSetOnTxStateNode() )
+        {
+            throw new UnsupportedOperationException( "Please implement" );
+        }
+        else if ( stateHolder.hasTxStateWithChanges() )
+        {
+            if ( stateHolder.txState().nodeIsAddedInThisTx( nodeReference() ) )
+            {
+                throw new UnsupportedOperationException( "Please implement" );
+            }
+        }
+        return super.relationshipGroupReference();
+    }
+
+    @Override
+    public boolean isDense()
+    {
+        if ( isSetOnTxStateNode() )
+        {
+            return false;
+        }
+        return super.isDense();
     }
 }
