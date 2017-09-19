@@ -108,7 +108,6 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         {
             assert isDirectRelationshipReference( initialAddress );
 
-
             // Initialize inner cursor to relationship store and use it to build a virtual relationship group
             long reference = NaiveBitManipulation.decodeDirectRelationshipReference( initialAddress );
             read.relationships( originNodeReference, reference, innerHelper );

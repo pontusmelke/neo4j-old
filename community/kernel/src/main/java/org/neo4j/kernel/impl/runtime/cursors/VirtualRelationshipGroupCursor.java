@@ -123,7 +123,8 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
                 long rel = addedRelationships.next();
                 RelationshipState relState = txState.getRelationshipState( rel );
                 relState.accept( (RelationshipVisitor<RuntimeException>)
-                        ( relationshipId, typeId, startNodeId, endNodeId ) -> {
+                        ( relationshipId, typeId, startNodeId, endNodeId ) ->
+                        {
                             VirtualRelationshipGroup group = getOrCreateVirtualRelationshipGroup( typeId );
                             if ( startNodeId == endNodeId )
                             {
@@ -143,7 +144,6 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
             }
         }
     }
-
 
     @Override
     public int relationshipLabel()
