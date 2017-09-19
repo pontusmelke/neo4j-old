@@ -22,6 +22,7 @@ package org.neo4j.kernel.impl.runtime;
 import org.neo4j.internal.kernel.api.Transaction;
 import org.neo4j.io.pagecache.PagedFile;
 import org.neo4j.kernel.api.KernelTransaction;
+import org.neo4j.storageengine.api.StorageStatement;
 import org.neo4j.storageengine.api.StoreReadLayer;
 import org.neo4j.values.storable.Value;
 
@@ -29,6 +30,7 @@ public class NaiveTransaction extends NaiveRead implements Transaction
 {
     private final StoreReadLayer storeReadLayer;
     private final KernelTransaction kernelTransaction;
+    private final StorageStatement storageStatement;
 
     NaiveTransaction( PagedFile nodeStore, PagedFile relationshipStore, PagedFile relationshipGroupStore,
             PagedFile propertyStore, StoreReadLayer storeReadLayer, KernelTransaction kernelTransaction )
@@ -36,6 +38,7 @@ public class NaiveTransaction extends NaiveRead implements Transaction
         super( nodeStore, relationshipStore, relationshipGroupStore, propertyStore, kernelTransaction );
         this.storeReadLayer = storeReadLayer;
         this.kernelTransaction = kernelTransaction;
+        this.storageStatement = storeReadLayer.newStatement();
     }
 
     // TRANSACTION
@@ -63,7 +66,7 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     @Override
     public long nodeCreate()
     {
-        long nodeId = storeReadLayer.reserveNode();
+        long nodeId = storageStatement.reserveNode();
         kernelTransaction.txState().nodeDoCreate( nodeId );
         return nodeId;
     }
@@ -77,7 +80,7 @@ public class NaiveTransaction extends NaiveRead implements Transaction
     @Override
     public long relationshipCreate( long sourceNode, int relationshipLabel, long targetNode )
     {
-        long relId = storeReadLayer.reserveRelationship();
+        long relId = storageStatement.reserveRelationship();
         kernelTransaction.txState().relationshipDoCreate( relId, relationshipLabel, sourceNode, targetNode );
         return relId;
     }

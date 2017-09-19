@@ -45,7 +45,7 @@ import org.neo4j.kernel.api.schema.SchemaDescriptorFactory;
 import org.neo4j.kernel.api.schema.index.IndexDescriptor;
 import org.neo4j.kernel.api.schema.index.IndexDescriptorFactory;
 import org.neo4j.kernel.api.security.SecurityContext;
-import org.neo4j.kernel.api.txstate.LegacyIndexTransactionState;
+import org.neo4j.kernel.api.txstate.ExplicitIndexTransactionState;
 import org.neo4j.kernel.api.txstate.TransactionState;
 import org.neo4j.kernel.impl.api.KernelStatement;
 import org.neo4j.kernel.impl.api.StatementOperationParts;
@@ -479,7 +479,7 @@ public class ConstraintIndexCreatorTest
             }
 
             @Override
-            public LegacyIndexTransactionState legacyIndexTxState()
+            public ExplicitIndexTransactionState explicitIndexTxState()
             {
                 return null;
             }
