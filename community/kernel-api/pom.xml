@@ -91,6 +91,12 @@ the relevant Commercial Agreement.
       <artifactId>hamcrest-library</artifactId>
       <scope>test</scope>
     </dependency>
+      <dependency>
+          <groupId>org.openjdk.jmh</groupId>
+          <artifactId>jmh-core</artifactId>
+          <version>1.11.2</version>
+          <scope>test</scope>
+      </dependency>
   </dependencies>
 
 </project>
