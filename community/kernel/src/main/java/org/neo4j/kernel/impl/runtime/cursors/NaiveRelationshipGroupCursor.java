@@ -114,6 +114,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
             read.relationships( originNodeReference, reference, innerHelper );
             virtualGroupCursor = new VirtualRelationshipGroupCursor();
             virtualGroupCursor.init( innerHelper );
+            isPureVirtual = false;
         }
         else
         {
@@ -209,7 +210,6 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         }
         if ( isVirtualGroup() )
         {
-            assert isVirtualGroup();
             return virtualGroupCursor.next();
         }
         return false;
@@ -258,7 +258,7 @@ public class NaiveRelationshipGroupCursor extends PageCacheBackedCursor implemen
         }
         if ( isPhysicalGroup() )
         {
-            physicalCount = count( incomingReference(), true );
+            physicalCount = count( incomingReference(), false );
         }
         return virtualCount + physicalCount;
     }
