@@ -69,6 +69,12 @@ public class Transaction implements org.neo4j.internal.kernel.api.Transaction
     }
 
     @Override
+    public void relationshipDelete( long relationship, int relationshipLabel, long sourceNode, long targetNode )
+    {
+        throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    @Override
     public void nodeAddLabel( long node, int nodeLabel )
     {
         throw new UnsupportedOperationException( "not implemented" );
