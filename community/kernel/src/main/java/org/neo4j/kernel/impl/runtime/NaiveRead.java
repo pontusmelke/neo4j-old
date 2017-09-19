@@ -206,7 +206,7 @@ public class NaiveRead implements Read
     public void relationships( long nodeReference, long reference, RelationshipTraversalCursor cursor )
     {
         int pageSizeInRecords;
-        assert ( !isDirectRelationshipReference( reference ) ); // We must not get any encoded references here
+        assert !isDirectRelationshipReference( reference ); // We must not get any encoded references here
 
         pageSizeInRecords = relationshipStore.pageSize() / NaiveRelationshipTraversalCursor.RECORD_SIZE;
         long pageId = reference / pageSizeInRecords;

@@ -95,7 +95,7 @@ public class PrimitiveIntObjectHashMap<VALUE> extends AbstractIntHopScotchCollec
     {
         return new Iterator<VALUE>()
         {
-            int idx = 0;
+            int idx;
             long nullKey = table.nullKey();
 
             @Override
