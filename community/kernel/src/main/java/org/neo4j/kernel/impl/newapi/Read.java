@@ -249,7 +249,7 @@ public class Read implements org.neo4j.internal.kernel.api.Read
 
     void group( RelationshipGroupRecord record, long reference )
     {
-        throw new UnsupportedOperationException( "not implemented" );
+        stores.getRelationshipGroupStore().getRecord( reference, record, RecordLoad.NORMAL );
     }
 
     long nodeHighMark()
