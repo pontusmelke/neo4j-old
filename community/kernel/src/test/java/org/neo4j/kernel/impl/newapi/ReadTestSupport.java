@@ -48,7 +48,16 @@ class ReadTestSupport implements KernelAPIReadTestSupport
     @Override
     public KernelAPI kernelToTest()
     {
-        return new TempKernel( (GraphDatabaseAPI) db );
+        TempKernel kernel = new TempKernel( ((GraphDatabaseAPI) db).getDependencyResolver() );
+        try
+        {
+            kernel.start();
+        }
+        catch ( Throwable throwable )
+        {
+            throwable.printStackTrace();
+        }
+        return kernel;
     }
 
     @Override

@@ -63,6 +63,7 @@ import org.neo4j.kernel.impl.core.StartupStatisticsProvider;
 import org.neo4j.kernel.impl.core.ThreadToStatementContextBridge;
 import org.neo4j.kernel.impl.core.TokenNotFoundException;
 import org.neo4j.kernel.impl.logging.LogService;
+import org.neo4j.kernel.impl.newapi.TempKernel;
 import org.neo4j.kernel.impl.proc.ProcedureConfig;
 import org.neo4j.kernel.impl.proc.ProcedureGDSFactory;
 import org.neo4j.kernel.impl.proc.ProcedureTransactionProvider;
@@ -232,6 +233,10 @@ public class DataSourceModule
                             neoStoreDataSource::getKernel );
         life.add( naiveKernel );
         deps.satisfyDependency( naiveKernel );
+
+        TempKernel tempKernel = new TempKernel( deps );
+        life.add( tempKernel );
+        deps.satisfyDependency( tempKernel );
 
         life.add( new MonitorGc( config, logging.getInternalLog( MonitorGc.class ) ) );
 

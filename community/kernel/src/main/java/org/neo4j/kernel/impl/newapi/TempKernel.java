@@ -19,24 +19,26 @@
  */
 package org.neo4j.kernel.impl.newapi;
 
+import org.neo4j.graphdb.DependencyResolver;
 import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.KernelAPI;
 import org.neo4j.internal.kernel.api.Token;
+import org.neo4j.kernel.NeoStoreDataSource;
 import org.neo4j.kernel.impl.storageengine.impl.recordstorage.RecordStorageEngine;
 import org.neo4j.kernel.impl.store.NeoStores;
 import org.neo4j.kernel.internal.GraphDatabaseAPI;
+import org.neo4j.kernel.lifecycle.Lifecycle;
 import org.neo4j.values.storable.Value;
 
-class TempKernel implements KernelAPI
+public class TempKernel implements KernelAPI, Lifecycle
 {
-    private final Transaction tx;
-    private final Cursors cursors;
+    private Transaction tx;
+    private Cursors cursors;
+    private DependencyResolver dependencyResolver;
 
-    TempKernel( GraphDatabaseAPI db )
+    public TempKernel( DependencyResolver dependencyResolver )
     {
-        RecordStorageEngine engine = db.getDependencyResolver().resolveDependency( RecordStorageEngine.class );
-        this.tx = new Transaction( engine.testAccessNeoStores() );
-        this.cursors = new Cursors( tx );
+        this.dependencyResolver = dependencyResolver;
     }
 
     @Override
@@ -55,6 +57,32 @@ class TempKernel implements KernelAPI
     public Token token()
     {
         throw new UnsupportedOperationException( "not implemented" );
+    }
+
+    @Override
+    public void init() throws Throwable
+    {
+
+    }
+
+    @Override
+    public void start() throws Throwable
+    {
+        RecordStorageEngine engine = dependencyResolver.resolveDependency( RecordStorageEngine.class );
+        this.tx = new Transaction( engine.testAccessNeoStores() );
+        this.cursors = new Cursors( tx );
+    }
+
+    @Override
+    public void stop() throws Throwable
+    {
+
+    }
+
+    @Override
+    public void shutdown() throws Throwable
+    {
+
     }
 
     private static class Transaction extends Read implements org.neo4j.internal.kernel.api.Transaction
