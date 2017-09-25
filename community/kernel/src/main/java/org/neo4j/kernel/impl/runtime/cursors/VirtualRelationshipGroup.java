@@ -28,20 +28,11 @@ class VirtualRelationshipGroup
     PrimitiveLongStack incoming;
     PrimitiveLongStack loops;
 
-    // TODO: FIXME We should not need these
-    PrimitiveLongStack outgoingAdded;
-    PrimitiveLongStack incomingAdded;
-    PrimitiveLongStack loopsAdded;
-
     VirtualRelationshipGroup()
     {
         // TODO: Calculate reasonable initial sizes based on dense node threshold setting
-        outgoing = new PrimitiveLongStack( 8 );
-        incoming = new PrimitiveLongStack( 8 );
+        outgoing = new PrimitiveLongStack( 16 );
+        incoming = new PrimitiveLongStack( 16 );
         loops = new PrimitiveLongStack( 4 );
-
-        outgoingAdded = new PrimitiveLongStack( 8 );
-        incomingAdded = new PrimitiveLongStack( 8 );
-        loopsAdded = new PrimitiveLongStack( 4 );
     }
 }

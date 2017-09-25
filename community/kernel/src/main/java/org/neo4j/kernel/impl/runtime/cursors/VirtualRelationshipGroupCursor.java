@@ -126,20 +126,21 @@ class VirtualRelationshipGroupCursor implements RelationshipGroupCursor
                         ( relationshipId, typeId, startNodeId, endNodeId ) ->
                         {
                             VirtualRelationshipGroup group = getOrCreateVirtualRelationshipGroup( typeId );
-                            if ( startNodeId == endNodeId )
-                            {
-                                assert startNodeId == relationshipId;
-                                group.loopsAdded.push( relationshipId );
-                            }
-                            else if ( startNodeId == originNodeReference )
-                            {
-                                group.outgoingAdded.push( relationshipId );
-                            }
-                            else // if ( endNodeId == originNodeReference )
-                            {
-                                assert endNodeId == originNodeReference;
-                                group.incomingAdded.push( relationshipId );
-                            }
+                            // We only need to track new groups, since an iterator is added separately in StateAwareRelationshipGroupCursor
+//                            if ( startNodeId == endNodeId )
+//                            {
+//                                assert startNodeId == relationshipId;
+//                                group.loopsAdded.push( relationshipId );
+//                            }
+//                            else if ( startNodeId == originNodeReference )
+//                            {
+//                                group.outgoingAdded.push( relationshipId );
+//                            }
+//                            else // if ( endNodeId == originNodeReference )
+//                            {
+//                                assert endNodeId == originNodeReference;
+//                                group.incomingAdded.push( relationshipId );
+//                            }
                         } );
             }
         }
