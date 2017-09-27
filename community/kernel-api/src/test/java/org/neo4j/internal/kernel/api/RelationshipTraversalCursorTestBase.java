@@ -19,6 +19,8 @@
  */
 package org.neo4j.internal.kernel.api;
 
+import java.util.function.Consumer;
+
 import org.junit.Test;
 
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -35,7 +37,7 @@ import static org.neo4j.graphdb.RelationshipType.withName;
 public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIReadTestSupport>
         extends KernelAPIReadTestBase<G>
 {
-    private static long bare, start, end;
+    private long bare, start, end, sparse, dense;
 
     @Override
     void createTestGraph( GraphDatabaseService graphDb )
@@ -87,6 +89,84 @@ public abstract class RelationshipTraversalCursorTestBase<G extends KernelAPIRea
 
             tx.success();
         }
+
+        Node sparse = node(
+                graphDb,
+                outgoing( "FOO" ),
+                outgoing( "BAR" ),
+                outgoing( "BAR" ),
+                incoming( "FOO" ),
+                outgoing( "FOO" ),
+                incoming( "BAZ" ),
+                incoming( "BAR" ),
+                outgoing( "BAZ" ) );
+        Node dense;
+        // dense node
+        try ( Transaction tx = graphDb.beginTx() )
+        {
+            dense = graphDb.createNode();
+            for ( Relationship rel : sparse.getRelationships() )
+            {
+                if ( sparse.equals( rel.getStartNode() ) )
+                {
+                    dense.createRelationshipTo( graphDb.createNode(), rel.getType() );
+                }
+                else
+                {
+                    graphDb.createNode().createRelationshipTo( dense, rel.getType() );
+                }
+            }
+            for ( int i = 0; i < 200; i++ )
+            {
+                dense.createRelationshipTo( graphDb.createNode(), withName( "BULK" ) );
+            }
+
+            tx.success();
+        }
+        this.sparse = sparse.getId();
+        this.dense = dense.getId();
+    }
+
+    @SafeVarargs
+    private static Node node( GraphDatabaseService db, Consumer<Node>... changes )
+    {
+        Node node;
+        try ( Transaction tx = db.beginTx() )
+        {
+            node = db.createNode();
+            tx.success();
+        }
+        for ( int i = changes.length; i-- > 0; )
+        {
+            changes[i].accept( node );
+        }
+        return node;
+    }
+
+    private static Consumer<Node> outgoing( String type )
+    {
+        return node ->
+        {
+            GraphDatabaseService db = node.getGraphDatabase();
+            try ( Transaction tx = db.beginTx() )
+            {
+                node.createRelationshipTo( db.createNode(), withName( type ) );
+                tx.success();
+            }
+        };
+    }
+
+    private static Consumer<Node> incoming( String type )
+    {
+        return node ->
+        {
+            GraphDatabaseService db = node.getGraphDatabase();
+            try ( Transaction tx = db.beginTx() )
+            {
+                db.createNode().createRelationshipTo( node, withName( type ) );
+                tx.success();
+            }
+        };
     }
 
     @Test
