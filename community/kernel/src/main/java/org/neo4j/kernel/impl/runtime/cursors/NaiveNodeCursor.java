@@ -160,19 +160,13 @@ public class NaiveNodeCursor extends PageCacheBackedCursor implements NodeCursor
     }
 
     @Override
-    public void outgoingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
+    public long allRelationshipsReference()
     {
-        throw new UnsupportedOperationException( "Please implement" );
+        throw new UnsupportedOperationException( "not implemented" );
     }
 
     @Override
-    public void incomingRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
-    {
-        throw new UnsupportedOperationException( "Please implement" );
-    }
-
-    @Override
-    public void allRelationships( RelationshipGroupCursor groups, RelationshipTraversalCursor relationships )
+    public void allRelationships( RelationshipTraversalCursor relationships )
     {
         throw new UnsupportedOperationException( "Please implement" );
     }
