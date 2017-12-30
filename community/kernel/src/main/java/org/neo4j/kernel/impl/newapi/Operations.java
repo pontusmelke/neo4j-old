@@ -72,12 +72,6 @@ public class Operations implements Write, ExplicitIndexWrite
         this.cursors = cursors;
     }
 
-    public void initialize()
-    {
-        this.nodeCursor = cursors.allocateNodeCursor();
-        this.propertyCursor = cursors.allocatePropertyCursor();
-    }
-
     @Override
     public long nodeCreate()
     {
@@ -140,6 +134,7 @@ public class Operations implements Write, ExplicitIndexWrite
         acquireExclusiveNodeLock( node );
 
         ktx.assertOpen();
+        NodeCursor nodeCursor = nodeCursor();
         allStoreHolder.singleNode( node, nodeCursor );
         if ( !nodeCursor.next() )
         {
@@ -154,7 +149,7 @@ public class Operations implements Write, ExplicitIndexWrite
 
         //node is there and doesn't already have the label, let's add
         ktx.txState().nodeDoAddLabel( nodeLabel, node );
-        updater.onLabelChange( nodeLabel, nodeCursor, propertyCursor, ADDED_LABEL );
+        updater.onLabelChange( nodeLabel, nodeCursor, propertyCursor(), ADDED_LABEL );
         return true;
     }
 
@@ -164,6 +159,7 @@ public class Operations implements Write, ExplicitIndexWrite
         acquireExclusiveNodeLock( node );
         ktx.assertOpen();
 
+        NodeCursor nodeCursor = nodeCursor();
         allStoreHolder.singleNode( node, nodeCursor );
         if ( !nodeCursor.next() )
         {
@@ -177,7 +173,7 @@ public class Operations implements Write, ExplicitIndexWrite
         }
 
         ktx.txState().nodeDoRemoveLabel( nodeLabel, node );
-        updater.onLabelChange( nodeLabel, nodeCursor, propertyCursor, REMOVED_LABEL );
+        updater.onLabelChange( nodeLabel, nodeCursor, propertyCursor(), REMOVED_LABEL );
         return true;
     }
 
@@ -195,7 +191,7 @@ public class Operations implements Write, ExplicitIndexWrite
             //no existing value, we just add it
             autoIndexing.nodes().propertyAdded( this, node, propertyKey, value );
             ktx.txState().nodeDoAddProperty( node, propertyKey, value );
-            updater.onPropertyAdd( nodeCursor, propertyCursor, propertyKey, value );
+            updater.onPropertyAdd( nodeCursor(), propertyCursor(), propertyKey, value );
             return NO_VALUE;
         }
         else
@@ -205,7 +201,7 @@ public class Operations implements Write, ExplicitIndexWrite
                 //the value has changed to a new value
                 autoIndexing.nodes().propertyChanged( this, node, propertyKey, existingValue, value );
                 ktx.txState().nodeDoChangeProperty( node, propertyKey, existingValue, value );
-                updater.onPropertyChange( nodeCursor, propertyCursor, propertyKey, existingValue, value );
+                updater.onPropertyChange( nodeCursor(), propertyCursor(), propertyKey, existingValue, value );
             }
             return existingValue;
         }
@@ -224,7 +220,7 @@ public class Operations implements Write, ExplicitIndexWrite
             //no existing value, we just add it
             autoIndexing.nodes().propertyRemoved( this, node, propertyKey);
             ktx.txState().nodeDoRemoveProperty( node, propertyKey, existingValue);
-            updater.onPropertyRemove( nodeCursor, propertyCursor, propertyKey, existingValue );
+            updater.onPropertyRemove( nodeCursor(), propertyCursor(), propertyKey, existingValue );
         }
 
         return existingValue;
@@ -349,12 +345,14 @@ public class Operations implements Write, ExplicitIndexWrite
 
     private Value readNodeProperty( long node, int propertyKey ) throws EntityNotFoundException
     {
+        NodeCursor nodeCursor = nodeCursor();
         allStoreHolder.singleNode( node, nodeCursor );
         if ( !nodeCursor.next() )
         {
             throw new EntityNotFoundException( EntityType.NODE, node );
         }
 
+        PropertyCursor propertyCursor = propertyCursor();
         nodeCursor.properties( propertyCursor );
 
         //Find out if the property had a value
@@ -424,11 +422,19 @@ public class Operations implements Write, ExplicitIndexWrite
 
     public NodeCursor nodeCursor()
     {
+        if ( nodeCursor == null )
+        {
+            nodeCursor = cursors.allocateNodeCursor();
+        }
         return nodeCursor;
     }
 
     public PropertyCursor propertyCursor()
     {
+        if ( propertyCursor == null )
+        {
+            propertyCursor = cursors.allocatePropertyCursor();
+        }
         return propertyCursor;
     }
 }

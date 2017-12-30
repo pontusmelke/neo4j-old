@@ -95,7 +95,6 @@ public class OperationsLockTest
                 ExplicitIndexStore.class ), AssertOpen.ALWAYS_OPEN );
         operations = new Operations( allStoreHolder, mock( IndexTxStateUpdater.class ),
                 storageStatement, transaction, cursors, autoindexing );
-        operations.initialize();
     }
 
     @After
