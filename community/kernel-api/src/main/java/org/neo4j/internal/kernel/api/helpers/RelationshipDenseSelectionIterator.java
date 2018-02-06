@@ -23,6 +23,9 @@ import java.util.NoSuchElementException;
 
 import org.neo4j.graphdb.ResourceIterator;
 
+import static org.neo4j.internal.kernel.api.helpers.RelationshipSelections.NOT_INITIALIZED;
+import static org.neo4j.internal.kernel.api.helpers.RelationshipSelections.NO_ID;
+
 /**
  * Helper iterator for traversing specific types and directions of a dense node.
  */
