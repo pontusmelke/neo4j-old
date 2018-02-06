@@ -71,6 +71,10 @@ public final class RelationshipSparseSelectionIterator<R> extends RelationshipSp
             close();
             _next = NO_ID;
         }
+        else
+        {
+            _next = cursor.relationshipReference();
+        }
         return current;
     }
 }
