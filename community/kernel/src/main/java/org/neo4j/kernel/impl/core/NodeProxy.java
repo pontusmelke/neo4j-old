@@ -130,7 +130,8 @@ public class NodeProxy implements Node
     @Override
     public ResourceIterable<Relationship> getRelationships( final Direction direction )
     {
-        return innerGetRelationships( direction, null );
+        KernelTransaction transaction = safeAcquireTransaction();
+        return innerGetRelationships( transaction, direction, null );
     }
 
     @Override
@@ -149,29 +150,31 @@ public class NodeProxy implements Node
     public ResourceIterable<Relationship> getRelationships( final Direction direction, RelationshipType... types )
     {
         final int[] typeIds;
-        try ( Statement statement = spi.statement() )
+        KernelTransaction transaction = safeAcquireTransaction();
+        try ( Statement statement = transaction.acquireStatement() )
         {
             typeIds = relTypeIds( types, statement );
         }
-        return innerGetRelationships( direction, typeIds );
+        return innerGetRelationships( transaction, direction, typeIds );
     }
 
-    private ResourceIterable<Relationship> innerGetRelationships( final Direction direction, int[] typeIds )
+    private ResourceIterable<Relationship> innerGetRelationships(
+            KernelTransaction transaction, final Direction direction, int[] typeIds )
     {
-        assertInUnterminatedTransaction();
-        return () -> getRelationshipSelectionIterator( direction, typeIds );
+        return () -> getRelationshipSelectionIterator( transaction, direction, typeIds );
     }
 
     @Override
     public boolean hasRelationship()
     {
-        return innerHasRelationships( Direction.BOTH, null );
+        return hasRelationship( Direction.BOTH );
     }
 
     @Override
     public boolean hasRelationship( Direction direction )
     {
-        return innerHasRelationships( direction, null );
+        KernelTransaction transaction = safeAcquireTransaction();
+        return innerHasRelationships( transaction, direction, null );
     }
 
     @Override
@@ -184,11 +187,12 @@ public class NodeProxy implements Node
     public boolean hasRelationship( Direction direction, RelationshipType... types )
     {
         final int[] typeIds;
-        try ( Statement statement = spi.statement() )
+        KernelTransaction transaction = safeAcquireTransaction();
+        try ( Statement statement = transaction.acquireStatement() )
         {
             typeIds = relTypeIds( types, statement );
         }
-        return innerHasRelationships( direction, typeIds );
+        return innerHasRelationships( transaction, direction, typeIds );
     }
 
     @Override
@@ -197,10 +201,9 @@ public class NodeProxy implements Node
         return hasRelationship( dir, type );
     }
 
-    private boolean innerHasRelationships( final Direction direction, int[] typeIds )
+    private boolean innerHasRelationships( final KernelTransaction transaction, final Direction direction, int[] typeIds )
     {
-        assertInUnterminatedTransaction();
-        return getRelationshipSelectionIterator( direction, typeIds ).hasNext();
+        return getRelationshipSelectionIterator( transaction, direction, typeIds ).hasNext();
     }
 
     @Override
@@ -750,9 +753,9 @@ public class NodeProxy implements Node
         }
     }
 
-    private ResourceIterator<Relationship> getRelationshipSelectionIterator( Direction direction, int[] typeIds )
+    private ResourceIterator<Relationship> getRelationshipSelectionIterator(
+            KernelTransaction transaction, Direction direction, int[] typeIds )
     {
-        KernelTransaction transaction = safeAcquireTransaction();
         NodeCursor node = transaction.nodeCursor();
         transaction.dataRead().singleNode( getId(), node );
         if ( !node.next() )
