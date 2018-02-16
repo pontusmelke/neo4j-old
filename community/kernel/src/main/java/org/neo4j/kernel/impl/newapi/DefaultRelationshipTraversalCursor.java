@@ -278,7 +278,7 @@ class DefaultRelationshipTraversalCursor extends RelationshipCursor
             hasChanges = hasChanges(); // <- will setup filter state if needed
             txs = hasChanges ? read.txState() : null;
 
-            if ( filterState == FilterState.NOT_INITIALIZED && filterStore)
+            if ( filterState == FilterState.NOT_INITIALIZED && filterStore )
             {
                 read.relationshipFull( this, next, pageCursor );
                 setupFilterState();
