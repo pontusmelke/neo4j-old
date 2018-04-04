@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.neo4j.internal.kernel.api.CapableIndexReference;
-import org.neo4j.internal.kernel.api.CursorFactory;
 import org.neo4j.internal.kernel.api.IndexCapability;
 import org.neo4j.internal.kernel.api.Modes;
 import org.neo4j.internal.kernel.api.SchemaRead;
@@ -111,7 +110,6 @@ public class ConstraintIndexCreatorTest
 
         // then
         assertEquals( INDEX_ID, indexId );
-        verifyNoMoreInteractions( indexCreationContext.schemaWriteOperations() );
         verify( schemaRead ).indexGetCommittedId( indexReference );
         verify( schemaRead ).index( LABEL_ID, PROPERTY_KEY_ID );
         verifyNoMoreInteractions( schemaRead );
@@ -291,7 +289,6 @@ public class ConstraintIndexCreatorTest
         // then
         assertEquals( "There should have been no need to acquire a statement to create the constraint index", 0,
                 kernel.transactions.size() );
-        verifyNoMoreInteractions( indexCreationContext.schemaWriteOperations() );
         verify( schemaRead ).index( LABEL_ID, PROPERTY_KEY_ID );
         verify( schemaRead ).indexGetOwningUniquenessConstraintId( indexReference );
         verifyNoMoreInteractions( schemaRead );
