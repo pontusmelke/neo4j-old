@@ -1147,7 +1147,7 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI, EmbeddedProxySPI
         private boolean closed;
 
         private static final long NOT_INITIALIZED = -2L;
-        protected static final long NO_ID = -1L;
+        static final long NO_ID = -1L;
 
         PrefetchingNodeResourceIterator( Statement statement, NodeFactory nodeFactory )
         {
@@ -1157,7 +1157,7 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI, EmbeddedProxySPI
         }
 
         @Override
-        public boolean hasNext()
+        public final boolean hasNext()
         {
             if ( next == NOT_INITIALIZED )
             {
@@ -1167,19 +1167,19 @@ public class GraphDatabaseFacade implements GraphDatabaseAPI, EmbeddedProxySPI
         }
 
         @Override
-        public Node next()
+        public final Node next()
         {
             if ( !hasNext() )
             {
                 close();
                 throw new NoSuchElementException(  );
             }
-            Node nodeProxy = nodeFactory.make( next );
+            long current = next;
             next = fetchNext();
-            return nodeProxy;
+            return nodeFactory.make( current );
         }
 
-        public void close()
+        public final void close()
         {
             if ( !closed )
             {
