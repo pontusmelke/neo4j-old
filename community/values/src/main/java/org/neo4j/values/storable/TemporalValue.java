@@ -26,9 +26,8 @@ import java.time.LocalTime;
 import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.chrono.ChronoZonedDateTime;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeParseException;
+import java.time.chrono.ChronoZonedDateTime;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -43,6 +42,7 @@ import java.time.temporal.ValueRange;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -571,6 +571,11 @@ public abstract class TemporalValue<T extends Temporal, V extends TemporalValue<
             return timezone( timezone );
         }
 
+    }
+
+    public static Set<String> fieldNames()
+    {
+        return Field.fields.keySet();
     }
 
     protected enum Field

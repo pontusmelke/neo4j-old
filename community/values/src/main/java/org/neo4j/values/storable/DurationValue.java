@@ -29,9 +29,12 @@ import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalUnit;
 import java.time.temporal.UnsupportedTemporalTypeException;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,10 +52,7 @@ import static java.time.temporal.ChronoField.EPOCH_DAY;
 import static java.time.temporal.ChronoField.NANO_OF_SECOND;
 import static java.time.temporal.ChronoField.OFFSET_SECONDS;
 import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-import static java.time.temporal.ChronoUnit.DAYS;
-import static java.time.temporal.ChronoUnit.MONTHS;
 import static java.time.temporal.ChronoUnit.NANOS;
-import static java.time.temporal.ChronoUnit.SECONDS;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Objects.requireNonNull;
@@ -71,6 +71,23 @@ import static org.neo4j.values.utils.TemporalUtil.SECONDS_PER_DAY;
  */
 public final class DurationValue extends ScalarValue implements TemporalAmount, Comparable<DurationValue>
 {
+
+    public static final String YEARS = "years";
+    public static final String MONTHS = "months";
+    public static final String MONTHSOFYEAR = "monthsofyear";
+    public static final String SECONDSOFMINUTE = "secondsofminute";
+    public static final String DAYS = "days";
+    public static final String HOURS = "hours";
+    public static final String MINUTESOFHOUR = "minutesofhour";
+    public static final String MINUTES = "minutes";
+    public static final String SECONDS = "seconds";
+    public static final String MILLISECONDSOFSECOND = "millisecondsofsecond";
+    public static final String MILLISECONDS = "milliseconds";
+    public static final String MICROSECONDSOFSECOND = "microsecondsofsecond";
+    public static final String MICROSECONDS = "microseconds";
+    public static final String NANOSECONDSOFSECOND = "nanosecondsofsecond";
+    public static final String NANOSECONDS = "nanoseconds";
+
     public static DurationValue duration( Duration value )
     {
         requireNonNull( value, "Duration" );
@@ -189,7 +206,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
     }
 
     private static final DurationValue ZERO = new DurationValue( 0, 0, 0, 0 );
-    private static final List<TemporalUnit> UNITS = unmodifiableList( asList( MONTHS, DAYS, SECONDS, NANOS ) );
+    private static final List<TemporalUnit> UNITS = unmodifiableList( asList( ChronoUnit.MONTHS, ChronoUnit.DAYS, ChronoUnit.SECONDS, NANOS ) );
     // This comparator is safe until 292,271,023,045 years. After that, we have an overflow.
     private static final Comparator<DurationValue> COMPARATOR =
             Comparator.comparingLong( DurationValue::averageLengthInSeconds )
@@ -543,7 +560,7 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
             from = to;
             to = tmp;
         }
-        seconds = assertValidUntil( from, to, SECONDS );
+        seconds = assertValidUntil( from, to, ChronoUnit.SECONDS );
         int fromNanos = from.isSupported( NANO_OF_SECOND ) ? from.get( NANO_OF_SECOND ) : 0;
         int toNanos = to.isSupported( NANO_OF_SECOND ) ? to.get( NANO_OF_SECOND ) : 0;
         nanos = toNanos - fromNanos;
@@ -725,49 +742,49 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         long val;
         switch ( fieldName.toLowerCase() )
         {
-        case "years":
+        case YEARS:
             val = months / 12;
             break;
-        case "months":
+        case MONTHS:
             val = months;
             break;
-        case "monthsofyear":
+        case MONTHSOFYEAR:
             val = months % 12;
             break;
-        case "days":
+        case DAYS:
             val = days;
             break;
-        case "hours":
+        case HOURS:
             val = seconds / 3600;
             break;
-        case "minutesofhour":
+        case MINUTESOFHOUR:
             val = (seconds / 60) % 60;
             break;
-        case "minutes":
+        case MINUTES:
             val = seconds / 60;
             break;
-        case "secondsofminute":
+        case SECONDSOFMINUTE:
             val = seconds % 60;
             break;
-        case "seconds":
+        case SECONDS:
             val = seconds;
             break;
-        case "millisecondsofsecond":
+        case MILLISECONDSOFSECOND:
             val = nanos / 1000_000;
             break;
-        case "milliseconds":
+        case MILLISECONDS:
             val = seconds * 1000 + nanos / 1000_000;
             break;
-        case "microsecondsofsecond":
+        case MICROSECONDSOFSECOND:
             val = nanos / 1000;
             break;
-        case "microseconds":
+        case MICROSECONDS:
             val = seconds * 1000_000 + nanos / 1000;
             break;
-        case "nanosecondsofsecond":
+        case NANOSECONDSOFSECOND:
             val = nanos;
             break;
-        case "nanoseconds":
+        case NANOSECONDS:
             val = seconds * NANOS_PER_SECOND + nanos;
             break;
         default:
@@ -775,6 +792,12 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
         }
 
         return Values.longValue( val );
+    }
+
+    public static Set<String> fieldNames()
+    {
+        return new HashSet<>( Arrays.asList(YEARS, MONTHS, MONTHSOFYEAR, DAYS, HOURS, MINUTESOFHOUR, MINUTES, SECONDSOFMINUTE,
+                SECONDS, MILLISECONDSOFSECOND, MILLISECONDS, MICROSECONDSOFSECOND, MICROSECONDS, NANOSECONDSOFSECOND, NANOSECONDS ) );
     }
 
     @Override
@@ -827,26 +850,26 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
     @Override
     public Temporal addTo( Temporal temporal )
     {
-        if ( months != 0 && temporal.isSupported( MONTHS ) )
+        if ( months != 0 && temporal.isSupported( ChronoUnit.MONTHS ) )
         {
-            temporal = assertValidPlus( temporal, months, MONTHS );
+            temporal = assertValidPlus( temporal, months, ChronoUnit.MONTHS );
         }
-        if ( days != 0 && temporal.isSupported( DAYS ) )
+        if ( days != 0 && temporal.isSupported( ChronoUnit.DAYS ) )
         {
-            temporal = assertValidPlus( temporal, days, DAYS );
+            temporal = assertValidPlus( temporal, days, ChronoUnit.DAYS );
         }
         if ( seconds != 0 )
         {
-            if ( temporal.isSupported( SECONDS ) )
+            if ( temporal.isSupported( ChronoUnit.SECONDS ) )
             {
-                temporal = assertValidPlus( temporal, seconds, SECONDS );
+                temporal = assertValidPlus( temporal, seconds, ChronoUnit.SECONDS );
             }
             else
             {
                 long asDays = seconds / SECONDS_PER_DAY;
                 if ( asDays != 0 )
                 {
-                    temporal = assertValidPlus( temporal, asDays, DAYS );
+                    temporal = assertValidPlus( temporal, asDays, ChronoUnit.DAYS );
                 }
             }
         }
@@ -860,26 +883,26 @@ public final class DurationValue extends ScalarValue implements TemporalAmount, 
     @Override
     public Temporal subtractFrom( Temporal temporal )
     {
-        if ( months != 0 && temporal.isSupported( MONTHS ) )
+        if ( months != 0 && temporal.isSupported( ChronoUnit.MONTHS ) )
         {
-            temporal = assertValidMinus( temporal, months, MONTHS );
+            temporal = assertValidMinus( temporal, months, ChronoUnit.MONTHS );
         }
-        if ( days != 0 && temporal.isSupported( DAYS ) )
+        if ( days != 0 && temporal.isSupported( ChronoUnit.DAYS ) )
         {
-            temporal = assertValidMinus( temporal, days, DAYS );
+            temporal = assertValidMinus( temporal, days, ChronoUnit.DAYS );
         }
         if ( seconds != 0 )
         {
-            if ( temporal.isSupported( SECONDS ) )
+            if ( temporal.isSupported( ChronoUnit.SECONDS ) )
             {
-                temporal = assertValidMinus( temporal, seconds, SECONDS );
+                temporal = assertValidMinus( temporal, seconds, ChronoUnit.SECONDS );
             }
-            else if ( temporal.isSupported( DAYS ) )
+            else if ( temporal.isSupported( ChronoUnit.DAYS ) )
             {
                 long asDays = seconds / SECONDS_PER_DAY;
                 if ( asDays != 0 )
                 {
-                    temporal = assertValidMinus( temporal, asDays, DAYS );
+                    temporal = assertValidMinus( temporal, asDays, ChronoUnit.DAYS );
                 }
             }
         }

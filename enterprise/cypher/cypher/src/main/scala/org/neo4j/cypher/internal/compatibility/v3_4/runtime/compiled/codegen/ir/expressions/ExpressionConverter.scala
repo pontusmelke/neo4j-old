@@ -23,10 +23,10 @@ import org.neo4j.cypher.internal.compatibility.v3_4.runtime.compiled.codegen.Cod
 import org.neo4j.cypher.internal.compatibility.v3_4.runtime.compiled.codegen.ir.expressions
 import org.neo4j.cypher.internal.compatibility.v3_4.runtime.compiled.codegen.ir.functions.functionConverter
 import org.neo4j.cypher.internal.compatibility.v3_4.runtime.compiled.codegen.spi.MethodStructure
-import org.neo4j.cypher.internal.compatibility.v3_4.runtime.compiled.helpers.LiteralTypeSupport
 import org.neo4j.cypher.internal.compiler.v3_4.planner.CantCompileQueryException
 import org.neo4j.cypher.internal.util.v3_4.symbols._
 import org.neo4j.cypher.internal.v3_4.{expressions => ast}
+import org.neo4j.values.storable.{DurationValue, PointValue, TemporalValue}
 
 object ExpressionConverter {
 
@@ -35,7 +35,8 @@ object ExpressionConverter {
     def asPredicate = new CodeGenExpression {
 
       override def generateExpression[E](structure: MethodStructure[E])(implicit context: CodeGenContext) = {
-        if (expression.nullable || !expression.codeGenType.isPrimitive) structure.coerceToBoolean(expression.generateExpression(structure))
+        if (expression.nullable || !expression.codeGenType.isPrimitive) structure
+          .coerceToBoolean(expression.generateExpression(structure))
         else expression.generateExpression(structure)
       }
 
@@ -71,8 +72,8 @@ object ExpressionConverter {
     case exp: ast.Variable =>
       createExpression(exp).asPredicate
 
-    case _:ast.False => False
-    case _:ast.True => True
+    case _: ast.False => False
+    case _: ast.True => True
 
     case other =>
       throw new CantCompileQueryException(s"Predicate of $other not yet supported")
@@ -80,7 +81,8 @@ object ExpressionConverter {
   }
 
   def createExpression(expression: ast.Expression)
-                      (implicit context: CodeGenContext): CodeGenExpression = expressionConverter(expression, createExpression)
+                      (implicit context: CodeGenContext): CodeGenExpression = expressionConverter(expression,
+                                                                                                  createExpression)
 
   def createMaterializeExpressionForVariable(variableQueryVariable: String)
                                             (implicit context: CodeGenContext): CodeGenExpression = {
@@ -111,13 +113,22 @@ object ExpressionConverter {
         LoadVariable(variable)
       case CypherCodeGenType(CTAny, _) => AnyProjection(variable)
       case CypherCodeGenType(CTMap, _) => AnyProjection(variable)
-      case CypherCodeGenType(ListType(_), _) => AnyProjection(variable) // TODO: We could have a more specialized projection when the inner type is known to be node or relationship
-      case _ => throw new CantCompileQueryException(s"The compiled runtime cannot handle results of type ${variable.codeGenType}")
+      case CypherCodeGenType(ListType(_), _) => AnyProjection(
+        variable) // TODO: We could have a more specialized projection when the inner type is known to be node or relationship
+      case _ => throw new CantCompileQueryException(
+        s"The compiled runtime cannot handle results of type ${variable.codeGenType}")
     }
   }
 
+  import scala.collection.JavaConverters._
+
+  private val TEMPORAL_AND_SPATIAL_FIELD = TemporalValue.fieldNames().asScala ++ PointValue.fieldNames()
+    .asScala ++ DurationValue.fieldNames().asScala
+
+  private def blackListed(key: String): Boolean = TEMPORAL_AND_SPATIAL_FIELD.contains(key.toLowerCase)
+
   private def expressionConverter(expression: ast.Expression, callback: ast.Expression => CodeGenExpression)
-                      (implicit context: CodeGenContext): CodeGenExpression = {
+                                 (implicit context: CodeGenContext): CodeGenExpression = {
 
     expression match {
       case node@ast.Variable(name) if context.semanticTable.isNode(node) =>
@@ -135,6 +146,9 @@ object ExpressionConverter {
         RelProperty(token, propKey.name, context.getVariable(name), context.namer.newVarName())
 
       case ast.Property(mapExpression, ast.PropertyKeyName(propKeyName)) =>
+        if (blackListed(propKeyName)) throw new CantCompileQueryException(
+          "temporal and spatial accessors are not supported in compiled runtime")
+
         MapProperty(callback(mapExpression), propKeyName)
 
       case ast.Parameter(name, cypherType) =>

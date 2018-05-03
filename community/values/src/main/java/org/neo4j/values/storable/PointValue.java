@@ -20,8 +20,10 @@
 package org.neo4j.values.storable;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -40,6 +42,14 @@ import static java.util.Collections.singletonList;
 
 public class PointValue extends ScalarValue implements Point, Comparable<PointValue>
 {
+    public static final String X = "x";
+    public static final String Y = "y";
+    public static final String Z = "z";
+    public static final String LONGITUDE = "longitude";
+    public static final String LATITUDE = "latitude";
+    public static final String HEIGHT = "height";
+    public static final String CRS = "crs";
+    public static final String SRID = "srid";
     public static String[] ALLOWED_KEYS = new String[]{"crs", "x", "y", "z", "longitude", "latitude", "height", "srid"};
 
     private CoordinateReferenceSystem crs;
@@ -422,25 +432,30 @@ public class PointValue extends ScalarValue implements Point, Comparable<PointVa
     {
         switch ( fieldName.toLowerCase() )
         {
-        case "x":
+        case X:
             return getNthCoordinate( 0, fieldName, false );
-        case "y":
+        case Y:
             return getNthCoordinate( 1, fieldName, false );
-        case "z":
+        case Z:
             return getNthCoordinate( 2, fieldName, false );
-        case "longitude":
+        case LONGITUDE:
             return getNthCoordinate( 0, fieldName, true );
-        case "latitude":
+        case LATITUDE:
             return getNthCoordinate( 1, fieldName, true );
-        case "height":
+        case HEIGHT:
             return getNthCoordinate( 2, fieldName, true );
-        case "crs":
+        case CRS:
             return Values.stringValue( crs.toString() );
-        case "srid":
+        case SRID:
             return Values.intValue( crs.getCode() );
         default:
             throw new InvalidValuesArgumentException( "No such field: " + fieldName );
         }
+    }
+
+    public static Set<String> fieldNames()
+    {
+        return new HashSet<>( Arrays.asList( X, Y, Z, LONGITUDE, LATITUDE, HEIGHT, CRS, SRID ) );
     }
 
     private DoubleValue getNthCoordinate( int n, String fieldName, boolean onlyGeographic )
